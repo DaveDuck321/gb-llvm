@@ -1,0 +1,13 @@
+#ifndef ELF_RELOC
+#error "ELF_RELOC must be defined"
+#endif
+
+// TODO: almost all instructions support immediates, also support these
+ELF_RELOC(R_GB_NONE,            0)
+ELF_RELOC(R_GB_8,               1)
+ELF_RELOC(R_GB_16,              2)
+ELF_RELOC(R_GB_32,              3)
+ELF_RELOC(R_GB_CALL,            4)
+ELF_RELOC(R_GB_JP,              5)
+ELF_RELOC(R_GB_LDH,             6)
+ELF_RELOC(R_GB_LD,              7)

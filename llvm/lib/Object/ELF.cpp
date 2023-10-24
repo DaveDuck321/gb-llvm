@@ -181,8 +181,12 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
-  default:
-    break;
+  case ELF::EM_GB:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/GB.def"
+    default:
+      break;
+    }
   }
   return "Unknown";
 }

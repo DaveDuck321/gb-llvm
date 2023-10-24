@@ -320,6 +320,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_GB = 259,            // Gameboy/ Gameboy color
 };
 
 // Object file classes.
@@ -950,6 +951,13 @@ enum {
 #include "ELFRelocs/Xtensa.def"
 };
 
+// TODO GB: maybe add a Gameboy Specific e_flags
+
+// ELF Relocation types for GB/GBC
+enum {
+#include "ELFRelocs/GB.def"
+};
+
 #undef ELF_RELOC
 
 // Section header.
@@ -1074,6 +1082,8 @@ enum : unsigned {
   SHT_RISCV_ATTRIBUTES = 0x70000003U,
 
   SHT_CSKY_ATTRIBUTES = 0x70000001U,
+
+  // TODO GB: add a section for graphics memory/ color palettes?
 
   SHT_HIPROC = 0x7fffffff, // Highest processor arch-specific type.
   SHT_LOUSER = 0x80000000, // Lowest type reserved for applications.
