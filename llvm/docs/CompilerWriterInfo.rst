@@ -203,6 +203,11 @@ SPIR-V
 
 * `SPIR-V documentation <https://www.khronos.org/registry/SPIR-V/>`_
 
+Gameboy
+======
+
+* `Gameboy instruction set `https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html`
+
 Miscellaneous Resources
 =======================
 
