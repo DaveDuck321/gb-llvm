@@ -1,5 +1,12 @@
 add_llvm_component_group(GB)
 
+set(LLVM_TARGET_DEFINITIONS GB.td)
+
+tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
+tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
+
+add_public_tablegen_target(GBCommonTableGen)
+
 add_llvm_target(GBCodeGen
     GBTargetMachine.cpp
 
