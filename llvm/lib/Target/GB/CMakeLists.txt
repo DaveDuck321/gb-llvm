@@ -4,6 +4,7 @@ set(LLVM_TARGET_DEFINITIONS GB.td)
 
 tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
 
 add_public_tablegen_target(GBCommonTableGen)
 

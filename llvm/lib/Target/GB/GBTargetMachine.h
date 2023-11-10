@@ -1,6 +1,8 @@
 #ifndef LLVM_LIB_TARGET_GB_GBTARGETMACHINE_H
 #define LLVM_LIB_TARGET_GB_GBTARGETMACHINE_H
 
+#include "MCTargetDesc/GBMCTargetDesc.h"
+
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"

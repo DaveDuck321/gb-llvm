@@ -1,4 +1,7 @@
 add_llvm_component_library(LLVMGBDesc
+    GBAsmBackend.cpp
+    GBELFObjectWriter.cpp
+    GBMCCodeEmitter.cpp
     GBMCTargetDesc.cpp
 
     LINK_COMPONENTS
