@@ -2,6 +2,7 @@ add_llvm_component_group(GB)
 
 set(LLVM_TARGET_DEFINITIONS GB.td)
 
+tablegen(LLVM GBGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
@@ -15,8 +16,9 @@ add_llvm_target(GBCodeGen
     LINK_COMPONENTS
     CodeGen
     Core
-    GBInfo
+    GBAsmParser
     GBDesc
+    GBInfo
     MC
     Support
     Target
@@ -25,5 +27,6 @@ add_llvm_target(GBCodeGen
     GB
     )
 
-add_subdirectory(TargetInfo)
+add_subdirectory(AsmParser)
 add_subdirectory(MCTargetDesc)
+add_subdirectory(TargetInfo)
