@@ -1,4 +1,5 @@
 #include "GBMCTargetDesc.h"
+#include "GBInstPrinter.h"
 #include "GBMCAsmInfo.h"
 
 #include "llvm/MC/MCAsmInfo.h"
@@ -20,6 +21,14 @@
 #include "GBGenSubtargetInfo.inc"
 
 using namespace llvm;
+
+static MCInstPrinter *createGBInstPrinter(const Triple &,
+                                          unsigned SyntaxVariant,
+                                          const MCAsmInfo &MAI,
+                                          const MCInstrInfo &MII,
+                                          const MCRegisterInfo &MRI) {
+  return new GBInstPrinter(MAI, MII, MRI);
+}
 
 static MCAsmInfo *createGBMCAsmInfo(const MCRegisterInfo &MRI, const Triple &TT,
                                     const MCTargetOptions &MTO) {
@@ -48,6 +57,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeGBTargetMC() {
   TargetRegistry::RegisterMCAsmBackend(T, createGBAsmBackend);
   TargetRegistry::RegisterMCAsmInfo(T, createGBMCAsmInfo);
   TargetRegistry::RegisterMCCodeEmitter(T, createGBMCCodeEmitter);
+  TargetRegistry::RegisterMCInstPrinter(T, createGBInstPrinter);
   TargetRegistry::RegisterMCInstrInfo(T, createGBInstrInfo);
   TargetRegistry::RegisterMCRegInfo(T, createGBMCRegisterInfo);
   TargetRegistry::RegisterMCSubtargetInfo(T, createGBMCSubtargetInfo);

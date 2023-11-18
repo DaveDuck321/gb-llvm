@@ -3,6 +3,7 @@ add_llvm_component_group(GB)
 set(LLVM_TARGET_DEFINITIONS GB.td)
 
 tablegen(LLVM GBGenAsmMatcher.inc -gen-asm-matcher)
+tablegen(LLVM GBGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
