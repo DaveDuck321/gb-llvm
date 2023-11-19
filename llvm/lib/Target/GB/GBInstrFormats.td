@@ -26,7 +26,7 @@ class GBInstr16<string opcodestr, string argsstr, dag outs, dag ins, list<dag> p
 
 // a = a + r
 class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rd, $rs1, $rs2",
+  : GBInstr8<opcodestr, "$rs2",
             (outs Acc:$rd),
             (ins Acc:$rs1, GPR8:$rs2),
             pattern> {
@@ -38,7 +38,7 @@ class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // a = a + imm
 class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$rd, $rs1, $imm8",
+  : GBInstr16<opcodestr, "$imm8",
             (outs Acc:$rd),
             (ins Acc:$rs1, imm8:$imm8),
             pattern> {

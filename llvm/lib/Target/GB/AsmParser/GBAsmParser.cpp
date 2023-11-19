@@ -160,7 +160,7 @@ ParseStatus GBAsmParser::tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
   const auto &Token = getParser().getTok();
   StartLoc = Token.getLoc();
   EndLoc = Token.getEndLoc();
-  Reg = MatchRegisterName(Token.getIdentifier());
+  Reg = MatchRegisterName(Token.getIdentifier().lower());
 
   if (Reg.isValid()) {
     getParser().Lex();

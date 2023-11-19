@@ -10,21 +10,21 @@ class GBCombinedReg<string name, bits<16> enc, list<GBReg> halves> : GBReg<name,
 }
 
 // 8-Bit registers
-def B : GBReg<"B", 0>;
-def C : GBReg<"C", 1>;
-def D : GBReg<"D", 2>;
-def E : GBReg<"E", 3>;
-def H : GBReg<"H", 4>;
-def L : GBReg<"L", 5>;
-def A : GBReg<"A", 7>;
-def F : GBReg<"F", -1>;
+def B : GBReg<"b", 0>;
+def C : GBReg<"c", 1>;
+def D : GBReg<"d", 2>;
+def E : GBReg<"e", 3>;
+def H : GBReg<"h", 4>;
+def L : GBReg<"l", 5>;
+def A : GBReg<"a", 7>;
+def F : GBReg<"f", -1>;
 
 // 16-Bit registers
-def BC : GBCombinedReg<"BC", 0x00, [B, C]>;
-def DE : GBCombinedReg<"DE", 0x10, [D, E]>;
-def HL : GBCombinedReg<"HL", 0x20, [H, L]>;
-def AF : GBCombinedReg<"AF", 0x30, [A, F]>;
-def SP : GBReg<"SP", 0x30>;
+def BC : GBCombinedReg<"bc", 0x00, [B, C]>;
+def DE : GBCombinedReg<"de", 0x10, [D, E]>;
+def HL : GBCombinedReg<"hl", 0x20, [H, L]>;
+def AF : GBCombinedReg<"af", 0x30, [A, F]>;
+def SP : GBReg<"sp", 0x30>;
 
 // Classes
 def Acc : RegisterClass<"GB", [i8], 8, (add A)>;
