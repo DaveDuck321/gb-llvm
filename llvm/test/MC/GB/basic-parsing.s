@@ -25,3 +25,27 @@ or d
 # CHECK-INST: cp h
 # CHECK: encoding: [0xbc]
 cp h
+# CHECK-INST: add 255
+# CHECK: encoding: [0xc6,0xff]
+add 255
+# CHECK-INST: sub 1
+# CHECK: encoding: [0xd6,0x01]
+sub 1
+# CHECK-INST: and 7
+# CHECK: encoding: [0xe6,0x07]
+and 7
+# CHECK-INST: or 0
+# CHECK: encoding: [0xf6,0x00]
+or 0
+# CHECK-INST: adc 255
+# CHECK: encoding: [0xce,0xff]
+adc 255
+# CHECK-INST: sbc 1
+# CHECK: encoding: [0xde,0x01]
+sbc 1
+# CHECK-INST: xor 7
+# CHECK: encoding: [0xee,0x07]
+xor 7
+# CHECK-INST: cp 0
+# CHECK: encoding: [0xfe,0x00]
+cp 0

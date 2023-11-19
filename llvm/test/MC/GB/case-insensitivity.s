@@ -8,3 +8,7 @@ add A
 # CHECK-INST: add a
 # CHECK: encoding: [0x87]
 add a
+
+# CHECK-INST: add a
+# CHECK: encoding: [0x87]
+ADD a
