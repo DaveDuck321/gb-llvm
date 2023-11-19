@@ -61,3 +61,18 @@ class GBLDR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{5 - 3} = rd;
     let Inst{2 - 0} = rs;
 }
+
+// rd = imm
+class GBLDImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr16<opcodestr, "$rd, $imm8",
+            (outs GPR8:$rd),
+            (ins imm8:$imm8),
+            pattern> {
+    bits<3> rd;
+    bits<8> imm8;
+
+    let Inst{15 - 8} = imm8;
+    let Inst{7 - 6} = opcode{7 - 6};
+    let Inst{5 - 3} = rd;
+    let Inst{2 - 0} = opcode{2 - 0};
+}

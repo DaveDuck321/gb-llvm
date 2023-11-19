@@ -1,6 +1,7 @@
 include "GBInstrFormats.td"
 
-def LD : GBLDR8Instr<0x40, "ld", []>;
+def LD  : GBLDR8Instr<0x40, "ld", []>;
+def LDI : GBLDImm8Instr<0x06, "ld", []>;
 
 def ADD : GBArithR8Instr<0x80, "add", []>;
 def ADC : GBArithR8Instr<0x88, "adc", []>;
