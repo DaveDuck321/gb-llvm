@@ -44,6 +44,6 @@ class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
             pattern> {
     bits<8> imm8;
 
-    let Inst{8 - 15} = imm8;
+    let Inst{15 - 8} = imm8;
     let Inst{7 - 0} = opcode;
 }

@@ -9,7 +9,11 @@ def XOR : GBArithR8Instr<0xA8, "xor", []>;
 def OR  : GBArithR8Instr<0xB0, "or", []>;
 def CP  : GBArithR8Instr<0xB8, "cp", []>;
 
-def ADDI : GBArithImm8Instr<0xC6, "addi", []>;
-def SUBI : GBArithImm8Instr<0xD6, "subi", []>;
-def ANDI : GBArithImm8Instr<0xE6, "andi", []>;
-def ORI  : GBArithImm8Instr<0xC6, "ori", []>;
+def ADDI : GBArithImm8Instr<0xC6, "add", []>;
+def ADCI : GBArithImm8Instr<0xCE, "adc", []>;
+def SUBI : GBArithImm8Instr<0xD6, "sub", []>;
+def SBCI : GBArithImm8Instr<0xDE, "sbc", []>;
+def ANDI : GBArithImm8Instr<0xE6, "and", []>;
+def XORI : GBArithImm8Instr<0xEE, "xor", []>;
+def ORI  : GBArithImm8Instr<0xF6, "or", []>;
+def CPI  : GBArithImm8Instr<0xFE, "cp", []>;
