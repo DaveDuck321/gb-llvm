@@ -15,11 +15,13 @@ class GBInstr<string opcodestr, string argstr, dag outs, dag ins, list<dag> patt
 class GBInstr8<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
   : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
     bits<8> Inst;
+    let Size = 1;
 }
 
 class GBInstr16<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
   : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
     bits<16> Inst;
+    let Size = 2;
 }
 
 // a = a + r
