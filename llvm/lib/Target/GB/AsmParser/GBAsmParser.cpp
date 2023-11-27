@@ -16,6 +16,7 @@
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <cstdint>
 #include <memory>
 #include <variant>
 
@@ -24,13 +25,15 @@ using namespace llvm;
 namespace {
 
 class GBOperand : public MCParsedAsmOperand {
-  struct RegOp {
+  struct Reg {
     unsigned RegNum;
   };
-  struct ImmOp {
-    const MCExpr *Val;
+
+  struct Imm {
+    int64_t Val;
   };
-  struct TokOp {
+
+  struct Token {
     StringRef Val;
   };
 
@@ -39,19 +42,20 @@ class GBOperand : public MCParsedAsmOperand {
 
   public:
     Printer(raw_ostream &OS) : OS(OS) {}
-    void operator()(const RegOp &Op) { OS << "<register " << Op.RegNum << ">"; }
-    void operator()(const ImmOp &Op) { OS << Op.Val; }
-    void operator()(const TokOp &Tok) { OS << "'" << Tok.Val << "'"; }
+    void operator()(const Reg &Op) { OS << "<register " << Op.RegNum << ">"; }
+    void operator()(const Imm &Op) { OS << Op.Val; }
+    void operator()(const Token &Token) { OS << "'" << Token.Val << "'"; }
   };
 
   SMLoc StartLoc, EndLoc;
-  std::variant<RegOp, ImmOp, TokOp> Data;
+  std::variant<Reg, Imm, Token> Data;
 
 public:
-  bool isToken() const override { return std::holds_alternative<TokOp>(Data); };
-  bool isImm() const override { return std::holds_alternative<ImmOp>(Data); };
-  bool isReg() const override { return std::holds_alternative<RegOp>(Data); };
-  unsigned getReg() const override { return std::get<RegOp>(Data).RegNum; };
+  bool isToken() const override { return std::holds_alternative<Token>(Data); };
+  bool isImm() const override { return std::holds_alternative<Imm>(Data); };
+
+  bool isReg() const override { return std::holds_alternative<Reg>(Data); };
+  unsigned getReg() const override { return std::get<Reg>(Data).RegNum; };
   bool isMem() const override { return false; };
 
   SMLoc getStartLoc() const override { return StartLoc; };
@@ -60,7 +64,7 @@ public:
   void print(raw_ostream &OS) const override { std::visit(Printer{OS}, Data); };
 
   // Used by tablegen
-  StringRef getToken() const { return std::get<TokOp>(Data).Val; };
+  StringRef getToken() const { return std::get<Token>(Data).Val; };
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Unsupported operand count");
@@ -69,18 +73,12 @@ public:
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Unsupported operand count");
-
-    const auto *Expr = std::get<ImmOp>(Data).Val;
-    if (const auto *CE = dyn_cast<MCConstantExpr>(Expr); CE != nullptr) {
-      Inst.addOperand(MCOperand::createImm(CE->getValue()));
-    } else {
-      Inst.addOperand(MCOperand::createExpr(Expr));
-    }
+    Inst.addOperand(MCOperand::createImm(std::get<Imm>(Data).Val));
   }
 
   static auto createToken(StringRef Str, SMLoc S) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = TokOp{Str};
+    Op->Data = Token{Str};
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -88,15 +86,15 @@ public:
 
   static auto createReg(unsigned RegNo, SMLoc S, SMLoc E) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = RegOp{RegNo};
+    Op->Data = Reg{RegNo};
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
   }
 
-  static auto createImm(const MCExpr *Val, SMLoc S, SMLoc E) {
+  static auto createImm(int64_t Val, SMLoc S, SMLoc E) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = ImmOp{Val};
+    Op->Data = Imm{Val};
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -119,8 +117,7 @@ public:
   ParseStatus tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                SMLoc &EndLoc) override;
 
-  ParseStatus tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
-                                SMLoc &EndLoc);
+  ParseStatus tryParseImmediate(int64_t &Imm, SMLoc &StartLoc, SMLoc &EndLoc);
 
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
@@ -186,12 +183,20 @@ ParseStatus GBAsmParser::tryParseRegister(OperandVector &Operands) {
   return ParseStatus::NoMatch;
 }
 
-ParseStatus GBAsmParser::tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
+ParseStatus GBAsmParser::tryParseImmediate(int64_t &Val, SMLoc &StartLoc,
                                            SMLoc &EndLoc) {
   StartLoc = getLexer().getLoc();
+
+  const MCExpr *Expr;
   if (getParser().parseExpression(Expr, EndLoc)) {
     return ParseStatus::NoMatch;
   }
+
+  // TODO GB: hmm, what are non-constant expressions here?
+  if (Expr->getKind() != MCExpr::Constant) {
+    return ParseStatus::NoMatch;
+  }
+  Val = dyn_cast<MCConstantExpr>(Expr)->getValue();
   return ParseStatus::Success;
 }
 
@@ -207,10 +212,9 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
     break;
   }
 
-  const MCExpr *Expr;
   SMLoc StartLoc, EndLoc;
-  if (tryParseImmediate(Expr, StartLoc, EndLoc).isSuccess()) {
-    Operands.push_back(GBOperand::createImm(Expr, StartLoc, EndLoc));
+  if (int64_t Imm; tryParseImmediate(Imm, StartLoc, EndLoc).isSuccess()) {
+    Operands.push_back(GBOperand::createImm(Imm, StartLoc, EndLoc));
     return ParseStatus::Success;
   }
   return ParseStatus::NoMatch;
