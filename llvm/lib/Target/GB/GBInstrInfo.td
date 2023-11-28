@@ -20,3 +20,17 @@ def ANDI : GBArithImm8Instr<0xE6, "and", []>;
 def XORI : GBArithImm8Instr<0xEE, "xor", []>;
 def ORI  : GBArithImm8Instr<0xF6, "or", []>;
 def CPI  : GBArithImm8Instr<0xFE, "cp", []>;
+
+// CB instructions
+def RLC  : GBShuffleRegInstr<0x00, "rlc", []>;
+def RRC  : GBShuffleRegInstr<0x08, "rrc", []>;
+def RL   : GBShuffleRegInstr<0x10, "rl", []>;
+def RR   : GBShuffleRegInstr<0x18, "rr", []>;
+def SLA  : GBShuffleRegInstr<0x20, "sla", []>;
+def SRA  : GBShuffleRegInstr<0x28, "sra", []>;
+def SWAP : GBShuffleRegInstr<0x30, "swap", []>;
+def SRL  : GBShuffleRegInstr<0x38, "srl", []>;
+
+def BIT : GBBitGetInstr<0x40, "bit", []>;
+def RES : GBBitSetInstr<0x80, "res", []>;
+def SET : GBBitSetInstr<0xC0, "set", []>;

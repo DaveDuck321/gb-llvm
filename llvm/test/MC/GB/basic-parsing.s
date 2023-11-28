@@ -49,3 +49,36 @@ xor 7
 # CHECK-INST: cp 0
 # CHECK: encoding: [0xfe,0x00]
 cp 0
+# CHECK-INST: rlc e
+# CHECK: encoding: [0xcb,0x03]
+rlc e
+# CHECK-INST: rrc l
+# CHECK: encoding: [0xcb,0x0d]
+rrc l
+# CHECK-INST: rl b
+# CHECK: encoding: [0xcb,0x10]
+rl b
+# CHECK-INST: rr a
+# CHECK: encoding: [0xcb,0x1f]
+rr a
+# CHECK-INST: sla d
+# CHECK: encoding: [0xcb,0x22]
+sla d
+# CHECK-INST: sra c
+# CHECK: encoding: [0xcb,0x29]
+sra c
+# CHECK-INST: swap h
+# CHECK: encoding: [0xcb,0x34]
+swap h
+# CHECK-INST: srl b
+# CHECK: encoding: [0xcb,0x38]
+srl b
+# CHECK-INST: bit 4, a
+# CHECK: encoding: [0xcb,0x67]
+bit 4, a
+# CHECK-INST: res 2, e
+# CHECK: encoding: [0xcb,0x93]
+res 2, e
+# CHECK-INST: set 7, h
+# CHECK: encoding: [0xcb,0xfc]
+set 7, h

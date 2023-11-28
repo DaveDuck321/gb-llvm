@@ -16,6 +16,7 @@
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <variant>
@@ -23,6 +24,13 @@
 using namespace llvm;
 
 namespace {
+
+bool fitsInIntOfWidth(int64_t Value, uint8_t Width, bool IsSigned) {
+  if (IsSigned) {
+    return -(1 << (Width - 1)) <= Value && (1 << (Width - 1)) > Value;
+  }
+  return 0 <= Value && (1 << Width) > Value;
+}
 
 class GBOperand : public MCParsedAsmOperand {
   struct Reg {
@@ -53,6 +61,14 @@ class GBOperand : public MCParsedAsmOperand {
 public:
   bool isToken() const override { return std::holds_alternative<Token>(Data); };
   bool isImm() const override { return std::holds_alternative<Imm>(Data); };
+  bool isImmN(uint8_t Width, bool IsSigned) const {
+    return isImm() &&
+           fitsInIntOfWidth(std::get<Imm>(Data).Val, Width, IsSigned);
+  }
+  bool isImm3() const { return isImmN(3, false); }
+  bool isImm8() const { return isImmN(8, false); }
+  bool isImm16() const { return isImmN(16, false); }
+  bool isAddr16() const { return isImmN(16, false); }
 
   bool isReg() const override { return std::holds_alternative<Reg>(Data); };
   unsigned getReg() const override { return std::get<Reg>(Data).RegNum; };

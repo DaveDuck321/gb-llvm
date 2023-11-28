@@ -133,3 +133,91 @@ ld l,10
 # CHECK-INST: ld a, 10
 # CHECK: encoding: [0x3e,0x0a]
 ld a,10
+
+# CHECK-INST: rlc b
+# CHECK: encoding: [0xcb,0x00]
+rlc b
+# CHECK-INST: rlc c
+# CHECK: encoding: [0xcb,0x01]
+rlc c
+# CHECK-INST: rlc d
+# CHECK: encoding: [0xcb,0x02]
+rlc d
+# CHECK-INST: rlc e
+# CHECK: encoding: [0xcb,0x03]
+rlc e
+# CHECK-INST: rlc h
+# CHECK: encoding: [0xcb,0x04]
+rlc h
+# CHECK-INST: rlc l
+# CHECK: encoding: [0xcb,0x05]
+rlc l
+# CHECK-INST: rlc a
+# CHECK: encoding: [0xcb,0x07]
+rlc a
+
+# CHECK-INST: rr b
+# CHECK: encoding: [0xcb,0x18]
+rr b
+# CHECK-INST: rr c
+# CHECK: encoding: [0xcb,0x19]
+rr c
+# CHECK-INST: rr d
+# CHECK: encoding: [0xcb,0x1a]
+rr d
+# CHECK-INST: rr e
+# CHECK: encoding: [0xcb,0x1b]
+rr e
+# CHECK-INST: rr h
+# CHECK: encoding: [0xcb,0x1c]
+rr h
+# CHECK-INST: rr l
+# CHECK: encoding: [0xcb,0x1d]
+rr l
+# CHECK-INST: rr a
+# CHECK: encoding: [0xcb,0x1f]
+rr a
+
+# CHECK-INST: bit 2, b
+# CHECK: encoding: [0xcb,0x50]
+bit 2,b
+# CHECK-INST: bit 2, c
+# CHECK: encoding: [0xcb,0x51]
+bit 2,c
+# CHECK-INST: bit 2, d
+# CHECK: encoding: [0xcb,0x52]
+bit 2,d
+# CHECK-INST: bit 2, e
+# CHECK: encoding: [0xcb,0x53]
+bit 2,e
+# CHECK-INST: bit 2, h
+# CHECK: encoding: [0xcb,0x54]
+bit 2,h
+# CHECK-INST: bit 2, l
+# CHECK: encoding: [0xcb,0x55]
+bit 2,l
+# CHECK-INST: bit 2, a
+# CHECK: encoding: [0xcb,0x57]
+bit 2,a
+
+# CHECK-INST: bit 1, b
+# CHECK: encoding: [0xcb,0x48]
+bit 1,b
+# CHECK-INST: bit 1, c
+# CHECK: encoding: [0xcb,0x49]
+bit 1,c
+# CHECK-INST: bit 1, d
+# CHECK: encoding: [0xcb,0x4a]
+bit 1,d
+# CHECK-INST: bit 1, e
+# CHECK: encoding: [0xcb,0x4b]
+bit 1,e
+# CHECK-INST: bit 1, h
+# CHECK: encoding: [0xcb,0x4c]
+bit 1,h
+# CHECK-INST: bit 1, l
+# CHECK: encoding: [0xcb,0x4d]
+bit 1,l
+# CHECK-INST: bit 1, a
+# CHECK: encoding: [0xcb,0x4f]
+bit 1,a
