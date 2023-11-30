@@ -20,11 +20,11 @@ def A : GBReg<"a", 7>;
 def F : GBReg<"f", -1>;
 
 // 16-Bit registers
-def BC : GBCombinedReg<"bc", 0x00, [B, C]>;
-def DE : GBCombinedReg<"de", 0x10, [D, E]>;
-def HL : GBCombinedReg<"hl", 0x20, [H, L]>;
-def AF : GBCombinedReg<"af", 0x30, [A, F]>;
-def SP : GBReg<"sp", 0x30>;
+def BC : GBCombinedReg<"bc", 0, [B, C]>;
+def DE : GBCombinedReg<"de", 1, [D, E]>;
+def HL : GBCombinedReg<"hl", 2, [H, L]>;
+def AF : GBCombinedReg<"af", 3, [A, F]>;
+def SP : GBReg<"sp", 3>;
 
 // Classes
 def Acc : RegisterClass<"GB", [i8], 8, (add A)>;

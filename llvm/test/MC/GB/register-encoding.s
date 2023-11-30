@@ -265,3 +265,29 @@ dec l
 # CHECK-INST: dec a
 # CHECK: encoding: [0x3d]
 dec a
+
+# CHECK-INST: inc bc
+# CHECK: encoding: [0x03]
+inc bc
+# CHECK-INST: inc de
+# CHECK: encoding: [0x13]
+inc de
+# CHECK-INST: inc hl
+# CHECK: encoding: [0x23]
+inc hl
+# CHECK-INST: inc sp
+# CHECK: encoding: [0x33]
+inc sp
+
+# CHECK-INST: dec bc
+# CHECK: encoding: [0x0b]
+dec bc
+# CHECK-INST: dec de
+# CHECK: encoding: [0x1b]
+dec de
+# CHECK-INST: dec hl
+# CHECK: encoding: [0x2b]
+dec hl
+# CHECK-INST: dec sp
+# CHECK: encoding: [0x3b]
+dec sp

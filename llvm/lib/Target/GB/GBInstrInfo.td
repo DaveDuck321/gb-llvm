@@ -23,8 +23,11 @@ def XORI : GBArithImm8Instr<0xEE, "xor", []>;
 def ORI  : GBArithImm8Instr<0xF6, "or", []>;
 def CPI  : GBArithImm8Instr<0xFE, "cp", []>;
 
-def INC : GBArithGR8Instr<0x04, "inc", []>;
-def DEC : GBArithGR8Instr<0x05, "dec", []>;
+def INC8 : GBArithGPR8Instr<0x04, "inc", []>;
+def DEC8 : GBArithGPR8Instr<0x05, "dec", []>;
+
+def INC16 : GBArithGPR16Instr<0x03, "inc", []>;
+def DEC16 : GBArithGPR16Instr<0x0B, "dec", []>;
 
 // CB instructions
 def RLC  : GBShuffleRegInstr<0x00, "rlc", []>;
