@@ -26,6 +26,7 @@ def CPI  : GBArithImm8Instr<0xFE, "cp", []>;
 def INC8 : GBArithGPR8Instr<0x04, "inc", []>;
 def DEC8 : GBArithGPR8Instr<0x05, "dec", []>;
 
+def ADD16 : GBArithR16Instr<0x09, "add", []>;
 def INC16 : GBArithGPR16Instr<0x03, "inc", []>;
 def DEC16 : GBArithGPR16Instr<0x0B, "dec", []>;
 

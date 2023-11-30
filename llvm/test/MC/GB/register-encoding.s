@@ -291,3 +291,16 @@ dec hl
 # CHECK-INST: dec sp
 # CHECK: encoding: [0x3b]
 dec sp
+
+# CHECK-INST: add hl, bc
+# CHECK: encoding: [0x09]
+add hl, bc
+# CHECK-INST: add hl, de
+# CHECK: encoding: [0x19]
+add hl, de
+# CHECK-INST: add hl, hl
+# CHECK: encoding: [0x29]
+add hl, hl
+# CHECK-INST: add hl, sp
+# CHECK: encoding: [0x39]
+add hl, sp

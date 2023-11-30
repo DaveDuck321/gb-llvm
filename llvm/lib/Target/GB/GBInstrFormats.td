@@ -107,6 +107,19 @@ class GBArithGPR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{2 - 0} = opcode{2 - 0};
 }
 
+// HL = HL + r16
+class GBArithR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "$rd, $rs2",
+            (outs Ind:$rd),
+            (ins Ind:$rs1, GPR16:$rs2),
+            pattern> {
+    bits<2> rs2;
+
+    let Inst{7 - 6} = opcode{7 - 6};
+    let Inst{5 - 4} = rs2;
+    let Inst{3 - 0} = opcode{3 - 0};
+}
+
 // r16 = r16 + 1
 class GBArithGPR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd",
