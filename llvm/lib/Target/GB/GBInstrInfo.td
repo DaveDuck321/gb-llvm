@@ -34,3 +34,8 @@ def SRL  : GBShuffleRegInstr<0x38, "srl", []>;
 def BIT : GBBitGetInstr<0x40, "bit", []>;
 def RES : GBBitSetInstr<0x80, "res", []>;
 def SET : GBBitSetInstr<0xC0, "set", []>;
+
+def RET_NZ : GBRetCondInstr<0xC0, "ret", f_NZ, []>;
+def RET_NC : GBRetCondInstr<0xC0, "ret", f_NC, []>;
+def RET_Z  : GBRetCondInstr<0xC0, "ret", f_Z, []>;
+def RET_C  : GBRetCondInstr<0xC0, "ret", f_C, []>;

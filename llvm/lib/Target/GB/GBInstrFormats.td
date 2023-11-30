@@ -13,6 +13,26 @@ def imm8 : GBOperand<8, i8>;
 def imm16 : GBOperand<16, i16>;
 def addr16 : GBOperand<16, i16>;
 
+// Flag conditionals
+class GBFlagCondition<bits<8> encoding, string name> {
+  string Name = name;
+  bits<8> Encoding = encoding;
+}
+
+def f_NZ : GBFlagCondition<0x00, "nz">;
+def f_NC : GBFlagCondition<0x10, "nc">;
+def f_Z : GBFlagCondition<0x08, "z">;
+def f_C : GBFlagCondition<0x18, "c">;
+
+class FlagEncoding<bits<8> opcode, GBFlagCondition cond> {
+    // TODO: could this be an immediate/ pseudo register for nicer parsing?
+  bits<8> Encoding;
+
+  let Encoding{7 - 5} = opcode{7 - 5};
+  let Encoding{4 - 3} = cond.Encoding{4 - 3};
+  let Encoding{2 - 0} = opcode{2 - 0};
+}
+
 // Instruction formats
 class GBInstr<string opcodestr, string argstr, dag outs, dag ins, list<dag> pattern> : Instruction {
     let Namespace = "GB";
@@ -126,4 +146,12 @@ class GBShuffleRegInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Constraints = "$rd = $rs";
     let Arg{7 - 3} = opcode{7 - 3};
     let Arg{2 - 0} = rs;
+}
+
+// if (condition) return
+class GBRetCondInstr<bits<8> opcode, string opcodestr, GBFlagCondition cond, list<dag> pattern>
+  : GBInstr8<opcodestr, cond.Name, (outs), (ins), pattern> {
+    let Inst{7 - 0} = FlagEncoding<opcode, cond>.Encoding{7 - 0};
+
+    let isReturn = true;
 }
