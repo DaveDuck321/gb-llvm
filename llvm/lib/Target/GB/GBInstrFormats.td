@@ -92,6 +92,21 @@ class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{7 - 0} = opcode;
 }
 
+// r = r + 1
+class GBArithGR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "$rd",
+            (outs GPR8:$rs),
+            (ins GPR8:$rd),
+            pattern> {
+    bits<3> rd;
+
+    let Constraints = "$rd = $rs";
+
+    let Inst{7 - 6} = opcode{7 - 6};
+    let Inst{5 - 3} = rd;
+    let Inst{2 - 0} = opcode{2 - 0};
+}
+
 // rs = rd
 class GBLDR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd, $rs",

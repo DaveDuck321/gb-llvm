@@ -97,3 +97,9 @@ ei
 # CHECK-INST: nop
 # CHECK: encoding: [0x00]
 nop
+# CHECK-INST: inc h
+# CHECK: encoding: [0x24]
+inc h
+# CHECK-INST: dec l
+# CHECK: encoding: [0x2d]
+dec l
