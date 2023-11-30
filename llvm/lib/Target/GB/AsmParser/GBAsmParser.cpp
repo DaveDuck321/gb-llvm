@@ -42,7 +42,7 @@ class GBOperand : public MCParsedAsmOperand {
   };
 
   struct Token {
-    StringRef Val;
+    std::string Val;
   };
 
   class Printer {
@@ -94,7 +94,7 @@ public:
 
   static auto createToken(StringRef Str, SMLoc S) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = Token{Str};
+    Op->Data = Token{Str.lower()};
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -146,6 +146,7 @@ public:
 private:
   ParseStatus tryParseRegister(OperandVector &Operands);
   ParseStatus tryParseImmediate(OperandVector &Operands);
+  ParseStatus tryParseToken(OperandVector &Operands);
   ParseStatus tryParseOperand(OperandVector &Operands);
 
 #define GET_ASSEMBLER_HEADER
@@ -170,13 +171,14 @@ bool GBAsmParser::parseRegister(MCRegister &Reg, SMLoc &StartLoc,
 
 ParseStatus GBAsmParser::tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                           SMLoc &EndLoc) {
-  const auto &Token = getParser().getTok();
+  auto &Lexer = getLexer();
+  const auto &Token = Lexer.getTok();
   StartLoc = Token.getLoc();
   EndLoc = Token.getEndLoc();
   Reg = MatchRegisterName(Token.getIdentifier().lower());
 
   if (Reg.isValid()) {
-    getParser().Lex();
+    Lexer.Lex();
     return ParseStatus::Success;
   }
   return ParseStatus::NoMatch;
@@ -236,11 +238,29 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
   return ParseStatus::NoMatch;
 }
 
+ParseStatus GBAsmParser::tryParseToken(OperandVector &Operands) {
+  auto &Lexer = getLexer();
+  auto StartLoc = Lexer.getLoc();
+
+  if (not Lexer.is(AsmToken::Identifier)) {
+    return ParseStatus::NoMatch;
+  }
+
+  Operands.push_back(
+      GBOperand::createToken(Lexer.getTok().getString(), StartLoc));
+
+  Lexer.Lex();
+  return ParseStatus::Success;
+}
+
 ParseStatus GBAsmParser::tryParseOperand(OperandVector &Operands) {
   if (tryParseRegister(Operands).isSuccess()) {
     return ParseStatus::Success;
   }
   if (tryParseImmediate(Operands).isSuccess()) {
+    return ParseStatus::Success;
+  }
+  if (tryParseToken(Operands).isSuccess()) {
     return ParseStatus::Success;
   }
 
@@ -277,6 +297,8 @@ bool GBAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           OperandVector &Operands,
                                           MCStreamer &Out, uint64_t &ErrorInfo,
                                           bool MatchingInlineAsm) {
+  // TODO GB: actually position the cursor in the correct place after an error
+  // TODO GB: actually give a proper error message
   MCInst Inst;
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
   default:
