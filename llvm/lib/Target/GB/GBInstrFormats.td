@@ -55,6 +55,11 @@ class GBInstr16<string opcodestr, string argsstr, dag outs, dag ins, list<dag> p
     let Size = 2;
 }
 
+class NopInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+    let Inst{7 - 0} = opcode;
+}
+
 class GBCBInstr<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
   : GBInstr16<opcodestr, argsstr, outs, ins, pattern> {
     bits<8> Arg;

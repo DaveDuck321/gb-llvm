@@ -94,3 +94,6 @@ di
 # CHECK-INST: ei
 # CHECK: encoding: [0xfb]
 ei
+# CHECK-INST: nop
+# CHECK: encoding: [0x00]
+nop

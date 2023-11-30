@@ -1,5 +1,7 @@
 include "GBInstrFormats.td"
 
+def NOP : NopInstr<0x00, "nop", []>;
+
 def LD  : GBLDR8Instr<0x40, "ld", []>;
 def LDI : GBLDImm8Instr<0x06, "ld", []>;
 
