@@ -82,3 +82,15 @@ res 2, e
 # CHECK-INST: set 7, h
 # CHECK: encoding: [0xcb,0xfc]
 set 7, h
+# CHECK-INST: stop
+# CHECK: encoding: [0x10]
+stop # TODO: check stop 0
+# CHECK-INST: halt
+# CHECK: encoding: [0x76]
+halt
+# CHECK-INST: di
+# CHECK: encoding: [0xf3]
+di
+# CHECK-INST: ei
+# CHECK: encoding: [0xfb]
+ei

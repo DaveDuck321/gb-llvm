@@ -155,3 +155,11 @@ class GBRetCondInstr<bits<8> opcode, string opcodestr, GBFlagCondition cond, lis
 
     let isReturn = true;
 }
+
+// Special Gameboy-specific hardware control instructions
+class GBCtlInstruction<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+    let Inst{7 - 0} = opcode;
+
+    let hasSideEffects = true;
+}

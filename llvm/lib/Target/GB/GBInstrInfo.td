@@ -39,3 +39,12 @@ def RET_NZ : GBRetCondInstr<0xC0, "ret", f_NZ, []>;
 def RET_NC : GBRetCondInstr<0xC0, "ret", f_NC, []>;
 def RET_Z  : GBRetCondInstr<0xC0, "ret", f_Z, []>;
 def RET_C  : GBRetCondInstr<0xC0, "ret", f_C, []>;
+
+// NOTE: stop is acually 2 bytes -- officially STOP 0 ...BUT...
+// the gameboy sometimes interprets it as a 1 byte instruction.
+// Lets just interpret that pattern as STOP NOP
+// TODO: add STOP 0 as a PSEUDO instruction
+def STOP : GBCtlInstruction<0x10, "stop", []>;
+def HALT : GBCtlInstruction<0x76, "halt", []>;
+def DI   : GBCtlInstruction<0xF3, "di", []>;
+def EI   : GBCtlInstruction<0xFb, "ei", []>;
