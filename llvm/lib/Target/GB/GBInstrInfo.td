@@ -2,8 +2,9 @@ include "GBInstrFormats.td"
 
 def NOP : NopInstr<0x00, "nop", []>;
 
-def LD  : GBLDR8Instr<0x40, "ld", []>;
-def LDI : GBLDImm8Instr<0x06, "ld", []>;
+def LD8  : GBLDR8Instr<0x40, "ld", []>;
+def LDI8 : GBLDImm8Instr<0x06, "ld", []>;
+def LD16 : GBLDR16Instr<0x01, "ld", []>;
 
 def ADD : GBArithR8Instr<0x80, "add", []>;
 def ADC : GBArithR8Instr<0x88, "adc", []>;

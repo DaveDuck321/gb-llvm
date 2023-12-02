@@ -55,6 +55,12 @@ class GBInstr16<string opcodestr, string argsstr, dag outs, dag ins, list<dag> p
     let Size = 2;
 }
 
+class GBInstr24<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
+  : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
+    bits<24> Inst;
+    let Size = 3;
+}
+
 class NopInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
     let Inst{7 - 0} = opcode;
@@ -135,7 +141,7 @@ class GBArithGPR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{3 - 0} = opcode{3 - 0};
 }
 
-// rs = rd
+// rd = rs
 class GBLDR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd, $rs",
             (outs GPR8:$rd),
@@ -162,6 +168,21 @@ class GBLDImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{7 - 6} = opcode{7 - 6};
     let Inst{5 - 3} = rd;
     let Inst{2 - 0} = opcode{2 - 0};
+}
+
+// rd16 = imm16
+class GBLDR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr24<opcodestr, "$rd, $imm16",
+            (outs GPR16:$rd),
+            (ins imm16:$imm16),
+            pattern> {
+    bits<2> rd;
+    bits<16> imm16;
+
+    let Inst{23 - 8} = imm16;
+    let Inst{7 - 6} = opcode{7 - 6};
+    let Inst{5 - 4} = rd;
+    let Inst{3 - 0} = opcode{3 - 0};
 }
 
 // reg[bit].op()

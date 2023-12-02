@@ -12,3 +12,7 @@ add 0x80
 # CHECK-INST: add 128
 # CHECK: encoding: [0xc6,0x80]
 add $80
+
+# CHECK-INST: ld bc, 28677
+# CHECK: encoding: [0x01,0x05,0x70]
+ld bc, 0x7005
