@@ -103,3 +103,9 @@ inc h
 # CHECK-INST: dec l
 # CHECK: encoding: [0x2d]
 dec l
+# CHECK-INST: ret nz
+# CHECK: encoding: [0xc0]
+ret nz
+# CHECK-INST: jr c, -16
+# CHECK: encoding: [0x38,0xf0]
+jr c,-16

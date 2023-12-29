@@ -45,10 +45,8 @@ def BIT : GBBitGetInstr<0x40, "bit", []>;
 def RES : GBBitSetInstr<0x80, "res", []>;
 def SET : GBBitSetInstr<0xC0, "set", []>;
 
-def RET_NZ : GBRetCondInstr<0xC0, "ret", f_NZ, []>;
-def RET_NC : GBRetCondInstr<0xC0, "ret", f_NC, []>;
-def RET_Z  : GBRetCondInstr<0xC0, "ret", f_Z, []>;
-def RET_C  : GBRetCondInstr<0xC0, "ret", f_C, []>;
+def JR : GBCondImm8Instr<0x20, "jr", []>;
+def RET : GBRetCondInstr<0xC0, "ret", []>;
 
 // NOTE: stop is acually 2 bytes -- officially STOP 0 ...BUT...
 // the gameboy sometimes interprets it as a 1 byte instruction.

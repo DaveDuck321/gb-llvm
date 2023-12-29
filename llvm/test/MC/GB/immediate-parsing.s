@@ -16,3 +16,11 @@ add $80
 # CHECK-INST: ld bc, 28677
 # CHECK: encoding: [0x01,0x05,0x70]
 ld bc, 0x7005
+
+# CHECK-INST: jr nc, 16
+# CHECK: encoding: [0x30,0x10]
+jr nc, 16
+
+# CHECK-INST: jr z, -16
+# CHECK: encoding: [0x28,0xf0]
+jr z, -16

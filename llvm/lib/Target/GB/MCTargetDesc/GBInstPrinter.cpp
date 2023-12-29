@@ -27,22 +27,38 @@ void GBInstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) const {
 }
 
 void GBInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                 raw_ostream &OS) const {
+                                          raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
+  assert(Operand.isReg());
+  printRegName(OS, Operand.getReg());
+}
 
-  if (Operand.isReg()) {
-    printRegName(OS, Operand.getReg());
-    return;
+void GBInstPrinter::printImmediateOperand(const MCInst *MI, unsigned OpNo,
+                                          raw_ostream &OS) const {
+  const auto &Operand = MI->getOperand(OpNo);
+  assert(Operand.isImm());
+  OS << Operand.getImm();
+}
+
+void GBInstPrinter::printFlagOperand(const MCInst *MI, unsigned OpNo,
+                                     raw_ostream &OS) const {
+  const auto &Operand = MI->getOperand(OpNo);
+  assert(Operand.isImm());
+
+  switch (Operand.getImm()) {
+  case 0:
+    OS << "nz";
+    break;
+  case 1:
+    OS << "z";
+    break;
+  case 2:
+    OS << "nc";
+    break;
+  case 3:
+    OS << "c";
+    break;
+  default:
+    llvm_unreachable("Unrecognized flag type");
   }
-
-  if (Operand.isImm()) {
-    OS << Operand.getImm();
-    return;
-  }
-
-  if (Operand.isExpr()) {
-    Operand.getExpr()->print(OS, &MAI);
-  }
-
-  llvm_unreachable("Unknown operand kind");
 }

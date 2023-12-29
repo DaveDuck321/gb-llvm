@@ -20,6 +20,9 @@ public:
 
   // NOTE: Required by tablegen
   void printOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
+  void printImmediateOperand(const MCInst *, unsigned OpNo,
+                             raw_ostream &) const;
+  void printFlagOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
 
   // NOTE: these are TableGen'ed
   std::pair<const char *, uint64_t> getMnemonic(const MCInst *) override;

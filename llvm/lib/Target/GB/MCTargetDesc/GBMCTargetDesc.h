@@ -1,7 +1,6 @@
 #ifndef LLVM_LIB_TARGET_RISCV_MCTARGETDESC_GBMCTARGETDESC_H
 #define LLVM_LIB_TARGET_RISCV_MCTARGETDESC_GBMCTARGETDESC_H
 
-#include <cstdint>
 #include <memory>
 
 namespace llvm {

@@ -13,12 +13,14 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <stdint.h>
 #include <variant>
 
 using namespace llvm;
@@ -41,8 +43,12 @@ class GBOperand : public MCParsedAsmOperand {
     int64_t Val;
   };
 
+  struct Flag {
+    StringRef Flag;
+  };
+
   struct Token {
-    std::string Val;
+    StringRef Val;
   };
 
   class Printer {
@@ -52,23 +58,27 @@ class GBOperand : public MCParsedAsmOperand {
     Printer(raw_ostream &OS) : OS(OS) {}
     void operator()(const Reg &Op) { OS << "<register " << Op.RegNum << ">"; }
     void operator()(const Imm &Op) { OS << Op.Val; }
+    void operator()(const Flag &Flag) { OS << Flag.Flag; }
     void operator()(const Token &Token) { OS << "'" << Token.Val << "'"; }
   };
 
   SMLoc StartLoc, EndLoc;
-  std::variant<Reg, Imm, Token> Data;
+  std::variant<Reg, Imm, Token, Flag> Data;
 
 public:
   bool isToken() const override { return std::holds_alternative<Token>(Data); };
-  bool isImm() const override { return std::holds_alternative<Imm>(Data); };
+  bool isImm() const override {
+    return std::holds_alternative<Imm>(Data) || isFlag();
+  };
   bool isImmN(uint8_t Width, bool IsSigned) const {
-    return isImm() &&
+    return std::holds_alternative<Imm>(Data) &&
            fitsInIntOfWidth(std::get<Imm>(Data).Val, Width, IsSigned);
   }
-  bool isImm3() const { return isImmN(3, false); }
-  bool isImm8() const { return isImmN(8, false); }
-  bool isImm16() const { return isImmN(16, false); }
-  bool isAddr16() const { return isImmN(16, false); }
+  bool isUImm3() const { return isImmN(3, false); }
+  bool isUImm8() const { return isImmN(8, false); }
+  bool isSImm8() const { return isImmN(8, true); }
+  bool isUImm16() const { return isImmN(16, false); }
+  bool isFlag() const { return std::holds_alternative<Flag>(Data); }
 
   bool isReg() const override { return std::holds_alternative<Reg>(Data); };
   unsigned getReg() const override { return std::get<Reg>(Data).RegNum; };
@@ -92,9 +102,30 @@ public:
     Inst.addOperand(MCOperand::createImm(std::get<Imm>(Data).Val));
   }
 
+  void addFlagOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Unsupported operand count");
+    const auto Encoding = [&] {
+      const auto Name = std::get<Flag>(Data).Flag.lower();
+      if (Name == "nz") {
+        return 0;
+      }
+      if (Name == "z") {
+        return 1;
+      }
+      if (Name == "nc") {
+        return 2;
+      }
+      if (Name == "c") {
+        return 3;
+      }
+      llvm_unreachable("Unsupported flag operand");
+    }();
+    Inst.addOperand(MCOperand::createImm(Encoding));
+  }
+
   static auto createToken(StringRef Str, SMLoc S) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = Token{Str.lower()};
+    Op->Data = Token{Str};
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -111,6 +142,14 @@ public:
   static auto createImm(int64_t Val, SMLoc S, SMLoc E) {
     auto Op = std::make_unique<GBOperand>();
     Op->Data = Imm{Val};
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
+  static auto createFlag(StringRef Name, SMLoc S, SMLoc E) {
+    auto Op = std::make_unique<GBOperand>();
+    Op->Data = Flag{Name};
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -145,9 +184,9 @@ public:
 
 private:
   ParseStatus tryParseRegister(OperandVector &Operands);
+  ParseStatus tryParseFlag(OperandVector &Operands);
   ParseStatus tryParseImmediate(OperandVector &Operands);
   ParseStatus tryParseToken(OperandVector &Operands);
-  ParseStatus tryParseOperand(OperandVector &Operands);
 
 #define GET_ASSEMBLER_HEADER
 #include "GBGenAsmMatcher.inc"
@@ -238,33 +277,19 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
   return ParseStatus::NoMatch;
 }
 
-ParseStatus GBAsmParser::tryParseToken(OperandVector &Operands) {
+ParseStatus GBAsmParser::tryParseFlag(OperandVector &Operands) {
   auto &Lexer = getLexer();
-  auto StartLoc = Lexer.getLoc();
+  const auto StartLoc = Lexer.getLoc();
 
   if (not Lexer.is(AsmToken::Identifier)) {
     return ParseStatus::NoMatch;
   }
 
-  Operands.push_back(
-      GBOperand::createToken(Lexer.getTok().getString(), StartLoc));
-
+  const auto Flag = Lexer.getTok().getString();
   Lexer.Lex();
+
+  Operands.push_back(GBOperand::createFlag(Flag, StartLoc, Lexer.getLoc()));
   return ParseStatus::Success;
-}
-
-ParseStatus GBAsmParser::tryParseOperand(OperandVector &Operands) {
-  if (tryParseRegister(Operands).isSuccess()) {
-    return ParseStatus::Success;
-  }
-  if (tryParseImmediate(Operands).isSuccess()) {
-    return ParseStatus::Success;
-  }
-  if (tryParseToken(Operands).isSuccess()) {
-    return ParseStatus::Success;
-  }
-
-  return ParseStatus::Failure;
 }
 
 bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -282,7 +307,11 @@ bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       Lexer.Lex();
     }
 
-    if (!tryParseOperand(Operands).isSuccess()) {
+    if (MatchOperandParserImpl(Operands, Name).isSuccess()) {
+      continue;
+    }
+
+    if (!tryParseRegister(Operands).isSuccess()) {
       SMLoc ErrLoc = Lexer.getLoc();
       getParser().eatToEndOfStatement();
       return Error(ErrLoc, "unknown operand");
@@ -300,8 +329,14 @@ bool GBAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // TODO GB: actually position the cursor in the correct place after an error
   // TODO GB: actually give a proper error message
   MCInst Inst;
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
+  const auto MatchResult =
+      MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);
+  switch (MatchResult) {
   default:
+    if (const char *Diag = getMatchKindDiag((GBMatchResultTy)MatchResult);
+        Diag != nullptr) {
+      return Error(IDLoc, Diag);
+    }
     return Error(IDLoc, "Unknown matching error");
   case Match_MnemonicFail:
     return Error(IDLoc, "unrecognized mnemonic");
