@@ -109,3 +109,21 @@ ret nz
 # CHECK-INST: jr c, -16
 # CHECK: encoding: [0x38,0xf0]
 jr c,-16
+# CHECK-INST: rlca
+# CHECK: encoding: [0x07]
+rlca
+# CHECK-INST: rla
+# CHECK: encoding: [0x17]
+rla
+# CHECK-INST: rrca
+# CHECK: encoding: [0x0f]
+rrca
+# CHECK-INST: rra
+# CHECK: encoding: [0x1f]
+rra
+# CHECK-INST: daa
+# CHECK: encoding: [0x27]
+daa
+# CHECK-INST: cpl
+# CHECK: encoding: [0x2f]
+cpl

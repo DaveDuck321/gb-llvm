@@ -81,6 +81,12 @@ class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
     let Inst{2 - 0} = rs2;
 }
 
+class GBAccInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "", (outs Acc:$rd), (ins Acc:$rs), pattern> {
+    let Constraints = "$rd = $rs";
+    let Inst = opcode;
+}
+
 // a = a + imm
 class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr16<opcodestr, "$uimm8",

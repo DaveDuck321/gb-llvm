@@ -31,6 +31,13 @@ def ADD16 : GBArithR16Instr<0x09, "add", []>;
 def INC16 : GBArithGPR16Instr<0x03, "inc", []>;
 def DEC16 : GBArithGPR16Instr<0x0B, "dec", []>;
 
+def RLCA : GBAccInstr<0x07, "rlca", []>;
+def RLA  : GBAccInstr<0x17, "rla", []>;
+def RRCA : GBAccInstr<0x0F, "rrca", []>;
+def RRA  : GBAccInstr<0x1F, "rra", []>;
+def DAA  : GBAccInstr<0x27, "daa", []>;
+def CPL  : GBAccInstr<0x2F, "cpl", []>;
+
 // CB instructions
 def RLC  : GBShuffleRegInstr<0x00, "rlc", []>;
 def RRC  : GBShuffleRegInstr<0x08, "rrc", []>;
