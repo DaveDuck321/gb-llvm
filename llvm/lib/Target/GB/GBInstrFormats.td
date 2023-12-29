@@ -251,3 +251,9 @@ class GBCtlInstruction<bits<8> opcode, string opcodestr, list<dag> pattern>
 
     let hasSideEffects = true;
 }
+
+// TODO: how to mark the flag register as output?
+class GBFlagInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+    let Inst = opcode;
+}

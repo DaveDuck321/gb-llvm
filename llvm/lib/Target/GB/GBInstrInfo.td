@@ -38,6 +38,9 @@ def RRA  : GBAccInstr<0x1F, "rra", []>;
 def DAA  : GBAccInstr<0x27, "daa", []>;
 def CPL  : GBAccInstr<0x2F, "cpl", []>;
 
+def SCF : GBFlagInstr<0x37, "scf", []>;
+def CCF : GBFlagInstr<0x3F, "ccf", []>;
+
 // CB instructions
 def RLC  : GBShuffleRegInstr<0x00, "rlc", []>;
 def RRC  : GBShuffleRegInstr<0x08, "rrc", []>;

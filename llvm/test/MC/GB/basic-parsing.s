@@ -127,3 +127,9 @@ daa
 # CHECK-INST: cpl
 # CHECK: encoding: [0x2f]
 cpl
+# CHECK-INST: scf
+# CHECK: encoding: [0x37]
+scf
+# CHECK-INST: ccf
+# CHECK: encoding: [0x3f]
+ccf
