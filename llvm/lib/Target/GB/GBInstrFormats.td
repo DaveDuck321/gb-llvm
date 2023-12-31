@@ -6,15 +6,16 @@ class GBAsmImmOperand<string name> : AsmOperandClass {
   let ParserMethod = "tryParseImmediate";
 }
 
-class GBImm<string name, ValueType ty> : Operand<ty> {
+class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
   let PrintMethod = "printImmediateOperand";
-  let ParserMatchClass = GBAsmImmOperand<name>;
+  let ParserMatchClass = GBAsmImmOperand<signedness # "Imm" # size>;
+  let DecoderMethod = "Decode" # signedness # "ImmOperand<" # size # ">";
 }
 
-def uimm3 : GBImm<"UImm3", i8>;
-def simm8 : GBImm<"SImm8", i8>;
-def uimm8 : GBImm<"UImm8", i8>;
-def uimm16 : GBImm<"UImm16", i16>;
+def uimm3 : GBImm<3, "U", i8>;
+def simm8 : GBImm<8, "S", i8>;
+def uimm8 : GBImm<8, "U", i8>;
+def uimm16 : GBImm<16, "U", i16>;
 
 def GBAsmFlagOperand : AsmOperandClass {
   let Name = "Flag";
@@ -71,28 +72,21 @@ class GBCBInstr<string opcodestr, string argsstr, dag outs, dag ins, list<dag> p
 
 // a = a + r
 class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rs2",
-            (outs Acc:$rd),
-            (ins Acc:$rs1, GPR8:$rs2),
-            pattern> {
-    bits<3> rs2;
+  : GBInstr8<opcodestr, "$rs", (outs), (ins GPR8:$rs), pattern> {
+    bits<3> rs;
 
     let Inst{7 - 3} = opcode{7 - 3};
-    let Inst{2 - 0} = rs2;
+    let Inst{2 - 0} = rs;
 }
 
 class GBAccInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs Acc:$rd), (ins Acc:$rs), pattern> {
-    let Constraints = "$rd = $rs";
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
     let Inst = opcode;
 }
 
 // a = a + imm
 class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$uimm8",
-            (outs Acc:$rd),
-            (ins Acc:$rs1, uimm8:$uimm8),
-            pattern> {
+  : GBInstr16<opcodestr, "$uimm8", (outs), (ins uimm8:$uimm8), pattern> {
     bits<8> uimm8;
 
     let Inst{15 - 8} = uimm8;
@@ -116,14 +110,11 @@ class GBArithGPR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // HL = HL + r16
 class GBArithR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rd, $rs2",
-            (outs Ind:$rd),
-            (ins Ind:$rs1, GPR16:$rs2),
-            pattern> {
-    bits<2> rs2;
+  : GBInstr8<opcodestr, "hl, $rs", (outs), (ins GPR16:$rs), pattern> {
+    bits<2> rs;
 
     let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 4} = rs2;
+    let Inst{5 - 4} = rs;
     let Inst{3 - 0} = opcode{3 - 0};
 }
 
