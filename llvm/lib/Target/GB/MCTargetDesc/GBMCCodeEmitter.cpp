@@ -51,10 +51,9 @@ void GBMCCodeEmitter::encodeInstruction(const MCInst &MI,
                                         const MCSubtargetInfo &STI) const {
 
   auto Encoding = getBinaryCodeForInstr(MI, Fixups, STI);
-  const auto& Desc = MCII.get(MI.getOpcode());
+  const auto &Desc = MCII.get(MI.getOpcode());
 
   for (unsigned I = 0; I < Desc.Size; ++I) {
-    // TODO GB: we probably need little endian encoding here
     CB.push_back(static_cast<char>(Encoding & 0xFF));
     Encoding >>= 8;
   }

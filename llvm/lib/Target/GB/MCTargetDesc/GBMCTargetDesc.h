@@ -15,8 +15,6 @@ class MCTargetOptions;
 class raw_pwrite_stream;
 class Target;
 
-Target &getTheGBTarget();
-
 MCCodeEmitter *createGBMCCodeEmitter(const MCInstrInfo &, MCContext &);
 
 MCAsmBackend *createGBAsmBackend(const Target &, const MCSubtargetInfo &,

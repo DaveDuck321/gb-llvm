@@ -27,7 +27,7 @@ void GBInstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) const {
 }
 
 void GBInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                          raw_ostream &OS) const {
+                                 raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
   assert(Operand.isReg());
   printRegName(OS, Operand.getReg());

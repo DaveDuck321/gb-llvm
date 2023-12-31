@@ -2,6 +2,8 @@
 #include "GBInstPrinter.h"
 #include "GBMCAsmInfo.h"
 
+#include "TargetInfo/GBTargetInfo.h"
+
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
