@@ -1,5 +1,8 @@
 # RUN: llvm-mc %s -triple=gb -show-encoding \
 # RUN:      | FileCheck -check-prefixes=CHECK,CHECK-INST %s
+# RUN: llvm-mc %s -triple=gb -filetype=obj \
+# RUN:      | llvm-objdump -d - \
+# RUN:      | FileCheck -check-prefix=CHECK-INST %s
 
 # CHECK-INST: add a
 # CHECK: encoding: [0x87]

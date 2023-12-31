@@ -1,5 +1,8 @@
 # RUN: llvm-mc %s -triple=gb -show-encoding -motorola-integers \
 # RUN:      | FileCheck -check-prefixes=CHECK,CHECK-INST %s
+# RUN: llvm-mc %s -triple=gb -filetype=obj -motorola-integers \
+# RUN:      | llvm-objdump -d - \
+# RUN:      | FileCheck -check-prefix=CHECK-INST %s
 
 # CHECK-INST: add 80
 # CHECK: encoding: [0xc6,0x50]

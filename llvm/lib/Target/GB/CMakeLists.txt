@@ -4,6 +4,7 @@ set(LLVM_TARGET_DEFINITIONS GB.td)
 
 tablegen(LLVM GBGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM GBGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM GBGenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
@@ -29,5 +30,6 @@ add_llvm_target(GBCodeGen
     )
 
 add_subdirectory(AsmParser)
+add_subdirectory(Disassembler)
 add_subdirectory(MCTargetDesc)
 add_subdirectory(TargetInfo)
