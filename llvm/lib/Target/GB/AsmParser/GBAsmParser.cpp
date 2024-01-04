@@ -40,7 +40,7 @@ class GBOperand : public MCParsedAsmOperand {
   };
 
   struct Imm {
-    int64_t Val;
+    const MCExpr *Expr;
   };
 
   struct Flag {
@@ -57,7 +57,7 @@ class GBOperand : public MCParsedAsmOperand {
   public:
     Printer(raw_ostream &OS) : OS(OS) {}
     void operator()(const Reg &Op) { OS << "<register " << Op.RegNum << ">"; }
-    void operator()(const Imm &Op) { OS << Op.Val; }
+    void operator()(const Imm &Op) { OS << *Op.Expr; }
     void operator()(const Flag &Flag) { OS << Flag.Flag; }
     void operator()(const Token &Token) { OS << "'" << Token.Val << "'"; }
   };
@@ -69,12 +69,24 @@ public:
   bool isToken() const override { return std::holds_alternative<Token>(Data); };
   bool isImm() const override {
     return std::holds_alternative<Imm>(Data) || isFlag();
-  };
-  bool isImmN(uint8_t Width, bool IsSigned) const {
-    return std::holds_alternative<Imm>(Data) &&
-           fitsInIntOfWidth(std::get<Imm>(Data).Val, Width, IsSigned);
   }
-  bool isUImm3() const { return isImmN(3, false); }
+
+  bool isImmN(uint8_t Width, bool IsSigned, bool AllowExpr = true) const {
+    if (not std::holds_alternative<Imm>(Data)) {
+      return false;
+    }
+
+    int64_t Value;
+    const MCExpr *Expr = std::get<Imm>(Data).Expr;
+    const bool IsConstantImm = Expr->evaluateAsAbsolute(Value);
+    if (not IsConstantImm) {
+      // TODO GB: is this actually verified later?
+      return AllowExpr;
+    }
+    return fitsInIntOfWidth(Value, Width, IsSigned);
+  }
+
+  bool isUImm3() const { return isImmN(3, false, false); }
   bool isUImm8() const { return isImmN(8, false); }
   bool isSImm8() const { return isImmN(8, true); }
   bool isUImm16() const { return isImmN(16, false); }
@@ -99,7 +111,16 @@ public:
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Unsupported operand count");
-    Inst.addOperand(MCOperand::createImm(std::get<Imm>(Data).Val));
+    assert(std::holds_alternative<Imm>(Data));
+
+    int64_t Value;
+    const MCExpr *Expr = std::get<Imm>(Data).Expr;
+    const bool IsConstantImm = Expr->evaluateAsAbsolute(Value);
+    if (IsConstantImm) {
+      Inst.addOperand(MCOperand::createImm(Value));
+    } else {
+      Inst.addOperand(MCOperand::createExpr(Expr));
+    }
   }
 
   void addFlagOperands(MCInst &Inst, unsigned N) const {
@@ -139,9 +160,9 @@ public:
     return Op;
   }
 
-  static auto createImm(int64_t Val, SMLoc S, SMLoc E) {
+  static auto createImm(const MCExpr *Expr, SMLoc S, SMLoc E) {
     auto Op = std::make_unique<GBOperand>();
-    Op->Data = Imm{Val};
+    Op->Data = Imm{Expr};
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -172,7 +193,8 @@ public:
   ParseStatus tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
                                SMLoc &EndLoc) override;
 
-  ParseStatus tryParseImmediate(int64_t &Imm, SMLoc &StartLoc, SMLoc &EndLoc);
+  ParseStatus tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
+                                SMLoc &EndLoc);
 
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
@@ -240,20 +262,12 @@ ParseStatus GBAsmParser::tryParseRegister(OperandVector &Operands) {
   return ParseStatus::NoMatch;
 }
 
-ParseStatus GBAsmParser::tryParseImmediate(int64_t &Val, SMLoc &StartLoc,
+ParseStatus GBAsmParser::tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
                                            SMLoc &EndLoc) {
   StartLoc = getLexer().getLoc();
-
-  const MCExpr *Expr;
   if (getParser().parseExpression(Expr, EndLoc)) {
     return ParseStatus::NoMatch;
   }
-
-  // TODO GB: hmm, what are non-constant expressions here?
-  if (Expr->getKind() != MCExpr::Constant) {
-    return ParseStatus::NoMatch;
-  }
-  Val = dyn_cast<MCConstantExpr>(Expr)->getValue();
   return ParseStatus::Success;
 }
 
@@ -265,13 +279,24 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
   case AsmToken::Minus:
   case AsmToken::Plus:
   case AsmToken::Integer:
-  case AsmToken::String:
+  case AsmToken::Dot:
     break;
+  case AsmToken::Identifier: {
+    // Only proceed to parse the immediate expression if it is definitively not
+    // a register name.
+    // TODO: can I make the assembler grammar non-ambiguous?
+    const auto &Token = getLexer().getTok();
+    MCRegister Reg = MatchRegisterName(Token.getIdentifier().lower());
+    if (Reg.isValid()) {
+      return ParseStatus::NoMatch;
+    }
+  }
   }
 
   SMLoc StartLoc, EndLoc;
-  if (int64_t Imm; tryParseImmediate(Imm, StartLoc, EndLoc).isSuccess()) {
-    Operands.push_back(GBOperand::createImm(Imm, StartLoc, EndLoc));
+  if (const MCExpr * Expr;
+      tryParseImmediate(Expr, StartLoc, EndLoc).isSuccess()) {
+    Operands.push_back(GBOperand::createImm(Expr, StartLoc, EndLoc));
     return ParseStatus::Success;
   }
   return ParseStatus::NoMatch;

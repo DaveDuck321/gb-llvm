@@ -36,8 +36,12 @@ void GBInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printImmediateOperand(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  assert(Operand.isImm());
-  OS << Operand.getImm();
+  if (Operand.isImm()) {
+    OS << Operand.getImm();
+  } else {
+    assert(Operand.isExpr());
+    OS << *Operand.getExpr();
+  }
 }
 
 void GBInstPrinter::printFlagOperand(const MCInst *MI, unsigned OpNo,

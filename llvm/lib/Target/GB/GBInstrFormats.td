@@ -1,3 +1,14 @@
+// Fixup types
+// Sync with GBFixupKinds.h
+class FixupKind<bits<3> kind> { bits<3> Kind = kind; }
+def FixupNone    : FixupKind<0>;
+def FixupData8   : FixupKind<1>;
+def FixupData16  : FixupKind<2>;
+def FixupPCRel8  : FixupKind<3>;
+def FixupPCRel16 : FixupKind<4>;
+def FixupFFXX    : FixupKind<5>;
+def FixupSPRel8  : FixupKind<6>;
+
 // Operand types
 class GBAsmImmOperand<string name> : AsmOperandClass {
   let Name = name;
@@ -30,40 +41,50 @@ def flag : Operand<i2> {
 }
 
 // Instruction formats
-class GBInstr<string opcodestr, string argstr, dag outs, dag ins, list<dag> pattern> : Instruction {
+class GBInstr<string opcodestr, string argstr,
+              dag outs, dag ins, list<dag> pattern,
+              FixupKind fixup> : Instruction {
     let Namespace = "GB";
 
     let AsmString = opcodestr # "\t" # argstr;
     let OutOperandList = outs;
     let InOperandList = ins;
     let Pattern = pattern;
+
+    let TSFlags{2 - 0} = fixup.Kind;
 }
 
-class GBInstr8<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
+class GBInstr8<string opcodestr, string argsstr,
+               dag outs, dag ins, list<dag> pattern,
+               FixupKind fixup>
+  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
     bits<8> Inst;
     let Size = 1;
 }
 
-class GBInstr16<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
+class GBInstr16<string opcodestr, string argsstr,
+                dag outs, dag ins, list<dag> pattern,
+                FixupKind fixup>
+  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
     bits<16> Inst;
     let Size = 2;
 }
 
-class GBInstr24<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern> {
+class GBInstr24<string opcodestr, string argsstr,
+                dag outs, dag ins, list<dag> pattern,
+                FixupKind fixup>
+  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
     bits<24> Inst;
     let Size = 3;
 }
 
 class NopInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
     let Inst{7 - 0} = opcode;
 }
 
 class GBCBInstr<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
-  : GBInstr16<opcodestr, argsstr, outs, ins, pattern> {
+  : GBInstr16<opcodestr, argsstr, outs, ins, pattern, FixupNone> {
     bits<8> Arg;
 
     let Inst{15 - 8} = Arg{7 - 0};
@@ -72,7 +93,7 @@ class GBCBInstr<string opcodestr, string argsstr, dag outs, dag ins, list<dag> p
 
 // a = a + r
 class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rs", (outs), (ins GPR8:$rs), pattern> {
+  : GBInstr8<opcodestr, "$rs", (outs), (ins GPR8:$rs), pattern, FixupNone> {
     bits<3> rs;
 
     let Inst{7 - 3} = opcode{7 - 3};
@@ -80,13 +101,17 @@ class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
 }
 
 class GBAccInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
     let Inst = opcode;
 }
 
 // a = a + imm
 class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$uimm8", (outs), (ins uimm8:$uimm8), pattern> {
+  : GBInstr16<opcodestr, "$uimm8",
+            (outs),
+            (ins uimm8:$uimm8),
+            pattern,
+            FixupData8> {
     bits<8> uimm8;
 
     let Inst{15 - 8} = uimm8;
@@ -98,7 +123,8 @@ class GBArithGPR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd",
             (outs GPR8:$rs),
             (ins GPR8:$rd),
-            pattern> {
+            pattern,
+            FixupNone> {
     bits<3> rd;
 
     let Constraints = "$rd = $rs";
@@ -110,7 +136,7 @@ class GBArithGPR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // HL = HL + r16
 class GBArithR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "hl, $rs", (outs), (ins GPR16:$rs), pattern> {
+  : GBInstr8<opcodestr, "hl, $rs", (outs), (ins GPR16:$rs), pattern, FixupNone> {
     bits<2> rs;
 
     let Inst{7 - 6} = opcode{7 - 6};
@@ -123,7 +149,8 @@ class GBArithGPR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd",
             (outs GPR16:$rs),
             (ins GPR16:$rd),
-            pattern> {
+            pattern,
+            FixupNone> {
     bits<2> rd;
 
     let Constraints = "$rd = $rs";
@@ -138,7 +165,8 @@ class GBLDR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr8<opcodestr, "$rd, $rs",
             (outs GPR8:$rd),
             (ins GPR8:$rs),
-            pattern> {
+            pattern,
+            FixupNone> {
     bits<3> rd;
     bits<3> rs;
 
@@ -152,7 +180,8 @@ class GBLDImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr16<opcodestr, "$rd, $uimm8",
             (outs GPR8:$rd),
             (ins uimm8:$uimm8),
-            pattern> {
+            pattern,
+            FixupData8> {
     bits<3> rd;
     bits<8> uimm8;
 
@@ -167,7 +196,8 @@ class GBLDR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
   : GBInstr24<opcodestr, "$rd, $uimm16",
             (outs GPR16:$rd),
             (ins uimm16:$uimm16),
-            pattern> {
+            pattern,
+            FixupData16> {
     bits<2> rd;
     bits<16> uimm16;
 
@@ -211,7 +241,7 @@ class GBShuffleRegInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // if (condition) return
 class GBRetCondInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$flag", (outs), (ins flag:$flag), pattern> {
+  : GBInstr8<opcodestr, "$flag", (outs), (ins flag:$flag), pattern, FixupNone> {
     bits<2> flag;
 
     let Inst{7 - 5} = opcode{7 - 5};
@@ -223,7 +253,10 @@ class GBRetCondInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 
 class GBCondImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$flag, $simm8", (outs), (ins simm8:$simm8, flag:$flag), pattern> {
+  : GBInstr16<opcodestr, "$flag, $simm8",
+             (outs), (ins simm8:$simm8, flag:$flag),
+             pattern,
+             FixupPCRel8> {
     bits<2> flag;
     bits<8> simm8;
 
@@ -237,7 +270,7 @@ class GBCondImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // Special Gameboy-specific hardware control instructions
 class GBCtlInstruction<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
     let Inst{7 - 0} = opcode;
 
     let hasSideEffects = true;
@@ -245,6 +278,6 @@ class GBCtlInstruction<bits<8> opcode, string opcodestr, list<dag> pattern>
 
 // TODO: how to mark the flag register as output?
 class GBFlagInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern> {
+  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
     let Inst = opcode;
 }

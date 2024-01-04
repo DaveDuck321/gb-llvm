@@ -1,3 +1,6 @@
+#include "GBFixupKinds.h"
+
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -18,13 +21,31 @@ public:
   ~GBELFObjectWriter() override = default;
 
   unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
-                        const MCFixup &Fixup, bool IsPCRel) const override {
-
-    report_fatal_error("getRelocType is not implemented");
-  }
+                        const MCFixup &Fixup, bool IsPCRel) const override;
 };
 
 } // namespace
+
+unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
+                                         const MCFixup &Fixup,
+                                         bool IsPCRel) const {
+  switch ((unsigned)Fixup.getKind()) {
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case GB::fixup_gb_sprel_8:
+    return ELF::R_GB_SPREL_8;
+  case FK_PCRel_1:
+    return ELF::R_GB_PCREL_8;
+  case FK_PCRel_2:
+    return ELF::R_GB_PCREL_16;
+  case GB::fixup_gb_lo8_ff00:
+    return ELF::R_GB_LO8_FF00;
+  case FK_Data_1:
+    return ELF::R_GB_8;
+  case FK_Data_2:
+    return ELF::R_GB_16;
+  }
+}
 
 namespace llvm {
 std::unique_ptr<MCObjectTargetWriter> createGBELFObjectWriter() {

@@ -1,3 +1,4 @@
+#include "GBFixupKinds.h"
 #include "GBMCTargetDesc.h"
 
 #include "llvm/ADT/Statistic.h"
@@ -5,6 +6,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/Endian.h"
@@ -72,8 +76,20 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     return MO.getImm();
   }
 
+  if (MO.isExpr()) {
+    const MCExpr *Expr = MO.getExpr();
+    assert(Expr->getKind() == MCExpr::Binary ||
+           Expr->getKind() == MCExpr::SymbolRef);
+
+    const auto &Desc = MCII.get(MI.getOpcode());
+    const auto Kind = GB::FixupKindMap[Desc.TSFlags & GB::FixupTSMask];
+
+    // Offset = 1 to skip opcode byte
+    Fixups.push_back(MCFixup::create(1, Expr, (MCFixupKind)Kind, MI.getLoc()));
+    return 0;
+  }
+
   llvm_unreachable("Unrecognized operand");
-  return 0;
 }
 
 namespace llvm {
