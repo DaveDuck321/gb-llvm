@@ -142,3 +142,18 @@ scf
 # CHECK-INST: ccf
 # CHECK: encoding: [0x3f]
 ccf
+# CHECK-INST: call 1
+# CHECK: encoding: [0xcd,0x01,0x00]
+call 0x0001
+# CHECK-INST: call nz, 65535
+# CHECK: encoding: [0xc4,0xff,0xff]
+call nz, 0xFFFF
+# CHECK-INST: jp 1
+# CHECK: encoding: [0xc3,0x01,0x00]
+jp 0x0001
+# CHECK-INST: jp c, 65535
+# CHECK: encoding: [0xda,0xff,0xff]
+jp c, 0xFFFF
+# CHECK-INST: jp (hl)
+# CHECK: encoding: [0xe9]
+jp (hl)

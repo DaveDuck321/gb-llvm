@@ -72,26 +72,49 @@ let Defs = [F] in {
   defm SRA  : _GB_CBGPR8S1<"sra", 0x28, []>;
   defm SWAP : _GB_CBGPR8S1<"swap", 0x30, []>;
   defm SRL  : _GB_CBGPR8S1<"srl", 0x38, []>;
-  defm BIT : _GB_CBGPR8S1Imm3<"bit", 0x40, []>;
+  defm BIT : GBCBGPR8S1Imm3<"bit", 0x40, []>;
 }
 
-defm RES : _GB_CBGPR8S1Imm3<"res", 0x80, []>;
-defm SET : _GB_CBGPR8S1Imm3<"set", 0xC0, []>;
+defm RES : GBCBGPR8S1Imm3<"res", 0x80, []>;
+defm SET : GBCBGPR8S1Imm3<"set", 0xC0, []>;
 
 let isTerminator = true in {
   let Size = 2 in
   def JR : _GB_SimpleImm8<"jr", 0x18, [], simm8, FixupPCRel8>;
-  def JR_FLAG : GBFlagImm8<"jr", 0x20, []>;
+
+  let Uses = [F] in
+  def JR_FLAG : _GB_FlagImm8<"jr", 0x20, []>;
 }
 
 let mayLoad = true, isReturn = true, isTerminator = true in {
-  def RET : GBInstrNoOperands<"ret", 0xC9, []>;
+  let Uses = [SP], Defs = [SP] in {
+    def RET : GBInstrNoOperands<"ret", 0xC9, []>;
 
-  let hasSideEffects = true in
-  def RETI : GBInstrNoOperands<"reti", 0xD9, []>;
+    let hasSideEffects = true in
+    def RETI : GBInstrNoOperands<"reti", 0xD9, []>;
+  }
 
-  let Size = 1 in
+  let Size = 1, Uses = [F, SP], Defs = [SP] in
   def RET_FLAG : _GB_FlagSequence<"ret", "", 0xC0, (ins), [], FixupNone>;
+}
+
+let mayStore = true, isCall = true in {
+  let Size = 3, Uses = [SP], Defs = [SP] in
+  def CALL : _GB_SimpleImm16<"call", 0xCD, []>;
+
+  let Uses = [F, SP], Defs = [SP] in
+  def CALL_FLAG : _GB_FlagImm16<"call", 0xC4, []>;
+}
+
+let isTerminator = true in {
+  let Size = 3 in
+  def JP : _GB_SimpleImm16<"jp", 0xC3, []>;
+
+  let isBranch = true, Uses = [F] in
+  def JP_FLAG : _GB_FlagImm16<"jp", 0xC2, []>;
+
+  let mayLoad = true in
+  def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9, []>;
 }
 
 let hasSideEffects = true in {

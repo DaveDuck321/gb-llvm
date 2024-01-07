@@ -161,11 +161,19 @@ class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag
   let Inst{5 - 4} = rs;
 }
 
+// TOOD GB: combine these
 class _GB_SimpleImm8<string mnemonic, bits<8> opcode, list<dag> pattern, GBImm immType, FixupKind fixup>
   : GBInstr<mnemonic, "$imm", opcode, (outs), (ins immType:$imm), pattern, fixup>
 {
   bits<8> imm;
   let Inst{15 - 8} = imm;
+}
+
+class _GB_SimpleImm16<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : GBInstr<mnemonic, "$imm", opcode, (outs), (ins uimm16:$imm), pattern, FixupData16>
+{
+  bits<16> imm;
+  let Inst{23 - 8} = imm;
 }
 
 class GBCBInstr<string mnemonic, string argstr, bits<8> opcode, dag outs, dag ins, list<dag> pattern>
@@ -194,7 +202,7 @@ multiclass _GB_CBGPR8S1<string mnemonic, bits<8> opcode, list<dag> pattern>
   }
 }
 
-multiclass _GB_CBGPR8S1Imm3<string mnemonic, bits<8> opcode, list<dag> pattern>
+multiclass GBCBGPR8S1Imm3<string mnemonic, bits<8> opcode, list<dag> pattern>
 {
   def _r : GBCBInstr<mnemonic, "$imm, $rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs, uimm3:$imm), pattern> {
     bits<3> rs;
@@ -223,10 +231,18 @@ class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs,
   let Inst{4 - 3} = flag;
 }
 
-class GBFlagImm8<string mnemonic, bits<8> opcode, list<dag> pattern>
+class _GB_FlagImm8<string mnemonic, bits<8> opcode, list<dag> pattern>
   : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins simm8:$imm), pattern, FixupPCRel8>
 {
   bits<8> imm;
   let Inst{15 - 8} = imm;
   let Size = 2;
+}
+
+class _GB_FlagImm16<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins uimm16:$imm), pattern, FixupData16>
+{
+  bits<16> imm;
+  let Inst{23 - 8} = imm;
+  let Size = 3;
 }
