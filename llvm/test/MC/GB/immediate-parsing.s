@@ -27,3 +27,7 @@ jr nc, 16
 # CHECK-INST: jr z, -16
 # CHECK: encoding: [0x28,0xf0]
 jr z, -16
+
+# CHECK-INST: jr -64
+# CHECK: encoding: [0x18,0xc0]
+jr -64

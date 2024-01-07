@@ -41,243 +41,192 @@ def flag : Operand<i2> {
 }
 
 // Instruction formats
-class GBInstr<string opcodestr, string argstr,
+class GBInstr<string mnemonic, string argstr, bits<8> opcode,
               dag outs, dag ins, list<dag> pattern,
               FixupKind fixup> : Instruction {
-    let Namespace = "GB";
+    bits<24> Inst;
+    let Inst{7 - 0} = opcode;
 
-    let AsmString = opcodestr # "\t" # argstr;
+    let Namespace = "GB";
+    let AsmString = mnemonic # "\t" # argstr;
+
     let OutOperandList = outs;
     let InOperandList = ins;
     let Pattern = pattern;
 
+    // These properties need to be overwritten
+    let mayStore = false;
+    let mayLoad = false;
+    let hasSideEffects = false;
+
     let TSFlags{2 - 0} = fixup.Kind;
 }
 
-class GBInstr8<string opcodestr, string argsstr,
-               dag outs, dag ins, list<dag> pattern,
-               FixupKind fixup>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
-    bits<8> Inst;
-    let Size = 1;
+class GBInstrNoOperands<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : GBInstr<mnemonic, "", opcode, (outs), (ins), pattern, FixupNone>
+{
+  let Size = 1;
 }
 
-class GBInstr16<string opcodestr, string argsstr,
-                dag outs, dag ins, list<dag> pattern,
-                FixupKind fixup>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
-    bits<16> Inst;
-    let Size = 2;
-}
-
-class GBInstr24<string opcodestr, string argsstr,
-                dag outs, dag ins, list<dag> pattern,
-                FixupKind fixup>
-  : GBInstr<opcodestr, argsstr, outs, ins, pattern, fixup> {
-    bits<24> Inst;
-    let Size = 3;
-}
-
-class NopInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
-    let Inst{7 - 0} = opcode;
-}
-
-class GBCBInstr<string opcodestr, string argsstr, dag outs, dag ins, list<dag> pattern>
-  : GBInstr16<opcodestr, argsstr, outs, ins, pattern, FixupNone> {
-    bits<8> Arg;
-
-    let Inst{15 - 8} = Arg{7 - 0};
-    let Inst{7 - 0} = 0xCB;
-}
-
-// a = a + r
-class GBArithR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rs", (outs), (ins GPR8:$rs), pattern, FixupNone> {
+// TODO GB: can I combine these sequencese
+multiclass _GB_GPR8S1Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag> pattern> {
+  def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), pattern, FixupNone> {
     bits<3> rs;
-
-    let Inst{7 - 3} = opcode{7 - 3};
     let Inst{2 - 0} = rs;
+  }
+
+  // TODO GB: get HL pattern from gpr instruction pattern
+  // FIXME: add Uses = HL
+  def _iHL : GBInstr<mnemonic, "(hl)", opcode, (outs), (ins), [], FixupNone> {
+    let Inst{2 - 0} = 0b110;
+    let mayLoad = true;
+  }
 }
 
-class GBAccInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
-    let Inst = opcode;
-}
-
-// a = a + imm
-class GBArithImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$uimm8",
-            (outs),
-            (ins uimm8:$uimm8),
-            pattern,
-            FixupData8> {
-    bits<8> uimm8;
-
-    let Inst{15 - 8} = uimm8;
-    let Inst{7 - 0} = opcode;
-}
-
-// r = r + 1
-class GBArithGPR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rd",
-            (outs GPR8:$rs),
-            (ins GPR8:$rd),
-            pattern,
-            FixupNone> {
-    bits<3> rd;
-
-    let Constraints = "$rd = $rs";
-
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 3} = rd;
-    let Inst{2 - 0} = opcode{2 - 0};
-}
-
-// HL = HL + r16
-class GBArithR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "hl, $rs", (outs), (ins GPR16:$rs), pattern, FixupNone> {
-    bits<2> rs;
-
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 4} = rs;
-    let Inst{3 - 0} = opcode{3 - 0};
-}
-
-// r16 = r16 + 1
-class GBArithGPR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rd",
-            (outs GPR16:$rs),
-            (ins GPR16:$rd),
-            pattern,
-            FixupNone> {
-    bits<2> rd;
-
-    let Constraints = "$rd = $rs";
-
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 4} = rd;
-    let Inst{3 - 0} = opcode{3 - 0};
-}
-
-// rd = rs
-class GBLDR8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$rd, $rs",
-            (outs GPR8:$rd),
-            (ins GPR8:$rs),
-            pattern,
-            FixupNone> {
-    bits<3> rd;
+multiclass _GB_GPR8S8Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag> pattern> {
+  def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), pattern, FixupNone> {
     bits<3> rs;
+    let Inst{5 - 3} = rs;
+  }
 
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 3} = rd;
-    let Inst{2 - 0} = rs;
+  // TODO GB: get HL pattern from gpr instruction pattern
+  // FIXME: add Uses = HL
+  def _iHL : GBInstr<mnemonic, "(hl)", opcode, (outs), (ins), [], FixupNone> {
+    let Inst{5 - 3} = 0b110;
+    let mayLoad = true;
+  }
 }
 
-// rd = imm
-class GBLDImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$rd, $uimm8",
-            (outs GPR8:$rd),
-            (ins uimm8:$uimm8),
-            pattern,
-            FixupData8> {
-    bits<3> rd;
-    bits<8> uimm8;
-
-    let Inst{15 - 8} = uimm8;
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 3} = rd;
-    let Inst{2 - 0} = opcode{2 - 0};
+multiclass GBGPR8LD<string mnemonic, bits<8> opcode, list<dag> pattern> {
+  let Size = 1 in {
+    def _rr : GBInstr<mnemonic, "$rd, $rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs), pattern, FixupNone> {
+      bits<3> rd;
+      bits<3> rs;
+      let Inst{5 - 3} = rd;
+      let Inst{2 - 0} = rs;
+      let isMoveReg = true;
+    }
+    def _r_HL : GBInstr<mnemonic, "$rd, (hl)", opcode, (outs GPR8:$rd), (ins), pattern, FixupNone> {
+      bits<3> rd;
+      let Inst{5 - 3} = rd;
+      let Inst{2 - 0} = 0b110;
+      let Uses = [HL];
+      let mayLoad = true;
+    }
+    def _HL_r : GBInstr<mnemonic, "(hl), $rs", opcode, (outs), (ins GPR8:$rs), pattern, FixupNone> {
+      bits<3> rs;
+      let Inst{5 - 3} = 0b110;
+      let Inst{2 - 0} = rs;
+      let Uses = [HL];
+      let mayStore = true;
+    }
+  }
 }
 
-// rd16 = imm16
-class GBLDR16Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr24<opcodestr, "$rd, $uimm16",
-            (outs GPR16:$rd),
-            (ins uimm16:$uimm16),
-            pattern,
-            FixupData16> {
-    bits<2> rd;
-    bits<16> uimm16;
+multiclass GBGPR8LDI8<string mnemonic, bits<8> opcode, list<dag> pattern> {
+  let Size = 2, isMoveImm = true in {
+    def _r : GBInstr<mnemonic, "$rd, $imm", opcode, (outs GPR8:$rd), (ins uimm8:$imm), pattern, FixupData8> {
+      bits<3> rd;
+      bits<8> imm;
+      let Inst{15 - 8} = imm;
+      let Inst{5 - 3} = rd;
+    }
 
-    let Inst{23 - 8} = uimm16;
-    let Inst{7 - 6} = opcode{7 - 6};
-    let Inst{5 - 4} = rd;
-    let Inst{3 - 0} = opcode{3 - 0};
+    // TODO GB: get HL pattern from gpr instruction pattern
+    def _iHL : GBInstr<mnemonic, "(hl), $imm", opcode, (outs), (ins uimm8:$imm), [], FixupData8> {
+      bits<8> imm;
+      let Inst{15 - 8} = imm;
+      let Inst{5 - 3} = 0b110;
+      let Uses = [HL];
+      let mayStore = true;
+    }
+  }
 }
 
-// reg[bit].op()
-class GBImm3Instr<bits<8> opcode, string opcodestr, dag outs, dag ins, list<dag> pattern>
-  : GBCBInstr<opcodestr, "$uimm3, $rs", outs, ins, pattern> {
+class GBGPR8LDI16<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : GBInstr<mnemonic, "$rd, $imm", opcode, (outs GPR16:$rd), (ins uimm16:$imm), pattern, FixupData16>
+{
+  bits<2> rd;
+  bits<16> imm;
+  let Inst{23 - 8} = imm;
+  let Inst{5 - 4} = rd;
+  let Size = 3;
+  let isMoveImm = true;
+}
+
+class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag> pattern>
+  : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR16:$rs), inputs), pattern, FixupNone>
+{
+  bits<2> rs;
+  let Inst{5 - 4} = rs;
+}
+
+class _GB_SimpleImm8<string mnemonic, bits<8> opcode, list<dag> pattern, GBImm immType, FixupKind fixup>
+  : GBInstr<mnemonic, "$imm", opcode, (outs), (ins immType:$imm), pattern, fixup>
+{
+  bits<8> imm;
+  let Inst{15 - 8} = imm;
+}
+
+class GBCBInstr<string mnemonic, string argstr, bits<8> opcode, dag outs, dag ins, list<dag> pattern>
+  : GBInstr<mnemonic, argstr, 0xCB, outs, ins, pattern, FixupNone>
+{
+  let Size = 2;
+  let Inst{15 - 11} = opcode{7 - 3};
+}
+
+// TODO GB: combine these
+multiclass _GB_CBGPR8S1<string mnemonic, bits<8> opcode, list<dag> pattern>
+{
+  def _r : GBCBInstr<mnemonic, "$rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs), pattern> {
     bits<3> rs;
-    bits<8> uimm3;  // Unfortunately i3 is not defined in tablegen
+    let Inst{10 - 8} = rs;
+    let Constraints = "$rs = $rd";
+  }
 
-    let Arg{7 - 6} = opcode{7 - 6};
-    let Arg{5 - 3} = uimm3{2 - 0};
-    let Arg{2 - 0} = rs;
+  // TODO: derive pattern from _r
+  def _iHL : GBCBInstr<mnemonic, "(hl)", opcode, (outs), (ins), []> {
+    let Inst{10 - 8} = 0b110;
+
+    let Uses = [HL];
+    let mayLoad = true;
+    let mayStore = true;
+  }
 }
 
-class GBBitGetInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBImm3Instr<opcode, opcodestr, (outs), (ins GPR8:$rs, uimm3:$uimm3), pattern> {}
-
-class GBBitSetInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBImm3Instr<opcode, opcodestr, (outs GPR8:$rd), (ins GPR8:$rs, uimm3:$uimm3), pattern> {
-    let Constraints = "$rd = $rs";
-}
-
-// reg.op()
-class GBShuffleRegInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBCBInstr<opcodestr, "$rs",
-            (outs GPR8:$rd),
-            (ins GPR8:$rs),
-            pattern> {
+multiclass _GB_CBGPR8S1Imm3<string mnemonic, bits<8> opcode, list<dag> pattern>
+{
+  def _r : GBCBInstr<mnemonic, "$imm, $rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs, uimm3:$imm), pattern> {
     bits<3> rs;
+    bits<3> imm;
+    let Inst{13 - 11} = imm;
+    let Inst{10 - 8} = rs;
+    let Constraints = "$rs = $rd";
+  }
 
-    let Constraints = "$rd = $rs";
-    let Arg{7 - 3} = opcode{7 - 3};
-    let Arg{2 - 0} = rs;
+  // TODO: derive pattern from _r
+  def _iHL : GBCBInstr<mnemonic, "$imm, (hl)", opcode, (outs), (ins uimm3:$imm), []> {
+    bits<3> imm;
+    let Inst{13 - 11} = imm;
+    let Inst{10 - 8} = 0b110;
+
+    let Uses = [HL];
+    let mayLoad = true;
+    let mayStore = true;
+  }
 }
 
-// if (condition) return
-class GBRetCondInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "$flag", (outs), (ins flag:$flag), pattern, FixupNone> {
-    bits<2> flag;
-
-    let Inst{7 - 5} = opcode{7 - 5};
-    let Inst{4 - 3} = flag;
-    let Inst{2 - 0} = opcode{2 - 0};
-
-    let isReturn = true;
+class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs, list<dag> pattern, FixupKind fixup>
+  : GBInstr<mnemonic, "$flag" # arg2, opcode, (outs), !con((ins flag:$flag), inputs), pattern, fixup>
+{
+  bits<2> flag;
+  let Inst{4 - 3} = flag;
 }
 
-
-class GBCondImm8Instr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr16<opcodestr, "$flag, $simm8",
-             (outs), (ins simm8:$simm8, flag:$flag),
-             pattern,
-             FixupPCRel8> {
-    bits<2> flag;
-    bits<8> simm8;
-
-    let Inst{15 - 8} = simm8;
-    let Inst{7 - 5} = opcode{7 - 5};
-    let Inst{4 - 3} = flag;
-    let Inst{2 - 0} = opcode{2 - 0};
-
-    let isBranch = true;
-}
-
-// Special Gameboy-specific hardware control instructions
-class GBCtlInstruction<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
-    let Inst{7 - 0} = opcode;
-
-    let hasSideEffects = true;
-}
-
-// TODO: how to mark the flag register as output?
-class GBFlagInstr<bits<8> opcode, string opcodestr, list<dag> pattern>
-  : GBInstr8<opcodestr, "", (outs), (ins), pattern, FixupNone> {
-    let Inst = opcode;
+class GBFlagImm8<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins simm8:$imm), pattern, FixupPCRel8>
+{
+  bits<8> imm;
+  let Inst{15 - 8} = imm;
+  let Size = 2;
 }

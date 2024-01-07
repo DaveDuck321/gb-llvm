@@ -1,68 +1,106 @@
 include "GBInstrFormats.td"
 
-def NOP : NopInstr<0x00, "nop", []>;
+def NOP : GBInstrNoOperands<"nop", 0x00, []>;
 
-def LD8  : GBLDR8Instr<0x40, "ld", []>;
-def LDI8 : GBLDImm8Instr<0x06, "ld", []>;
-def LD16 : GBLDR16Instr<0x01, "ld", []>;
+defm LD : GBGPR8LD<"ld", 0x40, []>;
+defm LDI8 : GBGPR8LDI8<"ld", 0x06, []>;
+def LDI16 : GBGPR8LDI16<"ld", 0x01, []>;
 
-def ADD : GBArithR8Instr<0x80, "add", []>;
-def ADC : GBArithR8Instr<0x88, "adc", []>;
-def SUB : GBArithR8Instr<0x90, "sub", []>;
-def SBC : GBArithR8Instr<0x98, "sbc", []>;
-def AND : GBArithR8Instr<0xA0, "and", []>;
-def XOR : GBArithR8Instr<0xA8, "xor", []>;
-def OR  : GBArithR8Instr<0xB0, "or", []>;
-def CP  : GBArithR8Instr<0xB8, "cp", []>;
+let Uses = [A], Defs = [A, F], Size = 1 in {
+  // TODO: be more specific about which flags are clobbered
+  let isAdd = true in
+  defm ADD : _GB_GPR8S1Sequence<"add", 0x80, (ins), []>;
 
-def ADDI : GBArithImm8Instr<0xC6, "add", []>;
-def ADCI : GBArithImm8Instr<0xCE, "adc", []>;
-def SUBI : GBArithImm8Instr<0xD6, "sub", []>;
-def SBCI : GBArithImm8Instr<0xDE, "sbc", []>;
-def ANDI : GBArithImm8Instr<0xE6, "and", []>;
-def XORI : GBArithImm8Instr<0xEE, "xor", []>;
-def ORI  : GBArithImm8Instr<0xF6, "or", []>;
-def CPI  : GBArithImm8Instr<0xFE, "cp", []>;
+  defm ADC : _GB_GPR8S1Sequence<"adc", 0x88, (ins), []>;
+  defm SUB : _GB_GPR8S1Sequence<"sub", 0x90, (ins), []>;
+  defm SBC : _GB_GPR8S1Sequence<"sbc", 0x98, (ins), []>;
+  defm AND : _GB_GPR8S1Sequence<"and", 0xA0, (ins), []>;
+  defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins), []>;
+  defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins), []>;
+  defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins), []>;
+}
 
-def INC8 : GBArithGPR8Instr<0x04, "inc", []>;
-def DEC8 : GBArithGPR8Instr<0x05, "dec", []>;
+let Uses = [A], Defs = [A, F], Size = 2 in {
+  def ADDI : _GB_SimpleImm8<"add", 0xC6, [], uimm8, FixupData8>;
+  def ADCI : _GB_SimpleImm8<"adc", 0xCE, [], uimm8, FixupData8>;
+  def SUBI : _GB_SimpleImm8<"sub", 0xD6, [], uimm8, FixupData8>;
+  def SBCI : _GB_SimpleImm8<"sbc", 0xDE, [], uimm8, FixupData8>;
+  def ANDI : _GB_SimpleImm8<"and", 0xE6, [], uimm8, FixupData8>;
+  def XORI : _GB_SimpleImm8<"xor", 0xEE, [], uimm8, FixupData8>;
+  def ORI  : _GB_SimpleImm8<"or",  0xF6, [], uimm8, FixupData8>;
+  def CPI  : _GB_SimpleImm8<"cp",  0xFE, [], uimm8, FixupData8>;
+}
 
-def ADD16 : GBArithR16Instr<0x09, "add", []>;
-def INC16 : GBArithGPR16Instr<0x03, "inc", []>;
-def DEC16 : GBArithGPR16Instr<0x0B, "dec", []>;
+let Uses = [A], Defs = [A, F], Size = 1 in {
+  defm INC : _GB_GPR8S8Sequence<"inc", 0x04, (ins), []>;
+  defm DEC : _GB_GPR8S8Sequence<"dec", 0x05, (ins), []>;
+}
 
-def RLCA : GBAccInstr<0x07, "rlca", []>;
-def RLA  : GBAccInstr<0x17, "rla", []>;
-def RRCA : GBAccInstr<0x0F, "rrca", []>;
-def RRA  : GBAccInstr<0x1F, "rra", []>;
-def DAA  : GBAccInstr<0x27, "daa", []>;
-def CPL  : GBAccInstr<0x2F, "cpl", []>;
+let Size = 1 in {
+  // TOOD GB: there's a hardware bug here... maybe find a way to model this?
+  def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (ins), []>;
+  def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (ins), []>;
 
-def SCF : GBFlagInstr<0x37, "scf", []>;
-def CCF : GBFlagInstr<0x3F, "ccf", []>;
+  let isAdd = true, Defs = [F] in
+  def ADD16 : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins), []>;
+}
 
-// CB instructions
-def RLC  : GBShuffleRegInstr<0x00, "rlc", []>;
-def RRC  : GBShuffleRegInstr<0x08, "rrc", []>;
-def RL   : GBShuffleRegInstr<0x10, "rl", []>;
-def RR   : GBShuffleRegInstr<0x18, "rr", []>;
-def SLA  : GBShuffleRegInstr<0x20, "sla", []>;
-def SRA  : GBShuffleRegInstr<0x28, "sra", []>;
-def SWAP : GBShuffleRegInstr<0x30, "swap", []>;
-def SRL  : GBShuffleRegInstr<0x38, "srl", []>;
+let Uses = [A], Defs = [A, F] in {
+  def RLCA : GBInstrNoOperands<"rlca", 0x07, []>;
+  def RLA  : GBInstrNoOperands<"rla", 0x17, []>;
+  def RRCA : GBInstrNoOperands<"rrca", 0x0F, []>;
+  def RRA  : GBInstrNoOperands<"rra", 0x1F, []>;
+  def CPL  : GBInstrNoOperands<"cpl", 0x2F, []>;
+}
 
-def BIT : GBBitGetInstr<0x40, "bit", []>;
-def RES : GBBitSetInstr<0x80, "res", []>;
-def SET : GBBitSetInstr<0xC0, "set", []>;
+let Uses = [A, F], Defs = [A, F] in {
+  def DAA  : GBInstrNoOperands<"daa", 0x27, []>;
+}
 
-def JR : GBCondImm8Instr<0x20, "jr", []>;
-def RET : GBRetCondInstr<0xC0, "ret", []>;
+let Defs = [F] in {
+  def SCF  : GBInstrNoOperands<"scf", 0x37, []>;
+  def CCF  : GBInstrNoOperands<"ccf", 0x3F, []>;
+}
 
-// NOTE: stop is acually 2 bytes -- officially STOP 0 ...BUT...
-// the gameboy sometimes interprets it as a 1 byte instruction.
-// Lets just interpret that pattern as STOP NOP
-// TODO: add STOP 0 as a PSEUDO instruction
-def STOP : GBCtlInstruction<0x10, "stop", []>;
-def HALT : GBCtlInstruction<0x76, "halt", []>;
-def DI   : GBCtlInstruction<0xF3, "di", []>;
-def EI   : GBCtlInstruction<0xFb, "ei", []>;
+// // CB instructions
+let Defs = [F] in {
+  defm RLC  : _GB_CBGPR8S1<"rlc", 0x00, []>;
+  defm RRC  : _GB_CBGPR8S1<"rrc", 0x08, []>;
+  defm RL   : _GB_CBGPR8S1<"rl", 0x10, []>;
+  defm RR   : _GB_CBGPR8S1<"rr", 0x18, []>;
+  defm SLA  : _GB_CBGPR8S1<"sla", 0x20, []>;
+  defm SRA  : _GB_CBGPR8S1<"sra", 0x28, []>;
+  defm SWAP : _GB_CBGPR8S1<"swap", 0x30, []>;
+  defm SRL  : _GB_CBGPR8S1<"srl", 0x38, []>;
+  defm BIT : _GB_CBGPR8S1Imm3<"bit", 0x40, []>;
+}
+
+defm RES : _GB_CBGPR8S1Imm3<"res", 0x80, []>;
+defm SET : _GB_CBGPR8S1Imm3<"set", 0xC0, []>;
+
+let isTerminator = true in {
+  let Size = 2 in
+  def JR : _GB_SimpleImm8<"jr", 0x18, [], simm8, FixupPCRel8>;
+  def JR_FLAG : GBFlagImm8<"jr", 0x20, []>;
+}
+
+let mayLoad = true, isReturn = true, isTerminator = true in {
+  def RET : GBInstrNoOperands<"ret", 0xC9, []>;
+
+  let hasSideEffects = true in
+  def RETI : GBInstrNoOperands<"reti", 0xD9, []>;
+
+  let Size = 1 in
+  def RET_FLAG : _GB_FlagSequence<"ret", "", 0xC0, (ins), [], FixupNone>;
+}
+
+let hasSideEffects = true in {
+  // TODO GB: add STOP 0 as a PSEUDO instruction
+  // NOTE: stop is acually 2 bytes -- officially STOP 0 ...BUT...
+  // the gameboy sometimes interprets it as a 1 byte instruction.
+  // Lets just interpret that pattern as STOP NOP
+  def STOP : GBInstrNoOperands<"stop", 0x10, []>;
+  def HALT : GBInstrNoOperands<"halt", 0x76, []>;
+  def DI   : GBInstrNoOperands<"di", 0xF3, []>;
+  def EI   : GBInstrNoOperands<"ei", 0xFb, []>;
+}

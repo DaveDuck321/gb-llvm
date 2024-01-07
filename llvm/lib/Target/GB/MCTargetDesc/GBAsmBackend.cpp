@@ -60,7 +60,7 @@ const MCFixupKindInfo &GBAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
     return MCAsmBackend::getFixupKindInfo(Kind);
   }
 
-  assert(Kind - FirstTargetFixupKind < getNumFixupKinds());
+  assert((unsigned)(Kind - FirstTargetFixupKind) < getNumFixupKinds());
   return GB::FixupKindInfo[Kind];
 }
 

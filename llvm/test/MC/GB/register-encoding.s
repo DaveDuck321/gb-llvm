@@ -22,6 +22,9 @@ add h
 # CHECK-INST: add l
 # CHECK: encoding: [0x85]
 add l
+# CHECK-INST: add (hl)
+# CHECK: encoding: [0x86]
+add (hl)
 # CHECK-INST: add a
 # CHECK: encoding: [0x87]
 add a
@@ -44,6 +47,9 @@ xor h
 # CHECK-INST: xor l
 # CHECK: encoding: [0xad]
 xor l
+# CHECK-INST: xor (hl)
+# CHECK: encoding: [0xae]
+xor (hl)
 # CHECK-INST: xor a
 # CHECK: encoding: [0xaf]
 xor a
@@ -66,6 +72,9 @@ ld b,h
 # CHECK-INST: ld b, l
 # CHECK: encoding: [0x45]
 ld b,l
+# CHECK-INST: ld b, (hl)
+# CHECK: encoding: [0x46]
+ld b,(hl)
 # CHECK-INST: ld b, a
 # CHECK: encoding: [0x47]
 ld b,a
@@ -88,6 +97,9 @@ ld c,h
 # CHECK-INST: ld c, l
 # CHECK: encoding: [0x4d]
 ld c,l
+# CHECK-INST: ld c, (hl)
+# CHECK: encoding: [0x4e]
+ld c,(hl)
 # CHECK-INST: ld c, a
 # CHECK: encoding: [0x4f]
 ld c,a
@@ -101,6 +113,9 @@ ld d,c
 # CHECK-INST: ld h, c
 # CHECK: encoding: [0x61]
 ld h,c
+# CHECK-INST: ld (hl), c
+# CHECK: encoding: [0x71]
+ld (hl),c
 
 # CHECK-INST: ld c, c
 # CHECK: encoding: [0x49]
@@ -133,6 +148,9 @@ ld h,10
 # CHECK-INST: ld l, 10
 # CHECK: encoding: [0x2e,0x0a]
 ld l,10
+# CHECK-INST: ld (hl), 10
+# CHECK: encoding: [0x36,0x0a]
+ld (hl),10
 # CHECK-INST: ld a, 10
 # CHECK: encoding: [0x3e,0x0a]
 ld a,10
@@ -155,6 +173,9 @@ rlc h
 # CHECK-INST: rlc l
 # CHECK: encoding: [0xcb,0x05]
 rlc l
+# CHECK-INST: rlc (hl)
+# CHECK: encoding: [0xcb,0x06]
+rlc (hl)
 # CHECK-INST: rlc a
 # CHECK: encoding: [0xcb,0x07]
 rlc a
@@ -177,6 +198,9 @@ rr h
 # CHECK-INST: rr l
 # CHECK: encoding: [0xcb,0x1d]
 rr l
+# CHECK-INST: rr (hl)
+# CHECK: encoding: [0xcb,0x1e]
+rr (hl)
 # CHECK-INST: rr a
 # CHECK: encoding: [0xcb,0x1f]
 rr a
@@ -199,6 +223,9 @@ bit 2,h
 # CHECK-INST: bit 2, l
 # CHECK: encoding: [0xcb,0x55]
 bit 2,l
+# CHECK-INST: bit 2, (hl)
+# CHECK: encoding: [0xcb,0x56]
+bit 2,(hl)
 # CHECK-INST: bit 2, a
 # CHECK: encoding: [0xcb,0x57]
 bit 2,a
@@ -221,6 +248,9 @@ bit 1,h
 # CHECK-INST: bit 1, l
 # CHECK: encoding: [0xcb,0x4d]
 bit 1,l
+# CHECK-INST: bit 1, (hl)
+# CHECK: encoding: [0xcb,0x4e]
+bit 1,(hl)
 # CHECK-INST: bit 1, a
 # CHECK: encoding: [0xcb,0x4f]
 bit 1,a
@@ -243,6 +273,9 @@ inc h
 # CHECK-INST: inc l
 # CHECK: encoding: [0x2c]
 inc l
+# CHECK-INST: inc (hl)
+# CHECK: encoding: [0x34]
+inc (hl)
 # CHECK-INST: inc a
 # CHECK: encoding: [0x3c]
 inc a
@@ -265,6 +298,9 @@ dec h
 # CHECK-INST: dec l
 # CHECK: encoding: [0x2d]
 dec l
+# CHECK-INST: dec (hl)
+# CHECK: encoding: [0x35]
+dec (hl)
 # CHECK-INST: dec a
 # CHECK: encoding: [0x3d]
 dec a

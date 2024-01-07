@@ -20,3 +20,11 @@ ret NC
 # CHECK-INST: ret nc
 # CHECK: encoding: [0xd0]
 ret nc
+
+# CHECK-INST: ld a, (hl)
+# CHECK: encoding: [0x7e]
+ld a, (HL)
+
+# CHECK-INST: ld (hl), a
+# CHECK: encoding: [0x77]
+ld (hl), a

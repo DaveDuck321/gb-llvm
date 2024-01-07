@@ -109,6 +109,12 @@ dec l
 # CHECK-INST: ret nz
 # CHECK: encoding: [0xc0]
 ret nz
+# CHECK-INST: reti
+# CHECK: encoding: [0xd9]
+reti
+# CHECK-INST: ret
+# CHECK: encoding: [0xc9]
+ret
 # CHECK-INST: jr c, -16
 # CHECK: encoding: [0x38,0xf0]
 jr c,-16

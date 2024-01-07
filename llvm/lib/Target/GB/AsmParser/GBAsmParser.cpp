@@ -12,20 +12,35 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <cmath>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdint.h>
 #include <variant>
 
 using namespace llvm;
 
 namespace {
+
+static std::optional<unsigned> getFlagEncoding(StringRef Flag) {
+  if (Flag == "nz") {
+    return 0u;
+  }
+  if (Flag == "z") {
+    return 1u;
+  }
+  if (Flag == "nc") {
+    return 2u;
+  }
+  if (Flag == "c") {
+    return 3u;
+  }
+  return std::nullopt;
+}
 
 bool fitsInIntOfWidth(int64_t Value, uint8_t Width, bool IsSigned) {
   if (IsSigned) {
@@ -125,23 +140,11 @@ public:
 
   void addFlagOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Unsupported operand count");
-    const auto Encoding = [&] {
-      const auto Name = std::get<Flag>(Data).Flag.lower();
-      if (Name == "nz") {
-        return 0;
-      }
-      if (Name == "z") {
-        return 1;
-      }
-      if (Name == "nc") {
-        return 2;
-      }
-      if (Name == "c") {
-        return 3;
-      }
+    const auto Encoding = getFlagEncoding(std::get<Flag>(Data).Flag.lower());
+    if (not Encoding.has_value()) {
       llvm_unreachable("Unsupported flag operand");
-    }();
-    Inst.addOperand(MCOperand::createImm(Encoding));
+    }
+    Inst.addOperand(MCOperand::createImm(Encoding.value()));
   }
 
   static auto createToken(StringRef Str, SMLoc S) {
@@ -205,9 +208,10 @@ public:
                                bool MatchingInlineAsm) override;
 
 private:
-  ParseStatus tryParseRegister(OperandVector &Operands);
   ParseStatus tryParseFlag(OperandVector &Operands);
   ParseStatus tryParseImmediate(OperandVector &Operands);
+  ParseStatus tryParseOperand(OperandVector &Operands);
+  ParseStatus tryParseRegister(OperandVector &Operands);
   ParseStatus tryParseToken(OperandVector &Operands);
 
 #define GET_ASSEMBLER_HEADER
@@ -245,6 +249,42 @@ ParseStatus GBAsmParser::tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
   return ParseStatus::NoMatch;
 }
 
+ParseStatus GBAsmParser::tryParseOperand(OperandVector &Operands) {
+  // Immediates + flags should have already been parsed by tablegen
+  if (tryParseRegister(Operands).isSuccess()) {
+    return ParseStatus::Success;
+  }
+  if (tryParseToken(Operands).isSuccess()) {
+    return ParseStatus::Success;
+  }
+  return ParseStatus::NoMatch;
+}
+
+ParseStatus GBAsmParser::tryParseToken(OperandVector &Operands) {
+  // Currently (hl) is the only token operand
+  // NOTE: this eats tokens during the parse, it much be called after exhausting
+  // all other operand types
+  auto &Lexer = getLexer();
+  const auto StartLoc = Lexer.getLoc();
+  if (not Lexer.is(AsmToken::LParen)) {
+    return ParseStatus::NoMatch;
+  }
+  Lexer.Lex();
+
+  if (Lexer.getTok().getString().lower() != "hl") {
+    return ParseStatus::NoMatch;
+  }
+  Lexer.Lex();
+
+  if (not Lexer.is(AsmToken::RParen)) {
+    return ParseStatus::NoMatch;
+  }
+  Lexer.Lex();
+
+  Operands.push_back(GBOperand::createToken("(hl)", StartLoc));
+  return ParseStatus::Success;
+}
+
 ParseStatus GBAsmParser::tryParseRegister(OperandVector &Operands) {
   switch (getLexer().getKind()) {
   default:
@@ -275,7 +315,6 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
   switch (getLexer().getKind()) {
   default:
     return ParseStatus::NoMatch;
-  case AsmToken::LParen:
   case AsmToken::Minus:
   case AsmToken::Plus:
   case AsmToken::Integer:
@@ -283,11 +322,15 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
     break;
   case AsmToken::Identifier: {
     // Only proceed to parse the immediate expression if it is definitively not
-    // a register name.
+    // a register/ flag name.
     // TODO: can I make the assembler grammar non-ambiguous?
     const auto &Token = getLexer().getTok();
-    MCRegister Reg = MatchRegisterName(Token.getIdentifier().lower());
+    const auto TokenStr = Token.getIdentifier().lower();
+    MCRegister Reg = MatchRegisterName(TokenStr);
     if (Reg.isValid()) {
+      return ParseStatus::NoMatch;
+    }
+    if (getFlagEncoding(TokenStr).has_value()) {
       return ParseStatus::NoMatch;
     }
   }
@@ -336,7 +379,7 @@ bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       continue;
     }
 
-    if (!tryParseRegister(Operands).isSuccess()) {
+    if (!tryParseOperand(Operands).isSuccess()) {
       SMLoc ErrLoc = Lexer.getLoc();
       getParser().eatToEndOfStatement();
       return Error(ErrLoc, "unknown operand");
