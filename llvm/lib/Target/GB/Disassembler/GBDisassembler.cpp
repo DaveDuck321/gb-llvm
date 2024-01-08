@@ -29,6 +29,7 @@ namespace {
 unsigned GPR8DecodeTable[] = {GB::B, GB::C, GB::D, GB::E,
                               GB::H, GB::L, ~0u,   GB::A};
 unsigned GPR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::SP};
+unsigned SR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::AF};
 
 DecodeStatus DecodeGPR8RegisterClass(MCInst &MI, uint64_t Encoding,
                                      uint64_t Addr, const void *Decoder) {
@@ -46,6 +47,15 @@ DecodeStatus DecodeGPR16RegisterClass(MCInst &MI, uint64_t Encoding,
   assert((Encoding & ~0b11) == 0);
 
   MI.addOperand(MCOperand::createReg(GPR16DecodeTable[Encoding]));
+
+  return DecodeStatus::Success;
+}
+
+DecodeStatus DecodeSR16RegisterClass(MCInst &MI, uint64_t Encoding,
+                                     uint64_t Addr, const void *Decoder) {
+  assert((Encoding & ~0b11) == 0);
+
+  MI.addOperand(MCOperand::createReg(SR16DecodeTable[Encoding]));
 
   return DecodeStatus::Success;
 }

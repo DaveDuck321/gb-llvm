@@ -157,3 +157,9 @@ jp c, 0xFFFF
 # CHECK-INST: jp (hl)
 # CHECK: encoding: [0xe9]
 jp (hl)
+# CHECK-INST: push hl
+# CHECK: encoding: [0xe5]
+push hl
+# CHECK-INST: pop af
+# CHECK: encoding: [0xf1]
+pop af

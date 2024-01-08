@@ -246,3 +246,13 @@ class _GB_FlagImm16<string mnemonic, bits<8> opcode, list<dag> pattern>
   let Inst{23 - 8} = imm;
   let Size = 3;
 }
+
+class GBPushPop16<string mnemonic, bits<8> opcode, dag outputs, dag inputs, list<dag> pattern>
+  : GBInstr<mnemonic, "$reg", opcode, outputs, inputs, pattern, FixupNone>
+{
+  bits<2> reg;
+  let Inst{5 - 4} = reg;
+  let Size = 1;
+  let Uses = [SP];
+  let Defs = [SP];
+}

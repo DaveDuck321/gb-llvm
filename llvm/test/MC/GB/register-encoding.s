@@ -356,3 +356,16 @@ ld hl, 1
 # CHECK-INST: ld sp, 1
 # CHECK: encoding: [0x31,0x01,0x00]
 ld sp, 1
+
+# CHECK-INST: push bc
+# CHECK: encoding: [0xc5]
+push bc
+# CHECK-INST: push de
+# CHECK: encoding: [0xd5]
+push de
+# CHECK-INST: push hl
+# CHECK: encoding: [0xe5]
+push hl
+# CHECK-INST: push af
+# CHECK: encoding: [0xf5]
+push af

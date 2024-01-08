@@ -30,4 +30,5 @@ def SP : GBReg<"sp", 3>;
 def Flags : RegisterClass<"GB", [i8], 8, (add F)> { let isAllocatable = false; }
 
 def GPR8 : RegisterClass<"GB", [i8], 8, (add A, B, C, D, E, H, L)>;
-def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)> { let CopyCost = 2; }
+def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)>;
+def SR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, AF)>;

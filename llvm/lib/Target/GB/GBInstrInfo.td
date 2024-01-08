@@ -127,3 +127,6 @@ let hasSideEffects = true in {
   def DI   : GBInstrNoOperands<"di", 0xF3, []>;
   def EI   : GBInstrNoOperands<"ei", 0xFb, []>;
 }
+
+def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins), []>;
+def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg), []>;
