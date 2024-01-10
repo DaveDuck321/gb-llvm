@@ -209,7 +209,8 @@ public:
 
 private:
   ParseStatus tryParseFlag(OperandVector &Operands);
-  ParseStatus tryParseImmediate(OperandVector &Operands);
+  ParseStatus tryParseImmediate(OperandVector &Operands,
+                                std::optional<int> Sign = std::nullopt);
   ParseStatus tryParseOperand(OperandVector &Operands);
   ParseStatus tryParseRegister(OperandVector &Operands);
   ParseStatus tryParseToken(OperandVector &Operands);
@@ -286,11 +287,8 @@ ParseStatus GBAsmParser::tryParseToken(OperandVector &Operands) {
 }
 
 ParseStatus GBAsmParser::tryParseRegister(OperandVector &Operands) {
-  switch (getLexer().getKind()) {
-  default:
+  if (not getLexer().is(AsmToken::Identifier)) {
     return ParseStatus::NoMatch;
-  case AsmToken::Identifier:
-    break;
   }
 
   MCRegister Reg;
@@ -311,7 +309,8 @@ ParseStatus GBAsmParser::tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
   return ParseStatus::Success;
 }
 
-ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
+ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands,
+                                           std::optional<int> Sign) {
   switch (getLexer().getKind()) {
   default:
     return ParseStatus::NoMatch;
@@ -339,6 +338,11 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
   SMLoc StartLoc, EndLoc;
   if (const MCExpr * Expr;
       tryParseImmediate(Expr, StartLoc, EndLoc).isSuccess()) {
+    if (Sign.has_value()) {
+      Expr = MCUnaryExpr::create(Sign.value() == 1 ? MCUnaryExpr::Plus
+                                                   : MCUnaryExpr::Minus,
+                                 Expr, getContext());
+    }
     Operands.push_back(GBOperand::createImm(Expr, StartLoc, EndLoc));
     return ParseStatus::Success;
   }
@@ -369,10 +373,18 @@ bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   int OperandNum = 0;
   while (Lexer.isNot(AsmToken::EndOfStatement)) {
     if (OperandNum++ > 0) {
-      if (!Lexer.is(AsmToken::Comma)) {
+      if (Lexer.is(AsmToken::Comma)) {
+        Lexer.Lex();
+      } else if (Lexer.is(AsmToken::Plus) || Lexer.is(AsmToken::Minus)) {
+        const auto Sign = Lexer.is(AsmToken::Plus) ? 1 : -1;
+        Lexer.Lex();
+        if (tryParseImmediate(Operands, Sign).isSuccess()) {
+          continue;
+        }
+        return Error(Lexer.getLoc(), "expected an immediate");
+      } else {
         return Error(Lexer.getLoc(), "expected a comma");
       }
-      Lexer.Lex();
     }
 
     if (MatchOperandParserImpl(Operands, Name).isSuccess()) {
@@ -395,7 +407,6 @@ bool GBAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           MCStreamer &Out, uint64_t &ErrorInfo,
                                           bool MatchingInlineAsm) {
   // TODO GB: actually position the cursor in the correct place after an error
-  // TODO GB: actually give a proper error message
   MCInst Inst;
   const auto MatchResult =
       MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);

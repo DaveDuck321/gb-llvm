@@ -5,9 +5,7 @@ def FixupNone    : FixupKind<0>;
 def FixupData8   : FixupKind<1>;
 def FixupData16  : FixupKind<2>;
 def FixupPCRel8  : FixupKind<3>;
-def FixupPCRel16 : FixupKind<4>;
-def FixupFFXX    : FixupKind<5>;
-def FixupSPRel8  : FixupKind<6>;
+def FixupFFXX    : FixupKind<4>;
 
 // Operand types
 class GBAsmImmOperand<string name> : AsmOperandClass {
@@ -48,7 +46,7 @@ class GBInstr<string mnemonic, string argstr, bits<8> opcode,
     let Inst{7 - 0} = opcode;
 
     let Namespace = "GB";
-    let AsmString = mnemonic # "\t" # argstr;
+    let AsmString = mnemonic # " " # argstr;
 
     let OutOperandList = outs;
     let InOperandList = ins;
@@ -167,6 +165,7 @@ class _GB_SimpleImm8<string mnemonic, bits<8> opcode, list<dag> pattern, GBImm i
 {
   bits<8> imm;
   let Inst{15 - 8} = imm;
+  let Size = 2;
 }
 
 class _GB_SimpleImm16<string mnemonic, bits<8> opcode, list<dag> pattern>

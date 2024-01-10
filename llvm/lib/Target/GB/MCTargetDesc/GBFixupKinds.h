@@ -14,10 +14,6 @@ enum Fixups {
   // eg. LDH (a8),A
   fixup_gb_lo8_ff00 = FirstTargetFixupKind,
 
-  // 8-bit signed fixup relative to the stack pointer
-  // eg. LD HL,SP+r8
-  fixup_gb_sprel_8,
-
   // Sentinel values
   fixup_gb_invalid,
   NumTargetFixupKinds = fixup_gb_invalid - FirstTargetFixupKind
@@ -31,8 +27,7 @@ static inline constexpr MCFixupKindInfo FixupKindInfo[] = {
 // Must be synced with tablegen
 static inline constexpr uint64_t FixupTSMask = 0b111;
 static inline constexpr unsigned FixupKindMap[] = {
-    FK_NONE,    FK_Data_1,         FK_Data_2,        FK_PCRel_1,
-    FK_PCRel_2, fixup_gb_lo8_ff00, fixup_gb_sprel_8,
+    FK_NONE, FK_Data_1, FK_Data_2, FK_PCRel_1, fixup_gb_lo8_ff00,
 };
 } // namespace llvm::GB
 

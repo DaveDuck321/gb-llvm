@@ -1,7 +1,6 @@
 #ifndef LLVM_LIB_TARGET_GB_MCTARGETDESC_GBMCASMINFO_H
 #define LLVM_LIB_TARGET_GB_MCTARGETDESC_GBMCASMINFO_H
 
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {

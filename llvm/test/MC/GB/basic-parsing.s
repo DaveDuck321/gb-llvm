@@ -163,3 +163,15 @@ push hl
 # CHECK-INST: pop af
 # CHECK: encoding: [0xf1]
 pop af
+# CHECK-INST: add sp, -10
+# CHECK: encoding: [0xe8,0xf6]
+add sp, -10
+# CHECK-INST: ld hl, sp, 127
+# CHECK: encoding: [0xf8,0x7f]
+ld hl, sp + 127
+# CHECK-INST: ld hl, sp, -128
+# CHECK: encoding: [0xf8,0x80]
+ld hl, sp - 128
+# CHECK-INST: ld sp, hl
+# CHECK: encoding: [0xf9]
+ld sp, hl

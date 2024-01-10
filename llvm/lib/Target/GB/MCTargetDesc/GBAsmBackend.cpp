@@ -11,7 +11,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_os_ostream.h"
 
 #include <cstdint>
 #include <memory>
@@ -61,7 +60,7 @@ const MCFixupKindInfo &GBAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   }
 
   assert((unsigned)(Kind - FirstTargetFixupKind) < getNumFixupKinds());
-  return GB::FixupKindInfo[Kind];
+  return GB::FixupKindInfo[Kind - FirstTargetFixupKind];
 }
 
 void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
@@ -79,9 +78,7 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     switch ((unsigned)Kind) {
     default:
       llvm_unreachable("Unknown fixup kind!");
-    case GB::fixup_gb_sprel_8:
     case FK_PCRel_1:
-    case FK_PCRel_2:
       return true;
     case GB::fixup_gb_lo8_ff00:
     case FK_Data_1:

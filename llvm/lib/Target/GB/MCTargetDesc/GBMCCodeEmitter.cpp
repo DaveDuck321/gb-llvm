@@ -2,7 +2,6 @@
 #include "GBMCTargetDesc.h"
 
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/bit.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -11,7 +10,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -79,7 +77,8 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   if (MO.isExpr()) {
     const MCExpr *Expr = MO.getExpr();
     assert(Expr->getKind() == MCExpr::Binary ||
-           Expr->getKind() == MCExpr::SymbolRef);
+           Expr->getKind() == MCExpr::SymbolRef ||
+           Expr->getKind() == MCExpr::Unary);
 
     const auto &Desc = MCII.get(MI.getOpcode());
     const auto Kind = GB::FixupKindMap[Desc.TSFlags & GB::FixupTSMask];

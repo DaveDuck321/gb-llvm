@@ -6,6 +6,14 @@ defm LD : GBGPR8LD<"ld", 0x40, []>;
 defm LDI8 : GBGPR8LDI8<"ld", 0x06, []>;
 def LDI16 : GBGPR8LDI16<"ld", 0x01, []>;
 
+let isMoveReg = true in {
+  let Uses = [HL], Defs = [SP] in
+  def LD_SP_HL : GBInstrNoOperands<"ld sp, hl", 0xF9, []>;
+
+  let Uses = [SP], Defs = [HL, F] in
+  def LD_HL_SP : _GB_SimpleImm8<"ld hl, sp,", 0xF8, [], simm8, FixupData8>;
+}
+
 let Uses = [A], Defs = [A, F], Size = 1 in {
   // TODO: be more specific about which flags are clobbered
   let isAdd = true in
@@ -20,7 +28,7 @@ let Uses = [A], Defs = [A, F], Size = 1 in {
   defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins), []>;
 }
 
-let Uses = [A], Defs = [A, F], Size = 2 in {
+let Uses = [A], Defs = [A, F] in {
   def ADDI : _GB_SimpleImm8<"add", 0xC6, [], uimm8, FixupData8>;
   def ADCI : _GB_SimpleImm8<"adc", 0xCE, [], uimm8, FixupData8>;
   def SUBI : _GB_SimpleImm8<"sub", 0xD6, [], uimm8, FixupData8>;
@@ -41,9 +49,12 @@ let Size = 1 in {
   def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (ins), []>;
   def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (ins), []>;
 
-  let isAdd = true, Defs = [F] in
-  def ADD16 : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins), []>;
+  let isAdd = true, Uses = [HL], Defs = [HL, F] in
+  def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins), []>;
 }
+
+let isAdd = true, Uses = [SP], Defs = [F] in
+def ADD_SP : _GB_SimpleImm8<"add sp,", 0xe8, [], simm8, FixupData8>;
 
 let Uses = [A], Defs = [A, F] in {
   def RLCA : GBInstrNoOperands<"rlca", 0x07, []>;
@@ -79,7 +90,6 @@ defm RES : GBCBGPR8S1Imm3<"res", 0x80, []>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0, []>;
 
 let isTerminator = true in {
-  let Size = 2 in
   def JR : _GB_SimpleImm8<"jr", 0x18, [], simm8, FixupPCRel8>;
 
   let Uses = [F] in
@@ -113,7 +123,7 @@ let isTerminator = true in {
   let isBranch = true, Uses = [F] in
   def JP_FLAG : _GB_FlagImm16<"jp", 0xC2, []>;
 
-  let mayLoad = true in
+  let mayLoad = true, Uses = [HL] in
   def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9, []>;
 }
 

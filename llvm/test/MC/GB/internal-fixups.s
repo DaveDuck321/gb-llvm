@@ -14,18 +14,22 @@ jump_label:
 add VAL8
 jr nz, jump_label
 LD sp, VAL16
+ld hl, sp+SP_REL8
 
 .set VAL8, 66
 .set VAL16, 16962
+.set SP_REL8, 10
 
 
 # CHECK-FIXUP: fixup A - offset: 1, value: VAL8, kind: FK_Data_1
 # CHECK-FIXUP: fixup A - offset: 1, value: jump_label, kind: FK_PCRel_1
 # CHECK-FIXUP: fixup A - offset: 1, value: VAL16, kind: FK_Data_2
+# CHECK-FIXUP: fixup A - offset: 1, value: +SP_REL8, kind: FK_Data_1
 
 # CHECK-FIXED: <jump_label>
 # CHECK-FIXED: add 66
 # CHECK-FIXED: jr nz, -3
 # CHECK-FIXED: ld sp, 16962
+# CHECK-FIXED: ld hl, sp, 10
 
 # CHECK-RELOCATIONS: There are no relocations in this file.
