@@ -29,7 +29,7 @@ ld hl, sp+SP_REL8
 # CHECK-FIXED: <jump_label>
 # CHECK-FIXED: add 66
 # CHECK-FIXED: jr nz, -3
-# CHECK-FIXED: ld sp, 16962
+# CHECK-FIXED: ld sp, $4242
 # CHECK-FIXED: ld hl, sp, 10
 
 # CHECK-RELOCATIONS: There are no relocations in this file.

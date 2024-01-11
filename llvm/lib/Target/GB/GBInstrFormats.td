@@ -16,7 +16,7 @@ class GBAsmImmOperand<string name> : AsmOperandClass {
 }
 
 class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
-  let PrintMethod = "printImmediateOperand";
+  let PrintMethod = "print" # signedness # size # "ImmediateOperand";
   let ParserMatchClass = GBAsmImmOperand<signedness # "Imm" # size>;
   let DecoderMethod = "Decode" # signedness # "ImmOperand<" # size # ">";
 }

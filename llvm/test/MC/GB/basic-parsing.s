@@ -87,7 +87,7 @@ res 2, e
 set 7, h
 # CHECK-INST: stop
 # CHECK: encoding: [0x10]
-stop # TODO: check stop 0
+stop ; TODO: check stop 0
 # CHECK-INST: halt
 # CHECK: encoding: [0x76]
 halt
@@ -142,16 +142,16 @@ scf
 # CHECK-INST: ccf
 # CHECK: encoding: [0x3f]
 ccf
-# CHECK-INST: call 1
+# CHECK-INST: call $0001
 # CHECK: encoding: [0xcd,0x01,0x00]
 call 0x0001
-# CHECK-INST: call nz, 65535
+# CHECK-INST: call nz, $ffff
 # CHECK: encoding: [0xc4,0xff,0xff]
 call nz, 0xFFFF
-# CHECK-INST: jp 1
+# CHECK-INST: jp $0001
 # CHECK: encoding: [0xc3,0x01,0x00]
 jp 0x0001
-# CHECK-INST: jp c, 65535
+# CHECK-INST: jp c, $ffff
 # CHECK: encoding: [0xda,0xff,0xff]
 jp c, 0xFFFF
 # CHECK-INST: jp (hl)

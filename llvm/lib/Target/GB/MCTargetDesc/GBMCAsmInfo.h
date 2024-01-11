@@ -15,6 +15,7 @@ public:
     CalleeSaveStackSlotSize = 2;
     AlignmentIsInBytes = false;
     UseMotorolaIntegers = true;
+    CommentString = ";";
   }
 };
 

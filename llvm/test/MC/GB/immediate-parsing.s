@@ -16,7 +16,7 @@ add 0x80
 # CHECK: encoding: [0xc6,0x80]
 add $80
 
-# CHECK-INST: ld bc, 28677
+# CHECK-INST: ld bc, $7005
 # CHECK: encoding: [0x01,0x05,0x70]
 ld bc, 0x7005
 
@@ -32,10 +32,10 @@ jr z, -16
 # CHECK: encoding: [0x18,0xc0]
 jr -64
 
-# CHECK-INST: call 65040
+# CHECK-INST: call $fe10
 # CHECK: [0xcd,0x10,0xfe]
 call 0xfe10
 
-# CHECK-INST: jp c, 65040
+# CHECK-INST: jp c, $fe10
 # CHECK: [0xda,0x10,0xfe]
 jp c, 0xfe10

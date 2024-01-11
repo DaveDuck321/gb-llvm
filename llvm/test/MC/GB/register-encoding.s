@@ -344,16 +344,16 @@ add hl, hl
 # CHECK: encoding: [0x39]
 add hl, sp
 
-# CHECK-INST: ld bc, 1
+# CHECK-INST: ld bc, $0001
 # CHECK: encoding: [0x01,0x01,0x00]
 ld bc, 1
-# CHECK-INST: ld de, 1
+# CHECK-INST: ld de, $0001
 # CHECK: encoding: [0x11,0x01,0x00]
 ld de, 1
-# CHECK-INST: ld hl, 1
+# CHECK-INST: ld hl, $0001
 # CHECK: encoding: [0x21,0x01,0x00]
 ld hl, 1
-# CHECK-INST: ld sp, 1
+# CHECK-INST: ld sp, $0001
 # CHECK: encoding: [0x31,0x01,0x00]
 ld sp, 1
 
