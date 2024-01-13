@@ -64,8 +64,14 @@ void GBInstPrinter::printU8ImmediateOperand(const MCInst *MI, unsigned OpNo,
   const auto &Operand = MI->getOperand(OpNo);
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
-    OS << Operand.getImm();
+    OS << "$";
+    llvm::write_hex(OS, Operand.getImm(), HexPrintStyle::Lower, 2);
   }
+}
+
+void GBInstPrinter::printD8ImmediateOperand(const MCInst *MI, unsigned OpNo,
+                                            raw_ostream &OS) const {
+  printS8ImmediateOperand(MI, OpNo, OS);
 }
 
 void GBInstPrinter::printU16ImmediateOperand(const MCInst *MI, unsigned OpNo,

@@ -24,6 +24,7 @@ class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
 def uimm3 : GBImm<3, "U", i8>;
 def simm8 : GBImm<8, "S", i8>;
 def uimm8 : GBImm<8, "U", i8>;
+def dimm8 : GBImm<8, "D", i8>;
 def uimm16 : GBImm<16, "U", i16>;
 
 def GBAsmFlagOperand : AsmOperandClass {
@@ -160,26 +161,27 @@ class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag
 }
 
 // TOOD GB: combine these
-class _GB_SimpleImm8<string mnemonic, bits<8> opcode, list<dag> pattern, GBImm immType, FixupKind fixup>
-  : GBInstr<mnemonic, "$imm", opcode, (outs), (ins immType:$imm), pattern, fixup>
+class _GB_SimpleImm8<string format, bits<8> opcode, list<dag> pattern, GBImm immType, FixupKind fixup>
+  : GBInstr<format, "", opcode, (outs), (ins immType:$imm), pattern, fixup>
 {
   bits<8> imm;
   let Inst{15 - 8} = imm;
   let Size = 2;
 }
 
-class _GB_SimpleImm16<string mnemonic, bits<8> opcode, list<dag> pattern>
-  : GBInstr<mnemonic, "$imm", opcode, (outs), (ins uimm16:$imm), pattern, FixupData16>
+class _GB_SimpleImm16<string format, bits<8> opcode, list<dag> pattern>
+  : GBInstr<format, "", opcode, (outs), (ins uimm16:$imm), pattern, FixupData16>
 {
   bits<16> imm;
   let Inst{23 - 8} = imm;
+  let Size = 3;
 }
 
 class GBCBInstr<string mnemonic, string argstr, bits<8> opcode, dag outs, dag ins, list<dag> pattern>
   : GBInstr<mnemonic, argstr, 0xCB, outs, ins, pattern, FixupNone>
 {
-  let Size = 2;
   let Inst{15 - 11} = opcode{7 - 3};
+  let Size = 2;
 }
 
 // TODO GB: combine these

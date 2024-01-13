@@ -61,6 +61,16 @@ DecodeStatus DecodeSR16RegisterClass(MCInst &MI, uint64_t Encoding,
 }
 
 template <size_t SizeInBits>
+DecodeStatus DecodeSImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
+                               const void *Decoder) {
+  assert(Encoding < (1 << SizeInBits));
+
+  MI.addOperand(MCOperand::createImm(SignExtend64<SizeInBits>(Encoding)));
+
+  return DecodeStatus::Success;
+}
+
+template <size_t SizeInBits>
 DecodeStatus DecodeUImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
                                const void *Decoder) {
   assert(Encoding < (1 << SizeInBits));
@@ -71,13 +81,9 @@ DecodeStatus DecodeUImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
 }
 
 template <size_t SizeInBits>
-DecodeStatus DecodeSImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
+DecodeStatus DecodeDImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
                                const void *Decoder) {
-  assert(Encoding < (1 << SizeInBits));
-
-  MI.addOperand(MCOperand::createImm(SignExtend64<SizeInBits>(Encoding)));
-
-  return DecodeStatus::Success;
+  return DecodeUImmOperand<SizeInBits>(MI, Encoding, Addr, Decoder);
 }
 
 } // namespace

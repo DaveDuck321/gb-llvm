@@ -6,13 +6,22 @@ defm LD : GBGPR8LD<"ld", 0x40, []>;
 defm LDI8 : GBGPR8LDI8<"ld", 0x06, []>;
 def LDI16 : GBGPR8LDI16<"ld", 0x01, []>;
 
+let mayStore = true, Uses = [A] in
+def LDH_iImm_A : _GB_SimpleImm8<"ldh ($imm), a", 0xE0, [], uimm8, FixupFFXX>;
+
+let mayLoad = true, Defs = [A] in
+def LDH_A_iImm : _GB_SimpleImm8<"ldh a, ($imm)", 0xF0, [], uimm8, FixupFFXX>;
+
 let isMoveReg = true in {
   let Uses = [HL], Defs = [SP] in
   def LD_SP_HL : GBInstrNoOperands<"ld sp, hl", 0xF9, []>;
 
   let Uses = [SP], Defs = [HL, F] in
-  def LD_HL_SP : _GB_SimpleImm8<"ld hl, sp,", 0xF8, [], simm8, FixupData8>;
+  def LD_HL_SP : _GB_SimpleImm8<"ld hl, sp, $imm", 0xF8, [], simm8, FixupData8>;
 }
+
+let mayStore = true, Uses = [SP] in
+def LD_iImm16_SP : _GB_SimpleImm16<"ld ($imm), sp", 0x08, []>;
 
 let Uses = [A], Defs = [A, F], Size = 1 in {
   // TODO: be more specific about which flags are clobbered
@@ -29,14 +38,14 @@ let Uses = [A], Defs = [A, F], Size = 1 in {
 }
 
 let Uses = [A], Defs = [A, F] in {
-  def ADDI : _GB_SimpleImm8<"add", 0xC6, [], uimm8, FixupData8>;
-  def ADCI : _GB_SimpleImm8<"adc", 0xCE, [], uimm8, FixupData8>;
-  def SUBI : _GB_SimpleImm8<"sub", 0xD6, [], uimm8, FixupData8>;
-  def SBCI : _GB_SimpleImm8<"sbc", 0xDE, [], uimm8, FixupData8>;
-  def ANDI : _GB_SimpleImm8<"and", 0xE6, [], uimm8, FixupData8>;
-  def XORI : _GB_SimpleImm8<"xor", 0xEE, [], uimm8, FixupData8>;
-  def ORI  : _GB_SimpleImm8<"or",  0xF6, [], uimm8, FixupData8>;
-  def CPI  : _GB_SimpleImm8<"cp",  0xFE, [], uimm8, FixupData8>;
+  def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, [], dimm8, FixupData8>;
+  def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, [], dimm8, FixupData8>;
+  def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, [], dimm8, FixupData8>;
+  def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, [], dimm8, FixupData8>;
+  def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, [], dimm8, FixupData8>;
+  def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, [], dimm8, FixupData8>;
+  def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, [], dimm8, FixupData8>;
+  def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, [], dimm8, FixupData8>;
 }
 
 let Uses = [A], Defs = [A, F], Size = 1 in {
@@ -54,7 +63,7 @@ let Size = 1 in {
 }
 
 let isAdd = true, Uses = [SP], Defs = [F] in
-def ADD_SP : _GB_SimpleImm8<"add sp,", 0xe8, [], simm8, FixupData8>;
+def ADD_SP : _GB_SimpleImm8<"add sp, $imm", 0xe8, [], simm8, FixupData8>;
 
 let Uses = [A], Defs = [A, F] in {
   def RLCA : GBInstrNoOperands<"rlca", 0x07, []>;
@@ -90,7 +99,7 @@ defm RES : GBCBGPR8S1Imm3<"res", 0x80, []>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0, []>;
 
 let isTerminator = true in {
-  def JR : _GB_SimpleImm8<"jr", 0x18, [], simm8, FixupPCRel8>;
+  def JR : _GB_SimpleImm8<"jr $imm", 0x18, [], simm8, FixupPCRel8>;
 
   let Uses = [F] in
   def JR_FLAG : _GB_FlagImm8<"jr", 0x20, []>;
@@ -109,21 +118,20 @@ let mayLoad = true, isReturn = true, isTerminator = true in {
 }
 
 let mayStore = true, isCall = true in {
-  let Size = 3, Uses = [SP], Defs = [SP] in
-  def CALL : _GB_SimpleImm16<"call", 0xCD, []>;
+  let Uses = [SP], Defs = [SP] in
+  def CALL : _GB_SimpleImm16<"call $imm", 0xCD, []>;
 
   let Uses = [F, SP], Defs = [SP] in
   def CALL_FLAG : _GB_FlagImm16<"call", 0xC4, []>;
 }
 
 let isTerminator = true in {
-  let Size = 3 in
-  def JP : _GB_SimpleImm16<"jp", 0xC3, []>;
+  def JP : _GB_SimpleImm16<"jp $imm", 0xC3, []>;
 
   let isBranch = true, Uses = [F] in
   def JP_FLAG : _GB_FlagImm16<"jp", 0xC2, []>;
 
-  let mayLoad = true, Uses = [HL] in
+  let mayLoad = true, isIndirectBranch = true, Uses = [HL] in
   def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9, []>;
 }
 

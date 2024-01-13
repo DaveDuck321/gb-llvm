@@ -102,8 +102,9 @@ public:
   }
 
   bool isUImm3() const { return isImmN(3, false, false); }
-  bool isUImm8() const { return isImmN(8, false); }
   bool isSImm8() const { return isImmN(8, true); }
+  bool isUImm8() const { return isImmN(8, false); }
+  bool isDImm8() const { return isImmN(8, false) || isImmN(8, true); }
   bool isUImm16() const { return isImmN(16, false); }
   bool isFlag() const { return std::holds_alternative<Flag>(Data); }
 
@@ -208,12 +209,14 @@ public:
                                bool MatchingInlineAsm) override;
 
 private:
+  bool parseNextOperand(StringRef Name, OperandVector &Operands);
+
   ParseStatus tryParseFlag(OperandVector &Operands);
   ParseStatus tryParseImmediate(OperandVector &Operands,
                                 std::optional<int> Sign = std::nullopt);
+  ParseStatus tryParseInsideParens(OperandVector &Operands);
   ParseStatus tryParseOperand(OperandVector &Operands);
   ParseStatus tryParseRegister(OperandVector &Operands);
-  ParseStatus tryParseToken(OperandVector &Operands);
 
 #define GET_ASSEMBLER_HEADER
 #include "GBGenAsmMatcher.inc"
@@ -255,39 +258,11 @@ ParseStatus GBAsmParser::tryParseOperand(OperandVector &Operands) {
   if (tryParseRegister(Operands).isSuccess()) {
     return ParseStatus::Success;
   }
-  if (tryParseToken(Operands).isSuccess()) {
-    return ParseStatus::Success;
-  }
   return ParseStatus::NoMatch;
 }
 
-ParseStatus GBAsmParser::tryParseToken(OperandVector &Operands) {
-  // Currently (hl) is the only token operand
-  // NOTE: this eats tokens during the parse, it much be called after exhausting
-  // all other operand types
-  auto &Lexer = getLexer();
-  const auto StartLoc = Lexer.getLoc();
-  if (not Lexer.is(AsmToken::LParen)) {
-    return ParseStatus::NoMatch;
-  }
-  Lexer.Lex();
-
-  if (Lexer.getTok().getString().lower() != "hl") {
-    return ParseStatus::NoMatch;
-  }
-  Lexer.Lex();
-
-  if (not Lexer.is(AsmToken::RParen)) {
-    return ParseStatus::NoMatch;
-  }
-  Lexer.Lex();
-
-  Operands.push_back(GBOperand::createToken("(hl)", StartLoc));
-  return ParseStatus::Success;
-}
-
 ParseStatus GBAsmParser::tryParseRegister(OperandVector &Operands) {
-  if (not getLexer().is(AsmToken::Identifier)) {
+  if (getLexer().isNot(AsmToken::Identifier)) {
     return ParseStatus::NoMatch;
   }
 
@@ -353,7 +328,7 @@ ParseStatus GBAsmParser::tryParseFlag(OperandVector &Operands) {
   auto &Lexer = getLexer();
   const auto StartLoc = Lexer.getLoc();
 
-  if (not Lexer.is(AsmToken::Identifier)) {
+  if (Lexer.isNot(AsmToken::Identifier)) {
     return ParseStatus::NoMatch;
   }
 
@@ -362,6 +337,20 @@ ParseStatus GBAsmParser::tryParseFlag(OperandVector &Operands) {
 
   Operands.push_back(GBOperand::createFlag(Flag, StartLoc, Lexer.getLoc()));
   return ParseStatus::Success;
+}
+
+bool GBAsmParser::parseNextOperand(StringRef Name, OperandVector &Operands) {
+  if (MatchOperandParserImpl(Operands, Name).isSuccess()) {
+    return false; // Success
+  }
+
+  if (tryParseOperand(Operands).isSuccess()) {
+    return false; // Success
+  }
+
+  SMLoc ErrLoc = getLexer().getLoc();
+  getParser().eatToEndOfStatement();
+  return Error(ErrLoc, "unknown operand");
 }
 
 bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -387,14 +376,22 @@ bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       }
     }
 
-    if (MatchOperandParserImpl(Operands, Name).isSuccess()) {
-      continue;
+    bool IsParenOpen = Lexer.is(AsmToken::LParen);
+    if (IsParenOpen) {
+      Operands.push_back(GBOperand::createToken("(", Lexer.getLoc()));
+      Lexer.Lex();
     }
 
-    if (!tryParseOperand(Operands).isSuccess()) {
-      SMLoc ErrLoc = Lexer.getLoc();
-      getParser().eatToEndOfStatement();
-      return Error(ErrLoc, "unknown operand");
+    if (parseNextOperand(Name, Operands)) {
+      return true; // Propagate error
+    }
+
+    if (IsParenOpen) {
+      if (Lexer.isNot(AsmToken::RParen)) {
+        return Error(Lexer.getLoc(), "expected a closing parenthesis");
+      }
+      Operands.push_back(GBOperand::createToken(")", Lexer.getLoc()));
+      Lexer.Lex();
     }
   }
 

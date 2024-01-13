@@ -130,28 +130,28 @@ ld l,c
 # CHECK: encoding: [0x79]
 ld a,c
 
-# CHECK-INST: ld b, 10
+# CHECK-INST: ld b, $0a
 # CHECK: encoding: [0x06,0x0a]
 ld b,10
-# CHECK-INST: ld c, 10
+# CHECK-INST: ld c, $0a
 # CHECK: encoding: [0x0e,0x0a]
 ld c,10
-# CHECK-INST: ld d, 10
+# CHECK-INST: ld d, $0a
 # CHECK: encoding: [0x16,0x0a]
 ld d,10
-# CHECK-INST: ld e, 10
+# CHECK-INST: ld e, $0a
 # CHECK: encoding: [0x1e,0x0a]
 ld e,10
-# CHECK-INST: ld h, 10
+# CHECK-INST: ld h, $0a
 # CHECK: encoding: [0x26,0x0a]
 ld h,10
-# CHECK-INST: ld l, 10
+# CHECK-INST: ld l, $0a
 # CHECK: encoding: [0x2e,0x0a]
 ld l,10
-# CHECK-INST: ld (hl), 10
+# CHECK-INST: ld (hl), $0a
 # CHECK: encoding: [0x36,0x0a]
 ld (hl),10
-# CHECK-INST: ld a, 10
+# CHECK-INST: ld a, $0a
 # CHECK: encoding: [0x3e,0x0a]
 ld a,10
 

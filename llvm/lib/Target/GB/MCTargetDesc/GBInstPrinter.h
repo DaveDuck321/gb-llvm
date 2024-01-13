@@ -20,8 +20,16 @@ public:
 
   // NOTE: Required by tablegen
   void printOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
-  void printImmediateOperand(const MCInst *, unsigned OpNo,
-                             raw_ostream &) const;
+  void printU3ImmediateOperand(const MCInst *, unsigned OpNo,
+                               raw_ostream &) const;
+  void printS8ImmediateOperand(const MCInst *, unsigned OpNo,
+                               raw_ostream &) const;
+  void printU8ImmediateOperand(const MCInst *, unsigned OpNo,
+                               raw_ostream &) const;
+  void printD8ImmediateOperand(const MCInst *, unsigned OpNo,
+                               raw_ostream &) const;
+  void printU16ImmediateOperand(const MCInst *, unsigned OpNo,
+                                raw_ostream &) const;
   void printFlagOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
 
   // NOTE: these are TableGen'ed
