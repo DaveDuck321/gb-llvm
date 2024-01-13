@@ -369,3 +369,10 @@ push hl
 # CHECK-INST: push af
 # CHECK: encoding: [0xf5]
 push af
+
+# CHECK-INST: ld a, (bc)
+# CHECK: encoding: [0x0a]
+ld a, (bc)
+# CHECK-INST: ld a, (de)
+# CHECK: encoding: [0x1a]
+ld a, (de)

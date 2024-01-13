@@ -29,8 +29,6 @@ public:
 
   unsigned getNumFixupKinds() const override;
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
-
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsResolved,
@@ -50,18 +48,7 @@ GBAsmBackend::createObjectTargetWriter() const {
   return createGBELFObjectWriter();
 }
 
-unsigned GBAsmBackend::getNumFixupKinds() const {
-  return GB::NumTargetFixupKinds;
-}
-
-const MCFixupKindInfo &GBAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
-  if (Kind < FirstTargetFixupKind) {
-    return MCAsmBackend::getFixupKindInfo(Kind);
-  }
-
-  assert((unsigned)(Kind - FirstTargetFixupKind) < getNumFixupKinds());
-  return GB::FixupKindInfo[Kind - FirstTargetFixupKind];
-}
+unsigned GBAsmBackend::getNumFixupKinds() const { return 0; }
 
 void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                               const MCValue &Target, MutableArrayRef<char> Data,
@@ -80,20 +67,11 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
       llvm_unreachable("Unknown fixup kind!");
     case FK_PCRel_1:
       return true;
-    case GB::fixup_gb_lo8_ff00:
     case FK_Data_1:
     case FK_Data_2:
       return false;
     }
   }();
-
-  if ((unsigned)Kind == GB::fixup_gb_lo8_ff00) {
-    if ((Value & 0xff00u) != 0xff00u || Value > 0xffffu) {
-      Ctx.reportError(Fixup.getLoc(), "lo8_ff00 fixup value out of range");
-    }
-    // Discard upper byte since it's already encoded in the instruction
-    Value &= 0x00ffu;
-  }
 
   if ((IsSigned && !isIntN(Info.TargetSize, Value)) ||
       (!IsSigned && !isUIntN(Info.TargetSize, Value))) {

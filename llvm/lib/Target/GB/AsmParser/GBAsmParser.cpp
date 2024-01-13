@@ -106,6 +106,19 @@ public:
   bool isUImm8() const { return isImmN(8, false); }
   bool isDImm8() const { return isImmN(8, false) || isImmN(8, true); }
   bool isUImm16() const { return isImmN(16, false); }
+  bool isRstVec() const {
+    if (not std::holds_alternative<Imm>(Data)) {
+      return false;
+    }
+
+    int64_t Value;
+    const MCExpr *Expr = std::get<Imm>(Data).Expr;
+    const bool IsConstantImm = Expr->evaluateAsAbsolute(Value);
+    if (not IsConstantImm) {
+      return true;
+    }
+    return (Value & ~0b0011'1000) == 0;
+  }
   bool isFlag() const { return std::holds_alternative<Flag>(Data); }
 
   bool isReg() const override { return std::holds_alternative<Reg>(Data); };
@@ -188,6 +201,7 @@ public:
       : MCTargetAsmParser(Options, STI, MII) {}
 
   enum GBMatchResultTy {
+    Match_Unsupported = FIRST_TARGET_MATCH_RESULT_TY,
 #define GET_OPERAND_DIAGNOSTIC_TYPES
 #include "GBGenAsmMatcher.inc"
   };

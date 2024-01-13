@@ -6,5 +6,4 @@
 ELF_RELOC(R_GB_NONE,            0)
 ELF_RELOC(R_GB_8,               1)
 ELF_RELOC(R_GB_16,              2)
-ELF_RELOC(R_GB_LO8_FF00,        4)
-ELF_RELOC(R_GB_PCREL_8,         5)
+ELF_RELOC(R_GB_PCREL_8,         3)

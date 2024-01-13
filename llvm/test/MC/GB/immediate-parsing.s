@@ -39,3 +39,7 @@ call 0xfe10
 # CHECK-INST: jp c, $fe10
 # CHECK: [0xda,0x10,0xfe]
 jp c, 0xfe10
+
+# CHECK-INST: rst $18
+# CHECK: encoding: [0xdf]
+rst $18

@@ -6,11 +6,35 @@ defm LD : GBGPR8LD<"ld", 0x40, []>;
 defm LDI8 : GBGPR8LDI8<"ld", 0x06, []>;
 def LDI16 : GBGPR8LDI16<"ld", 0x01, []>;
 
-let mayStore = true, Uses = [A] in
-def LDH_iImm_A : _GB_SimpleImm8<"ldh ($imm), a", 0xE0, [], uimm8, FixupFFXX>;
+let mayStore = true, Uses = [A] in {
+  def LDH_iImm_A : _GB_SimpleImm8<"ldh ($imm), a", 0xE0, [], uimm8, FixupData8>;
+  def LD_iImm_A : _GB_SimpleImm16<"ld ($imm), a", 0xEA, []>;
+  def LD_iR16_A : _GB_IR16S16Sequence<"ld ($rs), a", 0x02, []>;
+}
 
-let mayLoad = true, Defs = [A] in
-def LDH_A_iImm : _GB_SimpleImm8<"ldh a, ($imm)", 0xF0, [], uimm8, FixupFFXX>;
+let mayStore = true, Uses = [A, C] in
+def LD_iC_A : GBInstrNoOperands<"ld (c), a", 0xE2, []>;
+
+let mayStore = true, Uses = [A, HL], Defs = [HL] in {
+  // TOOD GB: should also accept: ld (hl+-), a
+  def LDI_iHL_A : GBInstrNoOperands<"ldi (hl), a", 0x22, []>;
+  def LDD_iHL_A : GBInstrNoOperands<"ldd (hl), a", 0x32, []>;
+}
+
+let mayLoad = true, Defs = [A] in {
+  def LDH_A_iImm : _GB_SimpleImm8<"ldh a, ($imm)", 0xF0, [], uimm8, FixupData8>;
+  def LD_A_iImm : _GB_SimpleImm16<"ld a, ($imm)", 0xFA, []>;
+  def LD_A_iR16 : _GB_IR16S16Sequence<"ld a, ($rs)", 0x0A, []>;
+
+  let Uses = [C] in
+  def LD_A_iC : GBInstrNoOperands<"ld a, (c)", 0xF2, []>;
+}
+
+let mayLoad = true, Uses = [HL], Defs = [A, HL] in {
+  // TOOD GB: should also accept: ld a, (hl+-)
+  def LDI_A_iHL : GBInstrNoOperands<"ldi a, (hl)", 0x2A, []>;
+  def LDD_A_iHL : GBInstrNoOperands<"ldd a, (hl)", 0x3A, []>;
+}
 
 let isMoveReg = true in {
   let Uses = [HL], Defs = [SP] in
@@ -148,3 +172,4 @@ let hasSideEffects = true in {
 
 def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins), []>;
 def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg), []>;
+def RST : GBRSTInstr<"rst", 0xC7, []>;

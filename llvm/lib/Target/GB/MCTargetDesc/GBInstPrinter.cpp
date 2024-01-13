@@ -41,8 +41,8 @@ void GBInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   printRegName(OS, Operand.getReg());
 }
 
-void GBInstPrinter::printU3ImmediateOperand(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &OS) const {
+void GBInstPrinter::printU3ImmOperand(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
@@ -50,8 +50,8 @@ void GBInstPrinter::printU3ImmediateOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-void GBInstPrinter::printS8ImmediateOperand(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &OS) const {
+void GBInstPrinter::printS8ImmOperand(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
@@ -59,8 +59,8 @@ void GBInstPrinter::printS8ImmediateOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-void GBInstPrinter::printU8ImmediateOperand(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &OS) const {
+void GBInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
@@ -69,13 +69,13 @@ void GBInstPrinter::printU8ImmediateOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-void GBInstPrinter::printD8ImmediateOperand(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &OS) const {
-  printS8ImmediateOperand(MI, OpNo, OS);
+void GBInstPrinter::printD8ImmOperand(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &OS) const {
+  printS8ImmOperand(MI, OpNo, OS);
 }
 
-void GBInstPrinter::printU16ImmediateOperand(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &OS) const {
+void GBInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());

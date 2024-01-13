@@ -43,6 +43,11 @@ private:
   unsigned getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
+
+  /// Return binary encoding of a rst vector operand
+  unsigned EncodeRstVecOperand(const MCInst &MI, unsigned OpNo,
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
 };
 
 } // namespace
@@ -89,6 +94,17 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   }
 
   llvm_unreachable("Unrecognized operand");
+}
+
+unsigned
+GBMCCodeEmitter::EncodeRstVecOperand(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups,
+                                     const MCSubtargetInfo &STI) const {
+  const auto &MO = MI.getOperand(OpNo);
+  const auto Val = MO.getImm();
+
+  assert((Val & ~0b0111000) == 0);
+  return Val >> 3;
 }
 
 namespace llvm {

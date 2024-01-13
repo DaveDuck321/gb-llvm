@@ -30,6 +30,7 @@ unsigned GPR8DecodeTable[] = {GB::B, GB::C, GB::D, GB::E,
                               GB::H, GB::L, ~0u,   GB::A};
 unsigned GPR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::SP};
 unsigned SR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::AF};
+unsigned IR16DecodeTable[] = {GB::BC, GB::DE};
 
 DecodeStatus DecodeGPR8RegisterClass(MCInst &MI, uint64_t Encoding,
                                      uint64_t Addr, const void *Decoder) {
@@ -56,6 +57,24 @@ DecodeStatus DecodeSR16RegisterClass(MCInst &MI, uint64_t Encoding,
   assert((Encoding & ~0b11) == 0);
 
   MI.addOperand(MCOperand::createReg(SR16DecodeTable[Encoding]));
+
+  return DecodeStatus::Success;
+}
+
+DecodeStatus DecodeIR16RegisterClass(MCInst &MI, uint64_t Encoding,
+                                     uint64_t Addr, const void *Decoder) {
+  assert((Encoding & ~0b1) == 0);
+
+  MI.addOperand(MCOperand::createReg(IR16DecodeTable[Encoding]));
+
+  return DecodeStatus::Success;
+}
+
+DecodeStatus DecodeRstVecOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
+                                 const void *Decoder) {
+  assert((Encoding & ~0b111) == 0);
+
+  MI.addOperand(MCOperand::createImm(Encoding << 3));
 
   return DecodeStatus::Success;
 }

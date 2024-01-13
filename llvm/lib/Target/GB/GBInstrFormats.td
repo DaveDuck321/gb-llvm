@@ -5,7 +5,6 @@ def FixupNone    : FixupKind<0>;
 def FixupData8   : FixupKind<1>;
 def FixupData16  : FixupKind<2>;
 def FixupPCRel8  : FixupKind<3>;
-def FixupFFXX    : FixupKind<4>;
 
 // Operand types
 class GBAsmImmOperand<string name> : AsmOperandClass {
@@ -16,7 +15,7 @@ class GBAsmImmOperand<string name> : AsmOperandClass {
 }
 
 class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
-  let PrintMethod = "print" # signedness # size # "ImmediateOperand";
+  let PrintMethod = "print" # signedness # size # "ImmOperand";
   let ParserMatchClass = GBAsmImmOperand<signedness # "Imm" # size>;
   let DecoderMethod = "Decode" # signedness # "ImmOperand<" # size # ">";
 }
@@ -26,6 +25,13 @@ def simm8 : GBImm<8, "S", i8>;
 def uimm8 : GBImm<8, "U", i8>;
 def dimm8 : GBImm<8, "D", i8>;
 def uimm16 : GBImm<16, "U", i16>;
+
+def rstvec : Operand<i8> {
+  let PrintMethod = "printU8ImmOperand";
+  let ParserMatchClass = GBAsmImmOperand<"RstVec">;
+  let EncoderMethod = "EncodeRstVecOperand";
+  let DecoderMethod = "DecodeRstVecOperand";
+}
 
 def GBAsmFlagOperand : AsmOperandClass {
   let Name = "Flag";
@@ -160,6 +166,14 @@ class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag
   let Inst{5 - 4} = rs;
 }
 
+class _GB_IR16S16Sequence<string format, bits<8> opcode, list<dag> pattern>
+  : GBInstr<format, "", opcode, (outs), (ins IR16:$rs), pattern, FixupNone>
+{
+  bits<1> rs;
+  let Inst{4} = rs;
+  let Size = 1;
+}
+
 // TOOD GB: combine these
 class _GB_SimpleImm8<string format, bits<8> opcode, list<dag> pattern, GBImm immType, FixupKind fixup>
   : GBInstr<format, "", opcode, (outs), (ins immType:$imm), pattern, fixup>
@@ -238,6 +252,14 @@ class _GB_FlagImm8<string mnemonic, bits<8> opcode, list<dag> pattern>
   bits<8> imm;
   let Inst{15 - 8} = imm;
   let Size = 2;
+}
+
+class GBRSTInstr<string mnemonic, bits<8> opcode, list<dag> pattern>
+  : GBInstr<mnemonic, "$rst", opcode, (outs), (ins rstvec:$rst), pattern, FixupNone>
+{
+  bits<3> rst;
+  let Inst{5 - 3} = rst;
+  let Size = 1;
 }
 
 class _GB_FlagImm16<string mnemonic, bits<8> opcode, list<dag> pattern>

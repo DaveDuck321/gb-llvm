@@ -34,8 +34,6 @@ unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
     llvm_unreachable("Unknown fixup kind!");
   case FK_PCRel_1:
     return ELF::R_GB_PCREL_8;
-  case GB::fixup_gb_lo8_ff00:
-    return ELF::R_GB_LO8_FF00;
   case FK_Data_1:
     return ELF::R_GB_8;
   case FK_Data_2:

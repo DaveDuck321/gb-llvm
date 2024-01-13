@@ -175,3 +175,39 @@ ld hl, sp - 128
 # CHECK-INST: ld sp, hl
 # CHECK: encoding: [0xf9]
 ld sp, hl
+# CHECK-INST: ld ($fedc), sp
+# CHECK: encoding: [0x08,0xdc,0xfe]
+ld (0xfedc), sp
+# CHECK-INST: ldh ($01), a
+# CHECK: encoding: [0xe0,0x01]
+ldh (0x01), a
+# CHECK-INST: ldh a, ($01)
+# CHECK: encoding: [0xf0,0x01]
+ldh a, (0x01)
+# CHECK-INST: ld a, ($fe01)
+# CHECK: encoding: [0xfa,0x01,0xfe]
+ld a, (0xfe01)
+# CHECK-INST: ld ($fe01), a
+# CHECK: encoding: [0xea,0x01,0xfe]
+ld (0xfe01), a
+# CHECK-INST: ldi (hl), a
+# CHECK: encoding: [0x22]
+ldi (hl), a
+# CHECK-INST: ldi a, (hl)
+# CHECK: encoding: [0x2a]
+ldi a, (hl)
+# CHECK-INST: ldd (hl), a
+# CHECK: encoding: [0x32]
+ldd (hl), a
+# CHECK-INST: ldd a, (hl)
+# CHECK: encoding: [0x3a]
+ldd a, (hl)
+# CHECK-INST: ld a, (bc)
+# CHECK: encoding: [0x0a]
+ld a, (bc)
+# CHECK-INST: ld (de), a
+# CHECK: encoding: [0x12]
+ld (de), a
+# CHECK-INST: rst $30
+# CHECK: encoding: [0xf7]
+rst 0x30
