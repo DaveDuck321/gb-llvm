@@ -1,5 +1,8 @@
 include "GBInstrFormats.td"
 
+// GB-Specific DAG nodes
+def RET_FLAG_NODE : SDNode<"GBISD::RET_FLAG", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
 def NOP : GBInstrNoOperands<"nop", 0x00, []>;
 
 defm LD : GBGPR8LD<"ld", 0x40, []>;
@@ -126,19 +129,19 @@ let isTerminator = true in {
   def JR : _GB_SimpleImm8<"jr $imm", 0x18, [], simm8, FixupPCRel8>;
 
   let Uses = [F] in
-  def JR_FLAG : _GB_FlagImm8<"jr", 0x20, []>;
+  def JR_COND : _GB_FlagImm8<"jr", 0x20, []>;
 }
 
-let mayLoad = true, isReturn = true, isTerminator = true in {
+let isReturn = true, isTerminator = true in {
   let Uses = [SP], Defs = [SP] in {
-    def RET : GBInstrNoOperands<"ret", 0xC9, []>;
+    def RET : GBInstrNoOperands<"ret", 0xC9, [(RET_FLAG_NODE)]>;
 
     let hasSideEffects = true in
     def RETI : GBInstrNoOperands<"reti", 0xD9, []>;
   }
 
   let Size = 1, Uses = [F, SP], Defs = [SP] in
-  def RET_FLAG : _GB_FlagSequence<"ret", "", 0xC0, (ins), [], FixupNone>;
+  def RET_COND : _GB_FlagSequence<"ret", "", 0xC0, (ins), [], FixupNone>;
 }
 
 let mayStore = true, isCall = true in {
@@ -146,14 +149,14 @@ let mayStore = true, isCall = true in {
   def CALL : _GB_SimpleImm16<"call $imm", 0xCD, []>;
 
   let Uses = [F, SP], Defs = [SP] in
-  def CALL_FLAG : _GB_FlagImm16<"call", 0xC4, []>;
+  def CALL_COND : _GB_FlagImm16<"call", 0xC4, []>;
 }
 
 let isTerminator = true in {
   def JP : _GB_SimpleImm16<"jp $imm", 0xC3, []>;
 
   let isBranch = true, Uses = [F] in
-  def JP_FLAG : _GB_FlagImm16<"jp", 0xC2, []>;
+  def JP_COND : _GB_FlagImm16<"jp", 0xC2, []>;
 
   let mayLoad = true, isIndirectBranch = true, Uses = [HL] in
   def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9, []>;

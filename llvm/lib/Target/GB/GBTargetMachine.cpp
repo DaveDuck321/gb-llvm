@@ -1,12 +1,15 @@
 #include "GBTargetMachine.h"
+#include "GB.h"
 #include "TargetInfo/GBTargetInfo.h"
 
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include <memory>
 #include <optional>
 
 using namespace llvm;
@@ -36,10 +39,36 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
                                  CodeGenOptLevel OL, bool JIT)
     : LLVMTargetMachine(T, DataLayout, TT, CPU, FS, Options,
                         getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(CM, CodeModel::Small), OL) {
+                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+      TLOF{std::make_unique<TargetLoweringObjectFileELF>()},
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 
+const TargetSubtargetInfo *
+GBTargetMachine::getSubtargetImpl(const Function &) const {
+  return &Subtarget;
+}
+
+namespace {
+class GBPassConfig : public TargetPassConfig {
+public:
+  GBPassConfig(GBTargetMachine &TM, PassManagerBase &PM)
+      : TargetPassConfig(TM, PM) {}
+
+  GBTargetMachine &getGBTargetMachine() const {
+    return getTM<GBTargetMachine>();
+  }
+
+  bool addInstSelector() override;
+};
+} // namespace
+
 TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new TargetPassConfig(*this, PM);
+  return new GBPassConfig(*this, PM);
+}
+
+bool GBPassConfig::addInstSelector() {
+  addPass(createGBISelDag(getGBTargetMachine(), getOptLevel()));
+  return false;
 }

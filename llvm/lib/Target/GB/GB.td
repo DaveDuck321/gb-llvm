@@ -1,6 +1,7 @@
 include "llvm/Target/Target.td"
 
 include "GBRegisterInfo.td"
+include "GBCallingConv.td"
 include "GBInstrInfo.td"
 
 def : ProcessorModel<"Gameboy classic", NoSchedModel, []>;

@@ -4,6 +4,8 @@ set(LLVM_TARGET_DEFINITIONS GB.td)
 
 tablegen(LLVM GBGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM GBGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM GBGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM GBGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM GBGenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
@@ -13,6 +15,14 @@ tablegen(LLVM GBGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(GBCommonTableGen)
 
 add_llvm_target(GBCodeGen
+    GBAsmPrinter.cpp
+    GBFrameLowering.cpp
+    GBInstrInfo.cpp
+    GBISelDAGToDAG.cpp
+    GBISelLowering.cpp
+    GBMCInstLower.cpp
+    GBRegisterInfo.cpp
+    GBSubtarget.cpp
     GBTargetMachine.cpp
 
     LINK_COMPONENTS

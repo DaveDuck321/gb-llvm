@@ -1,6 +1,7 @@
 #ifndef LLVM_LIB_TARGET_GB_GBTARGETMACHINE_H
 #define LLVM_LIB_TARGET_GB_GBTARGETMACHINE_H
 
+#include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
@@ -17,6 +18,7 @@ class GBTargetMachine : public LLVMTargetMachine {
   const static std::string DataLayout;
 
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  GBSubtarget Subtarget;
 
 public:
   GBTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
@@ -29,6 +31,7 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
+  const TargetSubtargetInfo *getSubtargetImpl(const Function &) const override;
 };
 
 } // namespace llvm
