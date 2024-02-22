@@ -16,11 +16,6 @@ public:
   StringRef getPassName() const override;
   void Select(SDNode *) override;
 
-private:
-  void selectBinaryNode(SDNode *, unsigned Op8i, unsigned Op8r,
-                        unsigned Op16 = 0);
-  void selectAccumulatorNode(SDNode *, unsigned TargetOp, MVT Width);
-
 #define GET_DAGISEL_DECL
 #include "GBGenDAGISel.inc"
 };

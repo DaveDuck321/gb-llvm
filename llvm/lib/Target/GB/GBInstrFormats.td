@@ -20,11 +20,11 @@ class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
   let DecoderMethod = "Decode" # signedness # "ImmOperand<" # size # ">";
 }
 
-def uimm3 : GBImm<3, "U", i8>;
-def simm8 : GBImm<8, "S", i8>;
-def uimm8 : GBImm<8, "U", i8>;
-def dimm8 : GBImm<8, "D", i8>;
-def uimm16 : GBImm<16, "U", i16>;
+def uimm3 : GBImm<3, "U", i8>, ImmLeaf<i8, [{return isUInt<3>(Imm);}]>;
+def simm8 : GBImm<8, "S", i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
+def uimm8 : GBImm<8, "U", i8>, ImmLeaf<i8, [{return isUInt<8>(Imm);}]>;
+def dimm8 : GBImm<8, "D", i8>, ImmLeaf<i8, [{return isInt<8>(Imm) || isUInt<8>(Imm);}]>;
+def uimm16 : GBImm<16, "U", i16>, ImmLeaf<i8, [{return isUInt<16>(Imm);}]>;
 
 def rstvec : Operand<i8> {
   let PrintMethod = "printU8ImmOperand";
@@ -73,7 +73,7 @@ class GBInstrNoOperands<string mnemonic, bits<8> opcode, list<dag> pattern>
   let Size = 1;
 }
 
-// TODO GB: can I combine these sequencese
+// TODO GB: can I combine these sequences?
 multiclass _GB_GPR8S1Sequence<string mnemonic, bits<8> opcode, dag inputs, list<dag> pattern> {
   def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), pattern, FixupNone> {
     bits<3> rs;

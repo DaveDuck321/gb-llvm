@@ -53,25 +53,25 @@ def LD_iImm16_SP : _GB_SimpleImm16<"ld ($imm), sp", 0x08, []>;
 let Uses = [A], Defs = [A, F], Size = 1 in {
   // TODO: be more specific about which flags are clobbered
   let isAdd = true in
-  defm ADD : _GB_GPR8S1Sequence<"add", 0x80, (ins), []>;
+  defm ADD : _GB_GPR8S1Sequence<"add", 0x80, (ins), [(set A, (add A, GPR8:$rs))]>;
 
   defm ADC : _GB_GPR8S1Sequence<"adc", 0x88, (ins), []>;
-  defm SUB : _GB_GPR8S1Sequence<"sub", 0x90, (ins), []>;
+  defm SUB : _GB_GPR8S1Sequence<"sub", 0x90, (ins), [(set A, (sub A, GPR8:$rs))]>;
   defm SBC : _GB_GPR8S1Sequence<"sbc", 0x98, (ins), []>;
-  defm AND : _GB_GPR8S1Sequence<"and", 0xA0, (ins), []>;
-  defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins), []>;
-  defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins), []>;
+  defm AND : _GB_GPR8S1Sequence<"and", 0xA0, (ins), [(set A, (and A, GPR8:$rs))]>;
+  defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins), [(set A, (xor A, GPR8:$rs))]>;
+  defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins), [(set A, (or A, GPR8:$rs))]>;
   defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins), []>;
 }
 
 let Uses = [A], Defs = [A, F] in {
-  def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, [], dimm8, FixupData8>;
+  def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, [(set A, (add A, dimm8:$imm))], dimm8, FixupData8>;
   def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, [], dimm8, FixupData8>;
-  def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, [], dimm8, FixupData8>;
+  def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, [(set A, (sub A, dimm8:$imm))], dimm8, FixupData8>;
   def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, [], dimm8, FixupData8>;
-  def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, [], dimm8, FixupData8>;
-  def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, [], dimm8, FixupData8>;
-  def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, [], dimm8, FixupData8>;
+  def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, [(set A, (and A, dimm8:$imm))], dimm8, FixupData8>;
+  def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, [(set A, (xor A, dimm8:$imm))], dimm8, FixupData8>;
+  def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, [(set A, (or A, dimm8:$imm))], dimm8, FixupData8>;
   def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, [], dimm8, FixupData8>;
 }
 
