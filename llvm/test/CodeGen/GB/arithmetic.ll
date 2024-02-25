@@ -22,6 +22,17 @@ define i8 @addi(i8 %b) nounwind {
   ret i8 %1
 }
 
+define i8 @add_hl(i8 %b, ptr %hl) nounwind {
+; GBI-LABEL: add_hl:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    add (hl)
+; GBI-NEXT:    ret
+  %1 = load i8, ptr %hl
+  %2 = add i8 %b, %1
+  ret i8 %2
+}
+
 define i8 @sub(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: sub:
 ; GBI:       ; %bb.0:
@@ -40,6 +51,17 @@ define i8 @subi(i8 %b) nounwind {
 ; GBI-NEXT:    ret
   %1 = sub i8 %b, 1
   ret i8 %1
+}
+
+define i8 @sub_hl(i8 %b, ptr %hl) nounwind {
+; GBI-LABEL: sub_hl:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub (hl)
+; GBI-NEXT:    ret
+  %1 = load i8, ptr %hl
+  %2 = sub i8 %b, %1
+  ret i8 %2
 }
 
 define i8 @and(i8 %b, i8 %c) nounwind {
@@ -62,6 +84,17 @@ define i8 @andi(i8 %b) nounwind {
   ret i8 %1
 }
 
+define i8 @and_hl(i8 %b, ptr %hl) nounwind {
+; GBI-LABEL: and_hl:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    and (hl)
+; GBI-NEXT:    ret
+  %1 = load i8, ptr %hl
+  %2 = and i8 %b, %1
+  ret i8 %2
+}
+
 define i8 @xor(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: xor:
 ; GBI:       ; %bb.0:
@@ -80,6 +113,17 @@ define i8 @xori(i8 %b) nounwind {
 ; GBI-NEXT:    ret
   %1 = xor i8 %b, 1
   ret i8 %1
+}
+
+define i8 @xor_hl(i8 %b, ptr %hl) nounwind {
+; GBI-LABEL: xor_hl:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    xor (hl)
+; GBI-NEXT:    ret
+  %1 = load i8, ptr %hl
+  %2 = xor i8 %b, %1
+  ret i8 %2
 }
 
 define i8 @or(i8 %b, i8 %c) nounwind {
@@ -102,36 +146,15 @@ define i8 @ori(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @constant8() nounwind {
-; GBI-LABEL: constant8:
+define i8 @or_hl(i8 %b, ptr %hl) nounwind {
+; GBI-LABEL: or_hl:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld a, $ff
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    or (hl)
 ; GBI-NEXT:    ret
-  ret i8 -1
-}
-
-define i16 @constantS16() nounwind {
-; GBI-LABEL: constantS16:
-; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $ffff
-; GBI-NEXT:    ret
-  ret i16 -1
-}
-
-define i16 @constantU16() nounwind {
-; GBI-LABEL: constantU16:
-; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $09a0
-; GBI-NEXT:    ret
-  ret i16 2464
-}
-
-define i16 @constantAmbiguousU16() nounwind {
-; GBI-LABEL: constantAmbiguousU16:
-; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $0001
-; GBI-NEXT:    ret
-  ret i16 1
+  %1 = load i8, ptr %hl
+  %2 = or i8 %b, %1
+  ret i8 %2
 }
 
 define i16 @add16(i16 %a) nounwind {

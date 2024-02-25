@@ -47,7 +47,7 @@ let isMoveReg = true in {
 let mayStore = true, Uses = [SP] in
 def LD_iImm16_SP : _GB_SimpleImm16<"ld ($imm), sp", 0x08>;
 
-let Uses = [A], Defs = [A, F], Size = 1 in {
+let Size = 1 in {
   // TODO: be more specific about which flags are clobbered
   let isAdd = true in
   defm ADD : _GB_GPR8S1Sequence<"add", 0x80, (ins)>;
@@ -72,7 +72,7 @@ let Uses = [A], Defs = [A, F] in {
   def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, dimm8, FixupData8>;
 }
 
-let Uses = [A], Defs = [A, F], Size = 1 in {
+let Size = 1 in {
   defm INC : _GB_GPR8S8Sequence<"inc", 0x04, (ins)>;
   defm DEC : _GB_GPR8S8Sequence<"dec", 0x05, (ins)>;
 }
@@ -186,19 +186,30 @@ def dimm16 : ImmLeaf<i16, [{return isInt<16>(Imm) || isUInt<16>(Imm);}]>;
 def : Pat<(dimm8:$imm), (LDI8_r dimm8:$imm)>;
 def : Pat<(dimm16:$imm), (LDI16 uimm16:$imm)>;
 
-// ALU
+// ALU 8-bit
 def : Pat<(add A, dimm8:$imm), (ADDI dimm8:$imm)>;
 def : Pat<(add A, GPR8:$rs), (ADD_r GPR8:$rs)>;
-def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
+def : Pat<(add A, (load HL)), (ADD_iHL)>;
 
 def : Pat<(sub A, dimm8:$imm), (SUBI dimm8:$imm)>;
 def : Pat<(sub A, GPR8:$rs), (SUB_r GPR8:$rs)>;
+def : Pat<(sub A, (load HL)), (SUB_iHL)>;
 
 def : Pat<(and A, dimm8:$imm), (ANDI dimm8:$imm)>;
 def : Pat<(and A, GPR8:$rs), (AND_r GPR8:$rs)>;
+def : Pat<(and A, (load HL)), (AND_iHL)>;
 
 def : Pat<(xor A, dimm8:$imm), (XORI dimm8:$imm)>;
 def : Pat<(xor A, GPR8:$rs), (XOR_r GPR8:$rs)>;
+def : Pat<(xor A, (load HL)), (XOR_iHL)>;
 
 def : Pat<(or A, dimm8:$imm), (ORI dimm8:$imm)>;
 def : Pat<(or A, GPR8:$rs), (OR_r GPR8:$rs)>;
+def : Pat<(or A, (load HL)), (OR_iHL)>;
+
+// ALU 16-bit
+def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
+
+// Memory
+def : Pat<(load HL), (LD_r_HL)>;
+def : Pat<(store GPR8:$rs, HL), (LD_HL_r GPR8:$rs)>;

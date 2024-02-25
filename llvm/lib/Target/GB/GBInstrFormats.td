@@ -80,12 +80,15 @@ multiclass _GB_GPR8S1Sequence<string mnemonic, bits<8> opcode, dag inputs> {
   def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), FixupNone> {
     bits<3> rs;
     let Inst{2 - 0} = rs;
+    let Uses = [A];
+    let Defs = [A, F];
   }
 
-  // FIXME: add Uses = HL
   def _iHL : GBInstr<mnemonic, "(hl)", opcode, (outs), (ins), FixupNone> {
     let Inst{2 - 0} = 0b110;
     let mayLoad = true;
+    let Uses = [A, HL];
+    let Defs = [A, F];
   }
 }
 
@@ -93,12 +96,15 @@ multiclass _GB_GPR8S8Sequence<string mnemonic, bits<8> opcode, dag inputs> {
   def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), FixupNone> {
     bits<3> rs;
     let Inst{5 - 3} = rs;
+    let Uses = [A];
+    let Defs = [A, F];
   }
 
-  // FIXME: add Uses = HL
   def _iHL : GBInstr<mnemonic, "(hl)", opcode, (outs), (ins), FixupNone> {
     let Inst{5 - 3} = 0b110;
     let mayLoad = true;
+    let Uses = [A, HL];
+    let Defs = [A, F];
   }
 }
 
