@@ -86,7 +86,7 @@ let Size = 1 in {
   def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (ins), []>;
 
   let isAdd = true, Uses = [HL], Defs = [HL, F] in
-  def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins), []>;
+  def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins), [(set HL, (add HL, GPR16:$rs))]>;
 }
 
 let isAdd = true, Uses = [SP], Defs = [F] in
@@ -176,3 +176,10 @@ let hasSideEffects = true in {
 def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins), []>;
 def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg), []>;
 def RST : GBRSTInstr<"rst", 0xC7, []>;
+
+
+// Patterns (and pattern-only immediates)
+def dimm16 : ImmLeaf<i16, [{return isInt<16>(Imm) || isUInt<16>(Imm);}]>;
+
+def : Pat<(dimm8:$imm), (LDI8_r dimm8:$imm)>;
+def : Pat<(dimm16:$imm), (LDI16 uimm16:$imm)>;

@@ -24,7 +24,7 @@ def uimm3 : GBImm<3, "U", i8>, ImmLeaf<i8, [{return isUInt<3>(Imm);}]>;
 def simm8 : GBImm<8, "S", i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
 def uimm8 : GBImm<8, "U", i8>, ImmLeaf<i8, [{return isUInt<8>(Imm);}]>;
 def dimm8 : GBImm<8, "D", i8>, ImmLeaf<i8, [{return isInt<8>(Imm) || isUInt<8>(Imm);}]>;
-def uimm16 : GBImm<16, "U", i16>, ImmLeaf<i8, [{return isUInt<16>(Imm);}]>;
+def uimm16 : GBImm<16, "U", i16>, ImmLeaf<i16, [{return isUInt<16>(Imm);}]>;
 
 def rstvec : Operand<i8> {
   let PrintMethod = "printU8ImmOperand";

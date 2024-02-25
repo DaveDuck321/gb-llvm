@@ -8,6 +8,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/NativeFormatting.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdint>
 
 using namespace llvm;
 
@@ -65,7 +66,7 @@ void GBInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
     OS << "$";
-    llvm::write_hex(OS, Operand.getImm(), HexPrintStyle::Lower, 2);
+    llvm::write_hex(OS, (uint8_t)Operand.getImm(), HexPrintStyle::Lower, 2);
   }
 }
 
@@ -80,7 +81,7 @@ void GBInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
   if (not printIfExpression(Operand, OS)) {
     assert(Operand.isImm());
     OS << "$";
-    llvm::write_hex(OS, Operand.getImm(), HexPrintStyle::Lower, 4);
+    llvm::write_hex(OS, (uint16_t)Operand.getImm(), HexPrintStyle::Lower, 4);
   }
 }
 

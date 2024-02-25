@@ -8,6 +8,10 @@
 # CHECK: encoding: [0xc6,0x50]
 add 80
 
+# CHECK-INST: ld a, $ff
+# CHECK: encoding: [0x3e,0xff]
+ld a, $ff
+
 # CHECK-INST: add 128
 # CHECK: encoding: [0xc6,0x80]
 add 0x80
