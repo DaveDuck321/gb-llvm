@@ -4,6 +4,7 @@
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
 #include "llvm/MC/MCInstPrinter.h"
+#include <cstdint>
 
 namespace llvm {
 
@@ -23,9 +24,11 @@ public:
   void printU3ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printS8ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printU8ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
-  void printD8ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printU16ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printFlagOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
+
+  void printPCRelS8ImmOperand(const MCInst *, uint64_t Addr, unsigned OpNo,
+                              raw_ostream &) const;
 
   // NOTE: these are TableGen'ed
   std::pair<const char *, uint64_t> getMnemonic(const MCInst *) override;

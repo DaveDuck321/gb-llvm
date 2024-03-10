@@ -8,12 +8,14 @@ namespace llvm {
 class GBTargetMachine;
 class MachineInstr;
 class MCInst;
+class AsmPrinter;
 
 class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
 
-void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI);
+void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
+                                 AsmPrinter &);
 
 } // namespace llvm
 

@@ -16,7 +16,7 @@ define i8 @addi(i8 %b) nounwind {
 ; GBI-LABEL: addi:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add 1
+; GBI-NEXT:    add $01
 ; GBI-NEXT:    ret
   %1 = add i8 %b, 1
   ret i8 %1
@@ -47,7 +47,7 @@ define i8 @subi(i8 %b) nounwind {
 ; GBI-LABEL: subi:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add -1
+; GBI-NEXT:    add $ff
 ; GBI-NEXT:    ret
   %1 = sub i8 %b, 1
   ret i8 %1
@@ -78,7 +78,7 @@ define i8 @andi(i8 %b) nounwind {
 ; GBI-LABEL: andi:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    and 1
+; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
   %1 = and i8 %b, 1
   ret i8 %1
@@ -109,7 +109,7 @@ define i8 @xori(i8 %b) nounwind {
 ; GBI-LABEL: xori:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    xor 1
+; GBI-NEXT:    xor $01
 ; GBI-NEXT:    ret
   %1 = xor i8 %b, 1
   ret i8 %1
@@ -140,7 +140,7 @@ define i8 @ori(i8 %b) nounwind {
 ; GBI-LABEL: ori:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    or 1
+; GBI-NEXT:    or $01
 ; GBI-NEXT:    ret
   %1 = or i8 %b, 1
   ret i8 %1

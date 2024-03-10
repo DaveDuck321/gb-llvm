@@ -34,7 +34,7 @@ ld a, (memory)
 
 
 # CHECK-FIXED: <jump_label>
-# CHECK-FIXED: add 66
+# CHECK-FIXED: add $42
 # CHECK-FIXED: jr nz, -3
 # CHECK-FIXED: ld sp, $4242
 # CHECK-FIXED: ld hl, sp, 10

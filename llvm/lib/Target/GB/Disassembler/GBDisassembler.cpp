@@ -99,12 +99,6 @@ DecodeStatus DecodeUImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
   return DecodeStatus::Success;
 }
 
-template <size_t SizeInBits>
-DecodeStatus DecodeDImmOperand(MCInst &MI, uint64_t Encoding, uint64_t Addr,
-                               const void *Decoder) {
-  return DecodeUImmOperand<SizeInBits>(MI, Encoding, Addr, Decoder);
-}
-
 } // namespace
 
 #include "GBGenDisassemblerTables.inc"

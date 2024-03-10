@@ -1,7 +1,6 @@
 #include "GBISelLowering.h"
 #include "GBRegisterInfo.h"
 #include "GBSubtarget.h"
-#include "GBTargetMachine.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -9,10 +8,12 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Support/Alignment.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -30,6 +31,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
 
   setStackPointerRegisterToSaveRestore(GB::SP);
 
+  setOperationAction(ISD::BR_CC, MVT::i8, Custom);
+
   // TODO GB: this is a guess, work out what this changes
   setBooleanContents(UndefinedBooleanContent);
 
@@ -40,16 +43,76 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
 SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
-    report_fatal_error("unimplemented!!");
+    report_fatal_error("GBTargetLowering::LowerOperation unimplemented!!");
+  case ISD::BR_CC:
+    return LowerBR_CC(Op, DAG);
   }
+}
+
+SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CCode =
+      dyn_cast<CondCodeSDNode>(Op.getOperand(1).getNode())->get();
+  SDValue LHS = Op.getOperand(2);
+  SDValue RHS = Op.getOperand(3);
+  SDValue BB = Op->getOperand(4);
+  SDLoc DL = Op;
+
+  auto ConvertToUnsignedCP = [&](ISD::CondCode UCond, unsigned Val) {
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, LHS.getValueType(), LHS, RHS);
+    LHS = Sub;
+    RHS = DAG.getConstant(Val, DL, MVT::i8);
+    CCode = UCond;
+  };
+
+  switch (CCode) {
+  default:
+    llvm_unreachable("Did not recognize condition code");
+
+  // Supported by the hardware
+  case ISD::CondCode::SETUGT:
+  case ISD::CondCode::SETUGE:
+  case ISD::CondCode::SETULT:
+  case ISD::CondCode::SETULE:
+  case ISD::CondCode::SETEQ:
+  case ISD::CondCode::SETNE:
+    break;
+
+  // We doesn't have hardware support for signed cmp, convert to subtract
+  // and unsigned cmp
+  case ISD::CondCode::SETGT:
+    std::swap(LHS, RHS);
+    ConvertToUnsignedCP(ISD::CondCode::SETUGT, 0x7F);
+    break;
+  case ISD::CondCode::SETGE:
+    // Use ULT and 0x80 here rather than ULE and 0x7f so we can emit CPI rather
+    // than an intermediate register copy
+    ConvertToUnsignedCP(ISD::CondCode::SETULT, 0x80);
+    break;
+  case ISD::CondCode::SETLT:
+    ConvertToUnsignedCP(ISD::CondCode::SETUGT, 0x7F);
+    break;
+  case ISD::CondCode::SETLE:
+    std::swap(LHS, RHS);
+    ConvertToUnsignedCP(ISD::CondCode::SETULT, 0x80);
+    break;
+  }
+
+  SDValue CC = DAG.getCondCode(CCode);
+  SDValue Cmp = DAG.getNode(GBISD::CP, DL, MVT::Glue, CC, LHS, RHS);
+  return DAG.getNode(GBISD::BR_CC, DL, MVT::Other, Chain, CC, BB, Cmp);
 }
 
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((GBISD::NodeType)Opcode) {
   case GBISD::FIRST_NUMBER:
     break;
-  case GBISD::RET_FLAG:
-    return "GBISD::RET_FLAG";
+  case GBISD::CP:
+    return "GBISD::CP";
+  case GBISD::BR_CC:
+    return "GBISD::BR_CC";
+  case GBISD::RET:
+    return "GBISD::RET";
   }
   return nullptr;
 }
@@ -147,7 +210,7 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     RetOps.push_back(Glue);
   }
 
-  return DAG.getNode(GBISD::RET_FLAG, DL, MVT::Other, RetOps);
+  return DAG.getNode(GBISD::RET, DL, MVT::Other, RetOps);
 }
 
 bool GBTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,

@@ -6,6 +6,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/NativeFormatting.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdint>
@@ -70,11 +71,6 @@ void GBInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-void GBInstPrinter::printD8ImmOperand(const MCInst *MI, unsigned OpNo,
-                                      raw_ostream &OS) const {
-  printS8ImmOperand(MI, OpNo, OS);
-}
-
 void GBInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
@@ -88,9 +84,10 @@ void GBInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printFlagOperand(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  assert(Operand.isImm());
+  assert(Operand.isImm() &&
+         (isUInt<2>(Operand.getImm()) || isInt<2>(Operand.getImm())));
 
-  switch (Operand.getImm()) {
+  switch (Operand.getImm() & 0b11) {
   case 0:
     OS << "nz";
     break;
@@ -105,5 +102,16 @@ void GBInstPrinter::printFlagOperand(const MCInst *MI, unsigned OpNo,
     break;
   default:
     llvm_unreachable("Unrecognized flag type");
+  }
+}
+
+void GBInstPrinter::printPCRelS8ImmOperand(const MCInst *MI, uint64_t Addr,
+                                           unsigned OpNo,
+                                           raw_ostream &OS) const {
+  // TODO GB: should I even use Addr?
+  const auto &Operand = MI->getOperand(OpNo);
+  if (not printIfExpression(Operand, OS)) {
+    assert(Operand.isImm());
+    OS << Operand.getImm();
   }
 }

@@ -20,11 +20,21 @@ class GBImm<int size, string signedness, ValueType ty> : Operand<ty> {
   let DecoderMethod = "Decode" # signedness # "ImmOperand<" # size # ">";
 }
 
-def uimm3 : GBImm<3, "U", i8>, ImmLeaf<i8, [{return isUInt<3>(Imm);}]>;
-def simm8 : GBImm<8, "S", i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
-def uimm8 : GBImm<8, "U", i8>, ImmLeaf<i8, [{return isUInt<8>(Imm);}]>;
-def dimm8 : GBImm<8, "D", i8>, ImmLeaf<i8, [{return isInt<8>(Imm) || isUInt<8>(Imm);}]>;
-def uimm16 : GBImm<16, "U", i16>, ImmLeaf<i16, [{return isUInt<16>(Imm);}]>;
+let OperandType = "OPERAND_IMMEDIATE" in {
+  def uimm3 : GBImm<3, "U", i8>;
+  def simm8 : GBImm<8, "S", i8>;
+  def uimm8 : GBImm<8, "U", i8>;
+  def uimm16 : GBImm<16, "U", i16>;
+
+  def bb_absolute : GBImm<16, "U", OtherVT>;
+}
+
+let OperandType = "OPERAND_PCREL" in {
+  def bb_pc_rel : GBImm<8, "S", OtherVT> {
+    let OperandType = "OPERAND_PCREL";
+    let PrintMethod = "printPCRelS8ImmOperand";
+  }
+}
 
 def rstvec : Operand<i8> {
   let PrintMethod = "printU8ImmOperand";
@@ -39,6 +49,12 @@ def GBAsmFlagOperand : AsmOperandClass {
   let DiagnosticString = "invalid flag";
   let ParserMethod = "tryParseFlag";
 }
+
+class GBFLAG_CC<bits<2> flag> { bits<2> Encoding = flag; }
+def GBFLAG_NZ : GBFLAG_CC<0>;
+def GBFLAG_Z  : GBFLAG_CC<1>;
+def GBFLAG_NC : GBFLAG_CC<2>;
+def GBFLAG_C  : GBFLAG_CC<3>;
 
 def flag : Operand<i2> {
   let PrintMethod = "printFlagOperand";
@@ -188,8 +204,8 @@ class _GB_SimpleImm8<string format, bits<8> opcode, GBImm immType, FixupKind fix
   let Size = 2;
 }
 
-class _GB_SimpleImm16<string format, bits<8> opcode>
-  : GBInstr<format, "", opcode, (outs), (ins uimm16:$imm), FixupData16>
+class GBAbsImm16<string format, bits<8> opcode>
+  : GBInstr<format, "", opcode, (outs), (ins bb_absolute:$imm), FixupData16>
 {
   bits<16> imm;
   let Inst{23 - 8} = imm;
@@ -249,8 +265,8 @@ class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs,
   let Inst{4 - 3} = flag;
 }
 
-class _GB_FlagImm8<string mnemonic, bits<8> opcode>
-  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins simm8:$imm), FixupPCRel8>
+class GBFlagPCRel<string mnemonic, bits<8> opcode>
+  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins bb_pc_rel:$imm), FixupPCRel8>
 {
   bits<8> imm;
   let Inst{15 - 8} = imm;
@@ -265,8 +281,8 @@ class GBRSTInstr<string mnemonic, bits<8> opcode>
   let Size = 1;
 }
 
-class _GB_FlagImm16<string mnemonic, bits<8> opcode>
-  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins uimm16:$imm), FixupData16>
+class GBAbsFlagImm16<string mnemonic, bits<8> opcode>
+  : _GB_FlagSequence<mnemonic, ", $imm", opcode, (ins bb_absolute:$imm), FixupData16>
 {
   bits<16> imm;
   let Inst{23 - 8} = imm;

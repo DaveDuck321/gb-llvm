@@ -104,7 +104,6 @@ public:
   bool isUImm3() const { return isImmN(3, false, false); }
   bool isSImm8() const { return isImmN(8, true); }
   bool isUImm8() const { return isImmN(8, false); }
-  bool isDImm8() const { return isImmN(8, false) || isImmN(8, true); }
   bool isUImm16() const { return isImmN(16, false); }
   bool isRstVec() const {
     if (not std::holds_alternative<Imm>(Data)) {

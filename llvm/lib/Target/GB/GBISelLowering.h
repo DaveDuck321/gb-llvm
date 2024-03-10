@@ -14,11 +14,13 @@ class GBSubtarget;
 namespace GBISD {
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
-  RET_FLAG,
+  CP,
+  BR_CC,
+  RET,
 };
 } // namespace GBISD
 
-  class GBTargetLowering : public TargetLowering {
+class GBTargetLowering : public TargetLowering {
 public:
   GBTargetLowering(const TargetMachine &, const GBSubtarget &);
 
@@ -26,6 +28,7 @@ public:
   const char *getTargetNodeName(unsigned Opcode) const override;
 
 private:
+  SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID, bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                const SDLoc &DL, SelectionDAG &,

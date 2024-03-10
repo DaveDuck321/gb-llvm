@@ -8,7 +8,7 @@ def LDI16 : GBGPR8LDI16<"ld", 0x01>;
 
 let mayStore = true, Uses = [A] in {
   def LDH_iImm_A : _GB_SimpleImm8<"ldh ($imm), a", 0xE0, uimm8, FixupData8>;
-  def LD_iImm_A : _GB_SimpleImm16<"ld ($imm), a", 0xEA>;
+  def LD_iImm_A : GBAbsImm16<"ld ($imm), a", 0xEA>;
   def LD_iR16_A : _GB_IR16S16Sequence<"ld ($rs), a", 0x02>;
 }
 
@@ -23,7 +23,7 @@ let mayStore = true, Uses = [A, HL], Defs = [HL] in {
 
 let mayLoad = true, Defs = [A] in {
   def LDH_A_iImm : _GB_SimpleImm8<"ldh a, ($imm)", 0xF0, uimm8, FixupData8>;
-  def LD_A_iImm : _GB_SimpleImm16<"ld a, ($imm)", 0xFA>;
+  def LD_A_iImm : GBAbsImm16<"ld a, ($imm)", 0xFA>;
   def LD_A_iR16 : _GB_IR16S16Sequence<"ld a, ($rs)", 0x0A>;
 
   let Uses = [C] in
@@ -45,7 +45,7 @@ let isMoveReg = true in {
 }
 
 let mayStore = true, Uses = [SP] in
-def LD_iImm16_SP : _GB_SimpleImm16<"ld ($imm), sp", 0x08>;
+def LD_iImm16_SP : GBAbsImm16<"ld ($imm), sp", 0x08>;
 
 let Size = 1 in {
   // TODO: be more specific about which flags are clobbered
@@ -58,18 +58,20 @@ let Size = 1 in {
   defm AND : _GB_GPR8S1Sequence<"and", 0xA0, (ins)>;
   defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins)>;
   defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins)>;
+
+  let Uses = [A], Defs = [F], isCompare = true in
   defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins)>;
 }
 
 let Uses = [A], Defs = [A, F] in {
-  def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, dimm8, FixupData8>;
-  def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, dimm8, FixupData8>;
-  def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, dimm8, FixupData8>;
-  def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, dimm8, FixupData8>;
-  def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, dimm8, FixupData8>;
-  def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, dimm8, FixupData8>;
-  def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, dimm8, FixupData8>;
-  def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, dimm8, FixupData8>;
+  def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, uimm8, FixupData8>;
+  def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, uimm8, FixupData8>;
+  def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, uimm8, FixupData8>;
+  def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, uimm8, FixupData8>;
+  def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, uimm8, FixupData8>;
+  def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, uimm8, FixupData8>;
+  def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, uimm8, FixupData8>;
+  def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, uimm8, FixupData8>;
 }
 
 let Size = 1 in {
@@ -122,11 +124,11 @@ let Defs = [F] in {
 defm RES : GBCBGPR8S1Imm3<"res", 0x80>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0>;
 
-let isTerminator = true in {
-  def JR : _GB_SimpleImm8<"jr $imm", 0x18, simm8, FixupPCRel8>;
+let isTerminator = true, isBranch = true, isBarrier = true in {
+  def JR : _GB_SimpleImm8<"jr $imm", 0x18, bb_pc_rel, FixupPCRel8>;
 
   let Uses = [F] in
-  def JR_COND : _GB_FlagImm8<"jr", 0x20>;
+  def JR_COND : GBFlagPCRel<"jr", 0x20>;
 }
 
 let isReturn = true, isTerminator = true in {
@@ -143,17 +145,17 @@ let isReturn = true, isTerminator = true in {
 
 let mayStore = true, isCall = true in {
   let Uses = [SP], Defs = [SP] in
-  def CALL : _GB_SimpleImm16<"call $imm", 0xCD>;
+  def CALL : GBAbsImm16<"call $imm", 0xCD>;
 
   let Uses = [F, SP], Defs = [SP] in
-  def CALL_COND : _GB_FlagImm16<"call", 0xC4>;
+  def CALL_COND : GBAbsFlagImm16<"call", 0xC4>;
 }
 
 let isTerminator = true in {
-  def JP : _GB_SimpleImm16<"jp $imm", 0xC3>;
+  def JP : GBAbsImm16<"jp $imm", 0xC3>;
 
   let isBranch = true, Uses = [F] in
-  def JP_COND : _GB_FlagImm16<"jp", 0xC2>;
+  def JP_COND : GBAbsFlagImm16<"jp", 0xC2>;
 
   let mayLoad = true, isIndirectBranch = true, Uses = [HL] in
   def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9>;
@@ -175,40 +177,72 @@ def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg)>;
 def RST : GBRSTInstr<"rst", 0xC7>;
 
 
+// Immediate types
+def imm8 : ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
+def imm16 : ImmLeaf<i16, [{return isInt<16>(Imm);}]>;
+
 // GB-Specific DAG nodes
-def RET_FLAG_NODE : SDNode<"GBISD::RET_FLAG", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
-def : Pat<(RET_FLAG_NODE), (RET)>;
+def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def : Pat<(RET_NODE), (RET)>;
 
-// Pattern-only immediates
-def dimm16 : ImmLeaf<i16, [{return isInt<16>(Imm) || isUInt<16>(Imm);}]>;
+//   CP operands: 0) condition code, 1) LHS, 2) RHS
+def SDTGBCP : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
+def CP_NODE : SDNode<"GBISD::CP", SDTGBCP, [SDNPOutGlue]>;
+def : Pat<(CP_NODE SETUGT, GPR8:$rs, A), (CP_r GPR8:$rs)>;
+def : Pat<(CP_NODE SETUGE, A, GPR8:$rs), (CP_r GPR8:$rs)>;
+def : Pat<(CP_NODE SETULT, A, GPR8:$rs), (CP_r GPR8:$rs)>;
+def : Pat<(CP_NODE SETULE, GPR8:$rs, A), (CP_r GPR8:$rs)>;
 
-// Constants
-def : Pat<(dimm8:$imm), (LDI8_r dimm8:$imm)>;
-def : Pat<(dimm16:$imm), (LDI16 uimm16:$imm)>;
+def : Pat<(CP_NODE SETEQ,  A, GPR8:$rs), (CP_r GPR8:$rs)>;
+def : Pat<(CP_NODE SETNE,  A, GPR8:$rs), (CP_r GPR8:$rs)>;
+
+def : Pat<(CP_NODE SETUGT, A, imm8:$imm8), (CPI imm8:$imm8)>;
+def : Pat<(CP_NODE SETULT, A, imm8:$imm8), (CPI imm8:$imm8)>;
+def : Pat<(CP_NODE SETEQ,  A, imm8:$imm8), (CPI imm8:$imm8)>;
+def : Pat<(CP_NODE SETNE,  A, imm8:$imm8), (CPI imm8:$imm8)>;
+
+//   BR_CC operands: 0) condition code, 1) basic block addr
+// TODO GB: generate JP here and optimize into JR in another pass
+def SDTGBBR_CC  : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>]>;
+def BR_CC_NODE : SDNode<"GBISD::BR_CC", SDTGBBR_CC, [SDNPInGlue, SDNPHasChain]>;
+def : Pat<(BR_CC_NODE SETUGT, bb:$imm), (JR_COND GBFLAG_C.Encoding, bb:$imm)>;
+def : Pat<(BR_CC_NODE SETUGE, bb:$imm), (JR_COND GBFLAG_NC.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETULT, bb:$imm), (JR_COND GBFLAG_C.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETULE, bb:$imm), (JR_COND GBFLAG_NC.Encoding, bb:$imm)>;
+def : Pat<(BR_CC_NODE SETEQ,  bb:$imm), (JR_COND GBFLAG_Z.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETNE,  bb:$imm), (JR_COND GBFLAG_NZ.Encoding, bb:$imm)>;
+
+// Constants for pattern matching
+def : Pat<(imm8:$imm), (LDI8_r imm8:$imm)>;
+def : Pat<(imm16:$imm), (LDI16 imm16:$imm)>;
 
 // ALU 8-bit
-def : Pat<(add A, dimm8:$imm), (ADDI dimm8:$imm)>;
+def : Pat<(add A, imm8:$imm), (ADDI imm8:$imm)>;
 def : Pat<(add A, GPR8:$rs), (ADD_r GPR8:$rs)>;
 def : Pat<(add A, (load HL)), (ADD_iHL)>;
 
-def : Pat<(sub A, dimm8:$imm), (SUBI dimm8:$imm)>;
+def : Pat<(sub A, imm8:$imm), (SUBI imm8:$imm)>;
 def : Pat<(sub A, GPR8:$rs), (SUB_r GPR8:$rs)>;
 def : Pat<(sub A, (load HL)), (SUB_iHL)>;
 
-def : Pat<(and A, dimm8:$imm), (ANDI dimm8:$imm)>;
+def : Pat<(and A, imm8:$imm), (ANDI imm8:$imm)>;
 def : Pat<(and A, GPR8:$rs), (AND_r GPR8:$rs)>;
 def : Pat<(and A, (load HL)), (AND_iHL)>;
 
-def : Pat<(xor A, dimm8:$imm), (XORI dimm8:$imm)>;
+def : Pat<(xor A, imm8:$imm), (XORI imm8:$imm)>;
 def : Pat<(xor A, GPR8:$rs), (XOR_r GPR8:$rs)>;
 def : Pat<(xor A, (load HL)), (XOR_iHL)>;
 
-def : Pat<(or A, dimm8:$imm), (ORI dimm8:$imm)>;
+def : Pat<(or A, imm8:$imm), (ORI imm8:$imm)>;
 def : Pat<(or A, GPR8:$rs), (OR_r GPR8:$rs)>;
 def : Pat<(or A, (load HL)), (OR_iHL)>;
 
 // ALU 16-bit
 def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
+
+// Branches
+// TODO GB: generate JP here and optimize into JR in another pass
+def : Pat<(br bb:$imm), (JR bb_pc_rel:$imm)>;
 
 // Memory
 def : Pat<(load HL), (LD_r_HL)>;

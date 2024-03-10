@@ -4,6 +4,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
 
 #include <memory>
@@ -25,8 +26,9 @@ public:
 } // namespace
 
 void GBAsmPrinter::emitInstruction(const MachineInstr *MI) {
+  LLVM_DEBUG(dbgs() << "Inst=" << MI->getOpcode() << "\n";);
   MCInst Inst;
-  LowerGBMachineInstrToMCInst(MI, Inst);
+  LowerGBMachineInstrToMCInst(MI, Inst, *this);
   EmitToStreamer(*OutStreamer, Inst);
 }
 
