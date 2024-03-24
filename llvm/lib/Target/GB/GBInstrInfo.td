@@ -93,10 +93,13 @@ def ADD_SP : _GB_SimpleImm8<"add sp, $imm", 0xe8, simm8, FixupData8>;
 
 let Uses = [A], Defs = [A, F] in {
   def RLCA : GBInstrNoOperands<"rlca", 0x07>;
-  def RLA  : GBInstrNoOperands<"rla", 0x17>;
   def RRCA : GBInstrNoOperands<"rrca", 0x0F>;
-  def RRA  : GBInstrNoOperands<"rra", 0x1F>;
   def CPL  : GBInstrNoOperands<"cpl", 0x2F>;
+}
+
+let Uses = [A, F], Defs = [A, F] in {
+  def RLA  : GBInstrNoOperands<"rla", 0x17>;
+  def RRA  : GBInstrNoOperands<"rra", 0x1F>;
 }
 
 let Uses = [A, F], Defs = [A, F] in {
@@ -196,10 +199,21 @@ def : Pat<(CP_NODE SETULE, GPR8:$rs, A), (CP_r GPR8:$rs)>;
 def : Pat<(CP_NODE SETEQ,  A, GPR8:$rs), (CP_r GPR8:$rs)>;
 def : Pat<(CP_NODE SETNE,  A, GPR8:$rs), (CP_r GPR8:$rs)>;
 
-def : Pat<(CP_NODE SETUGT, A, imm8:$imm8), (CPI imm8:$imm8)>;
+def : Pat<(CP_NODE SETUGE, A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETULT, A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETEQ,  A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETNE,  A, imm8:$imm8), (CPI imm8:$imm8)>;
+
+def : Pat<(CP_NODE SETULT, GPR8:$rs, 1), (DEC_r GPR8:$rs)>;
+
+// Rotates the carry into A, used as our setcc
+def SDTGB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;
+def RLA_NODE : SDNode<"GBISD::RLA", SDTGB1i8, [SDNPInGlue]>;
+def : Pat<(RLA_NODE A), (RLA)>;
+
+// Rotates A, useful for %i1 = sign(a)
+def RLCA_NODE : SDNode<"GBISD::RLCA", SDTGB1i8, []>;
+def : Pat<(RLCA_NODE A), (RLCA)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
 // TODO GB: generate JP here and optimize into JR in another pass
@@ -245,5 +259,5 @@ def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
 def : Pat<(br bb:$imm), (JR bb_pc_rel:$imm)>;
 
 // Memory
-def : Pat<(load HL), (LD_r_HL)>;
-def : Pat<(store GPR8:$rs, HL), (LD_HL_r GPR8:$rs)>;
+def : Pat<(load HL), (LD_r_iHL)>;
+def : Pat<(store GPR8:$rs, HL), (LD_iHL_r GPR8:$rs)>;

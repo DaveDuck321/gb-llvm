@@ -7,6 +7,8 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetCallingConv.h"
 #include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -14,9 +16,11 @@ class GBSubtarget;
 namespace GBISD {
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
-  CP,
   BR_CC,
+  CP,
   RET,
+  RLA,
+  RLCA,
 };
 } // namespace GBISD
 
@@ -29,6 +33,7 @@ public:
 
 private:
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID, bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                const SDLoc &DL, SelectionDAG &,
@@ -37,6 +42,10 @@ private:
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutsVals, const SDLoc &DL,
                       SelectionDAG &) const override;
+  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                         EVT VT) const override;
+  bool isSelectSupported(SelectSupportKind) const override;
+  bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                          Type *Ty) const override;
 };

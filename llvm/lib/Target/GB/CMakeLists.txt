@@ -21,6 +21,7 @@ add_llvm_target(GBCodeGen
     GBISelDAGToDAG.cpp
     GBISelLowering.cpp
     GBMCInstLower.cpp
+    GBPreISelSelectExpand.cpp
     GBRegisterInfo.cpp
     GBSubtarget.cpp
     GBTargetMachine.cpp

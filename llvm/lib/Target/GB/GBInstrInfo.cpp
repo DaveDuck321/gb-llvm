@@ -3,6 +3,8 @@
 #include "GBRegisterInfo.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <iterator>
@@ -62,4 +64,41 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 
   llvm_unreachable("Unsupported register copy!");
+}
+
+void GBInstrInfo::storeRegToStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
+    bool isKill, int FrameIndex, const TargetRegisterClass *RC,
+    const TargetRegisterInfo *TRI, Register VReg) const {
+  DebugLoc DL;
+  if (MI != MBB.end()) {
+    DL = MI->getDebugLoc();
+  }
+
+  if (GB::GPR8RegClass.hasSubClassEq(RC)) {
+    // TODO GB: this assume that we NEVER use the frame pointer
+    BuildMI(MBB, MI, DL, get(GB::LD_HL_SP)).addFrameIndex(FrameIndex);
+    BuildMI(MBB, MI, DL, get(GB::LD_iHL_r)).addReg(SrcReg);
+    return;
+  }
+  llvm_unreachable("Could not save reg to stack slot!");
+}
+
+void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                       Register DestReg, int FrameIndex,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI,
+                                       Register VReg) const {
+  DebugLoc DL;
+  if (MI != MBB.end()) {
+    DL = MI->getDebugLoc();
+  }
+
+  if (GB::GPR8RegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, MI, DL, get(GB::LD_HL_SP)).addFrameIndex(FrameIndex);
+    BuildMI(MBB, MI, DL, get(GB::LD_r_iHL)).addDef(DestReg);
+    return;
+  }
+  llvm_unreachable("Could not load reg to stack slot!");
 }

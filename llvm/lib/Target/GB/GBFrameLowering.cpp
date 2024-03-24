@@ -1,4 +1,5 @@
 #include "GBFrameLowering.h"
+#include "llvm/CodeGen/MachineFunction.h"
 
 using namespace llvm;
 
@@ -13,6 +14,6 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {}
 
 bool GBFrameLowering::hasFP(const MachineFunction &MF) const {
-  // TODO GB: I really want this to be always false... what would break?
-  return true;
+  // FIXME GB: I'm assuming this won't hold forever
+  return false;
 }

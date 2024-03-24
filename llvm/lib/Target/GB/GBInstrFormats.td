@@ -133,14 +133,14 @@ multiclass GBGPR8LD<string mnemonic, bits<8> opcode> {
       let Inst{2 - 0} = rs;
       let isMoveReg = true;
     }
-    def _r_HL : GBInstr<mnemonic, "$rd, (hl)", opcode, (outs GPR8:$rd), (ins), FixupNone> {
+    def _r_iHL : GBInstr<mnemonic, "$rd, (hl)", opcode, (outs GPR8:$rd), (ins), FixupNone> {
       bits<3> rd;
       let Inst{5 - 3} = rd;
       let Inst{2 - 0} = 0b110;
       let Uses = [HL];
       let mayLoad = true;
     }
-    def _HL_r : GBInstr<mnemonic, "(hl), $rs", opcode, (outs), (ins GPR8:$rs), FixupNone> {
+    def _iHL_r : GBInstr<mnemonic, "(hl), $rs", opcode, (outs), (ins GPR8:$rs), FixupNone> {
       bits<3> rs;
       let Inst{5 - 3} = 0b110;
       let Inst{2 - 0} = rs;

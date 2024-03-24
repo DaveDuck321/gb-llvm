@@ -2,9 +2,12 @@
 #include "GBFrameLowering.h"
 #include "GBTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetMachine.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "GBGenRegisterInfo.inc"
@@ -28,12 +31,22 @@ BitVector GBRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                          int SPAdj, unsigned FIOperandNum,
                                          RegScavenger *RS) const {
-  report_fatal_error("Not yet implemented!");
+  assert(SPAdj == 0 && "Unexpected SPAdj value");
+
+  DebugLoc DL = MI->getDebugLoc();
+  MachineBasicBlock &MBB = *MI->getParent();
+  const MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
+  int Offset = MFI.getObjectOffset(FrameIndex);
+
+  assert(isInt<8>(Offset));
+  MI->getOperand(FIOperandNum).ChangeToImmediate(Offset);
+  return false;
 }
 
 Register GBRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  // TODO GB: atm there is NO frame pointer, only BC
-  // Since the GB does not support dynamic allocation, alloca might be useful
-  // and this decision might not be smart.
-  return GB::BC;
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  assert(not TFI->hasFP(MF) && "Frame pointer generation is not supported");
+  return GB::SP;
 }

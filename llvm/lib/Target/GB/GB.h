@@ -13,6 +13,7 @@ class AsmPrinter;
 class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
+FunctionPass *createGBPreISelSelectExpand();
 
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);

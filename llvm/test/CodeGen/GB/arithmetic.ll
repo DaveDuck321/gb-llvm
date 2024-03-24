@@ -166,3 +166,121 @@ define i16 @add16(i16 %a) nounwind {
   %1 = add i16 %a, 20
   ret i16 %1
 }
+
+
+define i1 @setcc_eq(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_eq:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub c
+; GBI-NEXT:    dec a
+; GBI-NEXT:    rla
+; GBI-NEXT:    ret
+  %1 = icmp eq i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_ne(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_ne:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub c
+; GBI-NEXT:    dec a
+; GBI-NEXT:    rla
+; GBI-NEXT:    xor $ff
+; GBI-NEXT:    ret
+  %1 = icmp ne i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_gt:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    sub b
+; GBI-NEXT:    rlca
+; GBI-NEXT:    ret
+  %1 = icmp sgt i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_lt:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub c
+; GBI-NEXT:    rlca
+; GBI-NEXT:    ret
+  %1 = icmp slt i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_le(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_le:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    sub b
+; GBI-NEXT:    rlca
+; GBI-NEXT:    xor $ff
+; GBI-NEXT:    ret
+  %1 = icmp sle i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_ge:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub c
+; GBI-NEXT:    rlca
+; GBI-NEXT:    xor $ff
+; GBI-NEXT:    ret
+  %1 = icmp sge i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_ugt(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_ugt:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    cp b
+; GBI-NEXT:    rla
+; GBI-NEXT:    ret
+  %1 = icmp ugt i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_ult(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_ult:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    cp c
+; GBI-NEXT:    rla
+; GBI-NEXT:    ret
+  %1 = icmp ult i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_ule(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_ule:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    cp b
+; GBI-NEXT:    rla
+; GBI-NEXT:    xor $ff
+; GBI-NEXT:    ret
+  %1 = icmp ule i8 %b, %c
+  ret i1 %1
+}
+
+define i1 @setcc_uge(i8 %b, i8 %c) nounwind {
+; GBI-LABEL: setcc_uge:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    cp c
+; GBI-NEXT:    rla
+; GBI-NEXT:    xor $ff
+; GBI-NEXT:    ret
+  %1 = icmp uge i8 %b, %c
+  ret i1 %1
+}
