@@ -386,16 +386,16 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-NEXT:    jr .LBB11_1
 ; GBI-O0-NEXT:  .LBB11_1: ; %label1
 ; GBI-O0-NEXT:    ld a, $04
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jr .LBB11_3
 ; GBI-O0-NEXT:  .LBB11_2: ; %label2
 ; GBI-O0-NEXT:    ld a, $05
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jr .LBB11_3
 ; GBI-O0-NEXT:  .LBB11_3: ; %end
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ret
 ;
@@ -432,16 +432,16 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:    jr .LBB12_1
 ; GBI-O0-NEXT:  .LBB12_1: ; %select.true
 ; GBI-O0-NEXT:    ld a, $04
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jr .LBB12_3
 ; GBI-O0-NEXT:  .LBB12_2: ; %select.false
 ; GBI-O0-NEXT:    ld a, $05
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jr .LBB12_3
 ; GBI-O0-NEXT:  .LBB12_3: ; %select.end
-; GBI-O0-NEXT:    ld hl, sp, -1
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ret
 ;
@@ -460,4 +460,163 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O3-NEXT:    ret
   %result = select i1 %b, i8 4, i8 5
   ret i8 %result
+}
+
+define void @jt(i8 %in, ptr %out) {
+; GBI-O0-LABEL: jt:
+; GBI-O0:       ; %bb.0: ; %entry
+; GBI-O0-NEXT:    add sp, 4
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    cp $01
+; GBI-O0-NEXT:    jr z, .LBB13_1
+; GBI-O0-NEXT:    jr .LBB13_6
+; GBI-O0-NEXT:  .LBB13_6: ; %entry
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    cp $02
+; GBI-O0-NEXT:    jr z, .LBB13_2
+; GBI-O0-NEXT:    jr .LBB13_7
+; GBI-O0-NEXT:  .LBB13_7: ; %entry
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    cp $03
+; GBI-O0-NEXT:    jr z, .LBB13_3
+; GBI-O0-NEXT:    jr .LBB13_8
+; GBI-O0-NEXT:  .LBB13_8: ; %entry
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    cp $04
+; GBI-O0-NEXT:    jr z, .LBB13_4
+; GBI-O0-NEXT:    jr .LBB13_5
+; GBI-O0-NEXT:  .LBB13_1: ; %bb1
+; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    ld a, $04
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr .LBB13_5
+; GBI-O0-NEXT:  .LBB13_2: ; %bb2
+; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    ld a, $03
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr .LBB13_5
+; GBI-O0-NEXT:  .LBB13_3: ; %bb3
+; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    ld a, $02
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr .LBB13_5
+; GBI-O0-NEXT:  .LBB13_4: ; %bb4
+; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    ld a, $01
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr .LBB13_5
+; GBI-O0-NEXT:  .LBB13_5: ; %exit
+; GBI-O0-NEXT:    ret
+;
+; GBI-O3-LABEL: jt:
+; GBI-O3:       ; %bb.0: ; %entry
+; GBI-O3-NEXT:    ld c, $02
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    cp $80
+; GBI-O3-NEXT:    jr nc, .LBB13_3
+; GBI-O3-NEXT:    jr .LBB13_1
+; GBI-O3-NEXT:  .LBB13_1: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $01
+; GBI-O3-NEXT:    jr z, .LBB13_5
+; GBI-O3-NEXT:    jr .LBB13_2
+; GBI-O3-NEXT:  .LBB13_2: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $02
+; GBI-O3-NEXT:    jr z, .LBB13_6
+; GBI-O3-NEXT:    jr .LBB13_9
+; GBI-O3-NEXT:  .LBB13_6: ; %bb2
+; GBI-O3-NEXT:    ld a, $03
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    jr .LBB13_9
+; GBI-O3-NEXT:  .LBB13_3: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $03
+; GBI-O3-NEXT:    jr z, .LBB13_7
+; GBI-O3-NEXT:    jr .LBB13_4
+; GBI-O3-NEXT:  .LBB13_4: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $04
+; GBI-O3-NEXT:    jr z, .LBB13_8
+; GBI-O3-NEXT:    jr .LBB13_9
+; GBI-O3-NEXT:  .LBB13_8: ; %bb4
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:  .LBB13_9: ; %exit
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB13_5: ; %bb1
+; GBI-O3-NEXT:    ld a, $04
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    jr .LBB13_9
+; GBI-O3-NEXT:  .LBB13_7: ; %bb3
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    jr .LBB13_9
+entry:
+  switch i8 %in, label %exit [
+    i8 1, label %bb1
+    i8 2, label %bb2
+    i8 3, label %bb3
+    i8 4, label %bb4
+  ]
+bb1:
+  store i8 4, ptr %out
+  br label %exit
+bb2:
+  store i8 3, ptr %out
+  br label %exit
+bb3:
+  store i8 2, ptr %out
+  br label %exit
+bb4:
+  store i8 1, ptr %out
+  br label %exit
+exit:
+  ret void
+}
+
+define i8 @indirectbr(ptr %target) nounwind {
+; GBI-O0-LABEL: indirectbr:
+; GBI-O0:       ; %bb.0:
+; GBI-O0-NEXT:    jp (hl)
+; GBI-O0-NEXT:  .LBB14_1: ; %test_label1
+; GBI-O0-NEXT:    ld a, $01
+; GBI-O0-NEXT:    ret
+; GBI-O0-NEXT:  .LBB14_2: ; %test_label2
+; GBI-O0-NEXT:    jr .LBB14_3
+; GBI-O0-NEXT:  .LBB14_3: ; %ret
+; GBI-O0-NEXT:    ld a, $00
+; GBI-O0-NEXT:    ret
+;
+; GBI-O3-LABEL: indirectbr:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    jp (hl)
+; GBI-O3-NEXT:  .LBB14_1: ; %test_label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB14_2: ; %test_label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+  indirectbr ptr %target, [label %test_label1, label %test_label2]
+test_label1:
+  ret i8 1
+test_label2:
+  br label %ret
+ret:
+  ret i8 0
 }

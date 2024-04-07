@@ -3,9 +3,12 @@ class GBReg<string name, bits<16> enc> : Register<name> {
     let HWEncoding = enc;
 }
 
+def UpperSubReg : SubRegIndex<8, 8>;
+def LowerSubReg : SubRegIndex<8, 0>;
+
 class GBCombinedReg<string name, bits<16> enc, list<GBReg> halves> : GBReg<name, enc> {
     let SubRegs = halves;
-    let SubRegIndices = [SubRegIndex<8, 0>, SubRegIndex<8, 8>];
+    let SubRegIndices = [LowerSubReg, UpperSubReg];
     let CoveredBySubRegs = true;
 }
 

@@ -88,7 +88,7 @@ let Size = 1 in {
   def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins)>;
 }
 
-let isAdd = true, Uses = [SP], Defs = [F] in
+let isAdd = true, Uses = [SP], Defs = [SP, F] in
 def ADD_SP : _GB_SimpleImm8<"add sp, $imm", 0xe8, simm8, FixupData8>;
 
 let Uses = [A], Defs = [A, F] in {
@@ -160,8 +160,8 @@ let isTerminator = true in {
   let isBranch = true, Uses = [F] in
   def JP_COND : GBAbsFlagImm16<"jp", 0xC2>;
 
-  let mayLoad = true, isIndirectBranch = true, Uses = [HL] in
-  def JP_iHL : GBInstrNoOperands<"jp (hl)", 0xE9>;
+  let isIndirectBranch = true, Uses = [HL] in
+  def JP_HL : GBInstrNoOperands<"jp (hl)", 0xE9>;
 }
 
 let hasSideEffects = true in {
@@ -175,10 +175,14 @@ let hasSideEffects = true in {
   def EI   : GBInstrNoOperands<"ei", 0xFb>;
 }
 
-def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins)>;
-def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg)>;
-def RST : GBRSTInstr<"rst", 0xC7>;
+let mayLoad = true in {
+  def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins)>;
+  def RST : GBRSTInstr<"rst", 0xC7>;
+}
 
+let mayStore = true in {
+  def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg)>;
+}
 
 // Immediate types
 def imm8 : ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
@@ -187,6 +191,10 @@ def imm16 : ImmLeaf<i16, [{return isInt<16>(Imm);}]>;
 // GB-Specific DAG nodes
 def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def : Pat<(RET_NODE), (RET)>;
+
+//   ADDR_WRAPPER exists to match targetaddr against i16
+def SDTGBAddrWrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
+def ADDR_WRAPPER : SDNode<"GBISD::ADDR_WRAPPER", SDTGBAddrWrapper>;
 
 //   CP operands: 0) condition code, 1) LHS, 2) RHS
 def SDTGBCP : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
@@ -229,6 +237,8 @@ def : Pat<(BR_CC_NODE SETNE,  bb:$imm), (JR_COND GBFLAG_NZ.Encoding, bb:$imm)>;
 // Constants for pattern matching
 def : Pat<(imm8:$imm), (LDI8_r imm8:$imm)>;
 def : Pat<(imm16:$imm), (LDI16 imm16:$imm)>;
+def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 imm16:$imm)>;
+def : Pat<(ADDR_WRAPPER tblockaddress:$imm), (LDI16 imm16:$imm)>;
 
 // ALU 8-bit
 def : Pat<(add A, imm8:$imm), (ADDI imm8:$imm)>;
@@ -257,7 +267,47 @@ def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
 // Branches
 // TODO GB: generate JP here and optimize into JR in another pass
 def : Pat<(br bb:$imm), (JR bb_pc_rel:$imm)>;
+def : Pat<(brind HL), (JP_HL)>;
 
 // Memory
 def : Pat<(load HL), (LD_r_iHL)>;
 def : Pat<(store GPR8:$rs, HL), (LD_iHL_r GPR8:$rs)>;
+
+
+// Pseudos hack an extra operand for frame lowering
+class Pseudo<string name, string args, dag outs, dag ins>
+    : GBInstr<"pseudo " # name, args, -1, outs, ins, FixupNone> {
+  let isPseudo = 1;
+  let isCodeGenOnly = 1;
+}
+
+def Save16ToFrameIndex : Pseudo<"save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)> {
+    let mayStore = true;
+}
+
+def Load16FromFrameIndex : Pseudo<"load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)> {
+    let mayLoad = true;
+}
+
+def Save8ToFrameIndex : Pseudo<"save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)> {
+    let mayStore = true;
+}
+
+def Load8FromFrameIndex : Pseudo<"load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)> {
+    let mayLoad = true;
+}
+
+
+// Combine and split
+def SDTGBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
+def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDTGBCOMBINE, [SDNPHasChain]>;
+
+def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
+          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
+
+def SDTGBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
+def LOWER_NODE : SDNode<"GBISD::LOWER", SDTGBSPLIT, []>;
+def UPPER_NODE : SDNode<"GBISD::UPPER", SDTGBSPLIT, []>;
+
+def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
+def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;

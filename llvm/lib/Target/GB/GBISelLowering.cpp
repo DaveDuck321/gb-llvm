@@ -6,6 +6,7 @@
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineValueType.h"
@@ -13,9 +14,11 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <utility>
@@ -26,35 +29,115 @@ using namespace llvm;
 
 GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
                                    const GBSubtarget &STI)
-    : TargetLowering(TM) {
+    : TargetLowering(TM), Subtarget(STI) {
   addRegisterClass(MVT::i8, &GB::GPR8RegClass);
   addRegisterClass(MVT::i16, &GB::GPR16RegClass);
-
   computeRegisterProperties(STI.getRegisterInfo());
 
-  setStackPointerRegisterToSaveRestore(GB::SP);
-
-  // TODO: brcond should generate rra as part of the br_cc pattern
-  setOperationAction(ISD::BRCOND, MVT::Other, Expand); // -> br_cc
-  setOperationAction(ISD::BR_CC, MVT::i8, Custom);
-  setOperationAction(ISD::SETCC, MVT::i8, Custom);
-  // Select nodes should have already been removed by GBPerISelSelectExpand
-  setOperationAction(ISD::SELECT, MVT::i8, Custom);
-  setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
+  // setStackPointerRegisterToSaveRestore(GB::SP);
+  setMinFunctionAlignment(Align{1});
+  setPrefFunctionAlignment(Align{1});
+  setMinimumJumpTableEntries(INT_MAX); // Disable jump tables
 
   // Undefined bools allow a fast setcc implementation using the rla instruction
   // This makes select 4 cycles slower compared to
   // ZeroOrNegativeOneBooleanContent but makes setcc 12-20 cycles faster.
   setBooleanContents(UndefinedBooleanContent);
 
-  setMinFunctionAlignment(Align{1});
-  setPrefFunctionAlignment(Align{1});
+  // AssertSext, AssertZext, AssertAlign
+  // CONDCODE
+  // RegisterMask
+  setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
+  // GlobalTLSAddress
+  // FrameIndex
+  // JumpTable
+  // ConstantPool
+  // ExternalSymbol
+  setOperationAction(ISD::BlockAddress, MVT::i16, Custom);
+  // GLOBAL_OFFSET_TABLE
+  // FRAMEADDR
+  // RETURNADDR
+  // ADDROFRETURNADDR
+  // SPONENTRY
+  // LOCAL_RECOVER, READ_REGISTER, WRITE_REGISTER
+  // FRAME_TO_ARGS_OFFSET
+  // MCSymbol
+  // INTRINSIC_WO_CHAIN, INTRINSIC_W_CHAIN, INTRINSIC_VOID
+  // ADD, SUB
+  // MUL, SDIV, UDIV, SREM, UREM
+  // SMUL_LOHI, UMUL_LOHI
+  // SDIVREM, UDIVREM
+  // CARRY_FALSE
+  // ADDC                // Expanded
+  // SUBC                // Expanded
+  // ADDE                // Expanded
+  // SUBE                // Expanded
+  // UADDO_CARRY         // Expanded
+  // USUBO_CARRY         // Expanded
+  // SADDO_CARRY         // Expanded
+  // SSUBO_CARRY         // Expanded
+  // SADDO               // Expanded
+  // UADDO               // Expanded
+  // SSUBO               // Expanded
+  // USUBO               // Expanded
+  // SMULO               // Expanded
+  // UMULO               // Expanded
+  // MULHU, MULHS
+  // AND, OR, XOR
+  // SHL, SRA, SRL
+  // ROTL, ROTR
+  // BSWAP
+  // CTTZ, CTLZ
+  // CTPOP
+  // SELECT, SELECT_CC
+  setOperationAction(ISD::SETCC, MVT::i8, Custom);
+  // SETCCCARRY         // Expanded
+  // SHL_PARTS, SRA_PARTS, SRL_PARTS
+  // SIGN_EXTEND, ZERO_EXTEND, ANY_EXTEND
+  // TRUNCATE
+  // SIGN_EXTEND_INREG
+  // BITCAST
+  // ADDRSPACECAST
+  setOperationAction(ISD::LOAD, MVT::i8, Legal);
+  setOperationAction(ISD::LOAD, MVT::i16, Custom);
+  setOperationAction(ISD::STORE, MVT::i8, Legal);
+  setOperationAction(ISD::STORE, MVT::i16, Custom);
+  //  DYNAMIC_STACKALLOC
+  //  BR_JT
+  //  TODO: brcond should generate rra as part of the br_cc pattern
+  setOperationAction(ISD::BR, MVT::Other, Legal);
+  setOperationAction(ISD::BRIND, MVT::Other, Legal);
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand); // -> br_cc
+  setOperationAction(ISD::BR_CC, MVT::i8, Custom);
+  // INLINEASM, INLINEASM_BR
+  // ANNOTATION_LABEL
+  // STACKSAVE, STACKRESTORE
+  // CALLSEQ_START, CALLSEQ_END
+  // VAARG, VACOPY, VAEND, VASTART
+  // PREALLOCATED_SETUP, PREALLOCATED_ARG
+  // SRCVALUE
+  // MDNODE_SDNODE
+  // PCMARKER
+  // READCYCLECOUNTER
+  // HANDLENODE
+  // INIT_TRAMPOLINE, ADJUST_TRAMPOLINE
+  // TRAP
+  // LIFETIME_START, LIFETIME_END
+  // GET_DYNAMIC_AREA_OFFSET
+  // PSEUDO_PROBE
+  // STACKMAP
+  // PATCHPOINT
 }
 
 SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
+    Op->print(dbgs(), &DAG);
     report_fatal_error("GBTargetLowering::LowerOperation unimplemented!!");
+  case ISD::LOAD:
+    return LowerLOAD16(Op, DAG);
+  case ISD::STORE:
+    return LowerSTORE16(Op, DAG);
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
   case ISD::SETCC:
@@ -62,7 +145,72 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SELECT:
   case ISD::SELECT_CC:
     llvm_unreachable("DAG tried to lower ISD::SELECT_(CC)");
+  case ISD::GlobalAddress:
+    return LowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:
+    return LowerBlockAddress(Op, DAG);
   }
+}
+
+SDValue GBTargetLowering::LowerLOAD16(SDValue Op, SelectionDAG &DAG) const {
+  LoadSDNode *Node = dyn_cast<LoadSDNode>(Op);
+  assert(Op.getSimpleValueType() == MVT::i16);
+  assert(Node != nullptr);
+
+  SDValue Chain = Node->getChain();
+  SDValue BasePtr = Node->getBasePtr();
+  SDValue Offset = Node->getOffset();
+  SDLoc DL = Op;
+
+  SDValue PtrLower;
+  if (Node->isIndexed()) {
+    PtrLower = DAG.getNode(ISD::ADD, DL, MVT::i16, BasePtr, Offset);
+  } else {
+    assert(Offset->isUndef());
+    PtrLower = BasePtr;
+  }
+
+  SDValue PtrUpper = DAG.getNode(ISD::ADD, DL, MVT::i16, PtrLower,
+                                 DAG.getConstant(1, DL, MVT::i16));
+  SDValue Lower =
+      DAG.getLoad(MVT::i8, DL, Chain, PtrLower, Node->getMemOperand());
+  Chain = Lower.getValue(1);
+
+  SDValue Upper =
+      DAG.getLoad(MVT::i8, DL, Chain, PtrUpper, Node->getMemOperand());
+  Chain = Upper.getValue(1);
+
+  SDVTList VTs = DAG.getVTList(MVT::i16, MVT::Other);
+  return DAG.getNode(GBISD::COMBINE, DL, VTs, Chain, Lower, Upper);
+}
+
+SDValue GBTargetLowering::LowerSTORE16(SDValue Op, SelectionDAG &DAG) const {
+  StoreSDNode *Node = dyn_cast<StoreSDNode>(Op);
+  assert(Node != nullptr);
+  assert(Node->getValue().getSimpleValueType() == MVT::i16);
+
+  SDValue Chain = Node->getChain();
+  SDValue BasePtr = Node->getBasePtr();
+  SDValue Offset = Node->getOffset();
+  SDValue Value = Node->getValue();
+  SDLoc DL = Op;
+
+  SDValue PtrLower;
+  if (Node->isIndexed()) {
+    PtrLower = DAG.getNode(ISD::ADD, DL, MVT::i16, BasePtr, Offset);
+  } else {
+    assert(Offset->isUndef());
+    PtrLower = BasePtr;
+  }
+
+  SDValue PtrUpper = DAG.getNode(ISD::ADD, DL, MVT::i16, PtrLower,
+                                 DAG.getConstant(1, DL, MVT::i16));
+
+  SDValue Upper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, Value);
+  SDValue Lower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, Value);
+
+  Chain = DAG.getStore(Chain, DL, Lower, PtrLower, Node->getMemOperand());
+  return DAG.getStore(Chain, DL, Upper, PtrUpper, Node->getMemOperand());
 }
 
 SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
@@ -203,12 +351,38 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   return Result;
 }
 
+SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  GlobalAddressSDNode *Node = dyn_cast<GlobalAddressSDNode>(Op);
+  SDLoc DL = Op;
+
+  SDValue TargetAddr =
+      DAG.getTargetGlobalAddress(Node->getGlobal(), DL, MVT::i16);
+  return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
+}
+
+SDValue GBTargetLowering::LowerBlockAddress(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  BlockAddressSDNode *Node = dyn_cast<BlockAddressSDNode>(Op);
+  SDLoc DL = Op;
+
+  SDValue TargetAddr = DAG.getTargetBlockAddress(Node->getBlockAddress(),
+                                                 MVT::i16, Node->getOffset());
+  return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
+}
+
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((GBISD::NodeType)Opcode) {
   case GBISD::FIRST_NUMBER:
     break;
   case GBISD::BR_CC:
     return "GBISD::BR_CC";
+  case GBISD::COMBINE:
+    return "GBISD::COMBINE";
+  case GBISD::LOWER:
+    return "GBISD::LOWER";
+  case GBISD::UPPER:
+    return "GBISD::UPPER";
   case GBISD::CP:
     return "GBISD::CP";
   case GBISD::RET:
@@ -217,6 +391,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::RLA";
   case GBISD::RLCA:
     return "GBISD::RLCA";
+  case GBISD::ADDR_WRAPPER:
+    return "GBISD::ADDR_WRAPPER";
   }
   return nullptr;
 }
@@ -334,5 +510,15 @@ bool GBTargetLowering::isSelectSupported(SelectSupportKind) const {
 
 bool GBTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                                          Type *Ty) const {
+  return true;
+}
+
+bool GBTargetLowering::allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace,
+                                                      Align,
+                                                      MachineMemOperand::Flags,
+                                                      unsigned *Fast) const {
+  if (Fast != nullptr) {
+    *Fast = 1;
+  }
   return true;
 }

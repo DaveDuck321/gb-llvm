@@ -15,4 +15,4 @@ def CC_GB : CallingConv<[
     CCAssignToStack<0, 0> // TODO GB: confim ABI size is correct here
 ]>;
 
-def GB_CSRs : CalleeSavedRegs<(add D, E)>;
+def GB_CSRs : CalleeSavedRegs<(add)>;

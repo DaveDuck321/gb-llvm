@@ -16,15 +16,21 @@ class GBSubtarget;
 namespace GBISD {
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
+  ADDR_WRAPPER,
   BR_CC,
+  COMBINE,
   CP,
   RET,
   RLA,
   RLCA,
+  LOWER,
+  UPPER,
 };
 } // namespace GBISD
 
 class GBTargetLowering : public TargetLowering {
+  const GBSubtarget &Subtarget;
+
 public:
   GBTargetLowering(const TargetMachine &, const GBSubtarget &);
 
@@ -32,8 +38,12 @@ public:
   const char *getTargetNodeName(unsigned Opcode) const override;
 
 private:
+  SDValue LowerLOAD16(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSTORE16(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID, bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                const SDLoc &DL, SelectionDAG &,
@@ -48,6 +58,10 @@ private:
   bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                          Type *Ty) const override;
+
+  bool allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace, Align,
+                                      MachineMemOperand::Flags,
+                                      unsigned *Fast) const override;
 };
 } // namespace llvm
 #endif

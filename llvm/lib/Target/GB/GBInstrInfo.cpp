@@ -1,13 +1,15 @@
 #include "GBInstrInfo.h"
 #include "GB.h"
 #include "GBRegisterInfo.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include "MCTargetDesc/GBMCTargetDesc.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCRegister.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <iterator>
 
 #define GET_INSTRINFO_CTOR_DTOR
 #include "GBGenInstrInfo.inc"
@@ -23,7 +25,8 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   // 8-bit copy
   if (GB::GPR8RegClass.contains(SrcReg, DestReg)) {
-    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
     return;
   }
 
@@ -53,6 +56,9 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       IsSimpleCombinedGPR16(SrcReg, SrcA, SrcB) &&
       IsSimpleCombinedGPR16(DestReg, DestA, DestB)) {
 
+    if (KillSrc) {
+      BuildMI(MBB, MBBI, DL, get(TargetOpcode::KILL), SrcReg);
+    }
     BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestA).addReg(SrcA);
     BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestB).addReg(SrcB);
     return;
@@ -60,10 +66,35 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   // Special case: 16-bit copy from HL to SP
   if (SrcReg == GB::HL && DestReg == GB::SP) {
-    BuildMI(MBB, MBBI, DL, get(GB::LD_SP_HL), DestReg).addReg(SrcReg);
+    BuildMI(MBB, MBBI, DL, get(GB::LD_SP_HL), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
   }
 
   llvm_unreachable("Unsupported register copy!");
+}
+
+unsigned GBInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+                                          int &FrameIndex) const {
+  return 0;
+  switch (MI.getOpcode()) {
+  case GB::Load8FromFrameIndex:
+  case GB::Load16FromFrameIndex:
+    return true;
+  default:
+    return false;
+  }
+}
+
+unsigned GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+                                         int &FrameIndex) const {
+  return 0;
+  switch (MI.getOpcode()) {
+  case GB::Save8ToFrameIndex:
+  case GB::Save16ToFrameIndex:
+    return true;
+  default:
+    return false;
+  }
 }
 
 void GBInstrInfo::storeRegToStackSlot(
@@ -75,10 +106,24 @@ void GBInstrInfo::storeRegToStackSlot(
     DL = MI->getDebugLoc();
   }
 
+  // TODO GB: The GameBoy is really ill-suited for this constant stack offset...
+  // find a way to only use push/ pops (almost exclusively?)
+  // FIXME GB: ahhh, use push and pop HL rather than the automatic stack slot
+  // allocation... this could save 50+ cycles here
+  // TODO GB: We are using illegal instructions here, this is corrected in
+  // eliminateFrameIndex... is there a better way to do this?
+
   if (GB::GPR8RegClass.hasSubClassEq(RC)) {
-    // TODO GB: this assume that we NEVER use the frame pointer
-    BuildMI(MBB, MI, DL, get(GB::LD_HL_SP)).addFrameIndex(FrameIndex);
-    BuildMI(MBB, MI, DL, get(GB::LD_iHL_r)).addReg(SrcReg);
+    BuildMI(MBB, MI, DL, get(GB::Save8ToFrameIndex))
+        .addReg(SrcReg, getKillRegState(isKill))
+        .addFrameIndex(FrameIndex);
+    return;
+  }
+
+  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, MI, DL, get(GB::Save16ToFrameIndex))
+        .addReg(SrcReg, getKillRegState(isKill))
+        .addFrameIndex(FrameIndex);
     return;
   }
   llvm_unreachable("Could not save reg to stack slot!");
@@ -96,8 +141,15 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   }
 
   if (GB::GPR8RegClass.hasSubClassEq(RC)) {
-    BuildMI(MBB, MI, DL, get(GB::LD_HL_SP)).addFrameIndex(FrameIndex);
-    BuildMI(MBB, MI, DL, get(GB::LD_r_iHL)).addDef(DestReg);
+    BuildMI(MBB, MI, DL, get(GB::Load8FromFrameIndex))
+        .addDef(DestReg)
+        .addFrameIndex(FrameIndex);
+    return;
+  }
+  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+    BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex))
+        .addDef(DestReg)
+        .addFrameIndex(FrameIndex);
     return;
   }
   llvm_unreachable("Could not load reg to stack slot!");

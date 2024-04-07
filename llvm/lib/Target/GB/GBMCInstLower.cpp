@@ -32,6 +32,14 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       MCOp = MCOperand::createExpr(
           MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));
       break;
+    case MachineOperand::MO_GlobalAddress:
+      MCOp = MCOperand::createExpr(
+          MCSymbolRefExpr::create(AP.getSymbol(MO.getGlobal()), AP.OutContext));
+      break;
+    case MachineOperand::MO_BlockAddress:
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
+          AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP.OutContext));
+      break;
     case MachineOperand::MO_Immediate:
       MCOp = MCOperand::createImm(MO.getImm());
       break;
