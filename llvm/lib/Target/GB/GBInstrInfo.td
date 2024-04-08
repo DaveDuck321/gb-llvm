@@ -80,12 +80,14 @@ let Size = 1 in {
 }
 
 let Size = 1 in {
-  // TOOD GB: there's a hardware bug here... maybe find a way to model this?
-  def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (ins)>;
-  def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (ins)>;
+  let Constraints = "$rs = $rd", Defs = [F] in {
+    // TOOD GB: there's a hardware bug here... maybe find a way to model this?
+    def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (outs GPR16:$rd)>;
+    def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (outs GPR16:$rd)>;
+  }
 
   let isAdd = true, Uses = [HL], Defs = [HL, F] in
-  def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (ins)>;
+  def ADD_HL : _GB_GPR16S16Sequence<"add hl,", 0x09, (outs)>;
 }
 
 let isAdd = true, Uses = [SP], Defs = [SP, F] in
@@ -240,6 +242,10 @@ def : Pat<(imm16:$imm), (LDI16 imm16:$imm)>;
 def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 imm16:$imm)>;
 def : Pat<(ADDR_WRAPPER tblockaddress:$imm), (LDI16 imm16:$imm)>;
 
+// Frame index.
+def to_tframeindex : SDNodeXForm<frameindex, [{ return CurDAG->getTargetFrameIndex(N->getIndex(), N->getValueType(0)); }]>;
+def : Pat<(frameindex:$imm), (LD_HL_SP (to_tframeindex $imm))>;
+
 // ALU 8-bit
 def : Pat<(add A, imm8:$imm), (ADDI imm8:$imm)>;
 def : Pat<(add A, GPR8:$rs), (ADD_r GPR8:$rs)>;
@@ -263,6 +269,8 @@ def : Pat<(or A, (load HL)), (OR_iHL)>;
 
 // ALU 16-bit
 def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
+def : Pat<(add GPR16:$rs, 1), (INC16 GPR16:$rs)>;
+def : Pat<(add GPR16:$rs, -1), (DEC16 GPR16:$rs)>;
 
 // Branches
 // TODO GB: generate JP here and optimize into JR in another pass
@@ -300,9 +308,13 @@ def Load8FromFrameIndex : Pseudo<"load8", "$i to $r", (outs GPR8:$r), (ins simm8
 
 // Combine and split
 def SDTGBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
-def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDTGBCOMBINE, [SDNPHasChain]>;
+def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDTGBCOMBINE, [SDNPHasChain]>;
+def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDTGBCOMBINE, []>;
 
 def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
+          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
+
+def : Pat<(COMBINE_CHAIN_NODE GPR8:$rs1, GPR8:$rs2),
           (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
 
 def SDTGBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;

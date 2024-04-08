@@ -18,12 +18,13 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   ADDR_WRAPPER,
   BR_CC,
+  COMBINE_CHAIN,
   COMBINE,
   CP,
+  LOWER,
   RET,
   RLA,
   RLCA,
-  LOWER,
   UPPER,
 };
 } // namespace GBISD
@@ -44,6 +45,7 @@ private:
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID, bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                const SDLoc &DL, SelectionDAG &,

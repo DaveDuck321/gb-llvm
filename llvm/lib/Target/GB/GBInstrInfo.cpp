@@ -75,23 +75,23 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
 unsigned GBInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
                                           int &FrameIndex) const {
-  return 0;
   switch (MI.getOpcode()) {
   case GB::Load8FromFrameIndex:
   case GB::Load16FromFrameIndex:
-    return true;
+    FrameIndex = MI.getOperand(1).getIndex();
+    return MI.getOperand(0).getReg();
   default:
-    return false;
+    return 0;
   }
 }
 
 unsigned GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
                                          int &FrameIndex) const {
-  return 0;
   switch (MI.getOpcode()) {
   case GB::Save8ToFrameIndex:
   case GB::Save16ToFrameIndex:
-    return true;
+    FrameIndex = MI.getOperand(1).getIndex();
+    return MI.getOperand(0).getReg();
   default:
     return false;
   }

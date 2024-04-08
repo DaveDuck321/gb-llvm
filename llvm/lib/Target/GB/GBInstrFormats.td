@@ -180,8 +180,8 @@ class GBGPR8LDI16<string mnemonic, bits<8> opcode>
   let isMoveImm = true;
 }
 
-class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag inputs>
-  : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR16:$rs), inputs), FixupNone>
+class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag outputs>
+  : GBInstr<mnemonic, "$rs", opcode, !con((outs), outputs), (ins GPR16:$rs), FixupNone>
 {
   bits<2> rs;
   let Inst{5 - 4} = rs;

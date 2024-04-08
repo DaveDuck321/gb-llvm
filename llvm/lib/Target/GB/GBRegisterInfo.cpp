@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -38,12 +39,10 @@ bool GBRegisterInfo::requiresRegisterScavenging(
   return true;
 }
 
-bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                         int SPAdj, unsigned FIOperandNum,
-                                         RegScavenger *RS) const {
+bool GBRegisterInfo::eliminateStackSlotFrameIndex(
+    MachineBasicBlock::iterator MI, int SPAdj, unsigned FrameIndex,
+    RegScavenger &RS) const {
   assert(SPAdj == 0 && "Unexpected SPAdj value");
-  assert(FIOperandNum == 1);
-  assert(RS);
 
   MachineInstr &OldMI = *MI;
   DebugLoc DL = MI->getDebugLoc();
@@ -55,11 +54,10 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
-  int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
   int Offset = -MFI.getObjectOffset(FrameIndex);
   assert(isInt<8>(Offset));
 
-  bool PreserveHL = RS->isRegUsed(GB::HL);
+  bool PreserveHL = RS.isRegUsed(GB::HL);
 
   switch (MI->getOpcode()) {
   default:
@@ -115,6 +113,32 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     return true;
   }
   }
+}
+
+bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
+                                         int SPAdj, unsigned FIOperandNum,
+                                         RegScavenger *RS) const {
+  assert(RS);
+
+  DebugLoc DL = MI->getDebugLoc();
+  MachineBasicBlock &MBB = *MI->getParent();
+  const MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+
+  // Stack slots require actual loads, this is MUCH more work
+  const int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
+  if (int _;
+      TII.isLoadFromStackSlot(*MI, _) || TII.isStoreToStackSlot(*MI, _)) {
+    return eliminateStackSlotFrameIndex(MI, SPAdj, FrameIndex, *RS);
+  }
+
+  // Otherwise the complexity is handled by the GBISelLowering
+  const int Offset = -MFI.getObjectOffset(FrameIndex);
+  assert(MI->getOpcode() == GB::LD_HL_SP);
+  assert(isInt<8>(Offset));
+  MI->getOperand(FIOperandNum).ChangeToImmediate(Offset);
+  return false;
 }
 
 Register GBRegisterInfo::getFrameRegister(const MachineFunction &MF) const {

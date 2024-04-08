@@ -15,6 +15,10 @@ struct GBRegisterInfo : public GBGenRegisterInfo {
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const override;
 
+  bool eliminateStackSlotFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                                    unsigned FrameIndex,
+                                    RegScavenger &RS) const;
+
   bool eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;

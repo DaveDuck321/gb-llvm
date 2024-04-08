@@ -49,7 +49,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // RegisterMask
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   // GlobalTLSAddress
-  // FrameIndex
+  setOperationAction(ISD::FrameIndex, MVT::i16, Legal);
   // JumpTable
   // ConstantPool
   // ExternalSymbol
@@ -83,7 +83,10 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SMULO               // Expanded
   // UMULO               // Expanded
   // MULHU, MULHS
-  // AND, OR, XOR
+  for (const auto &BinaryOp : {ISD::AND, ISD::OR, ISD::XOR}) {
+    setOperationAction(BinaryOp, MVT::i8, Legal);
+    setOperationAction(BinaryOp, MVT::i16, Custom);
+  }
   // SHL, SRA, SRL
   // ROTL, ROTR
   // BSWAP
@@ -98,10 +101,10 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SIGN_EXTEND_INREG
   // BITCAST
   // ADDRSPACECAST
-  setOperationAction(ISD::LOAD, MVT::i8, Legal);
-  setOperationAction(ISD::LOAD, MVT::i16, Custom);
-  setOperationAction(ISD::STORE, MVT::i8, Legal);
-  setOperationAction(ISD::STORE, MVT::i16, Custom);
+  for (const auto &MemoryOp : {ISD::LOAD, ISD::STORE}) {
+    setOperationAction(MemoryOp, MVT::i8, Legal);
+    setOperationAction(MemoryOp, MVT::i16, Custom);
+  }
   //  DYNAMIC_STACKALLOC
   //  BR_JT
   //  TODO: brcond should generate rra as part of the br_cc pattern
@@ -149,6 +152,10 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:
     return LowerBlockAddress(Op, DAG);
+  case ISD::OR:
+  case ISD::AND:
+  case ISD::XOR:
+    return LowerBinaryOp(Op, DAG);
   }
 }
 
@@ -181,7 +188,7 @@ SDValue GBTargetLowering::LowerLOAD16(SDValue Op, SelectionDAG &DAG) const {
   Chain = Upper.getValue(1);
 
   SDVTList VTs = DAG.getVTList(MVT::i16, MVT::Other);
-  return DAG.getNode(GBISD::COMBINE, DL, VTs, Chain, Lower, Upper);
+  return DAG.getNode(GBISD::COMBINE_CHAIN, DL, VTs, Chain, Lower, Upper);
 }
 
 SDValue GBTargetLowering::LowerSTORE16(SDValue Op, SelectionDAG &DAG) const {
@@ -351,48 +358,70 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   return Result;
 }
 
+SDValue GBTargetLowering::LowerBlockAddress(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  BlockAddressSDNode *Node = dyn_cast<BlockAddressSDNode>(Op);
+  assert(Node);
+
+  SDLoc DL = Op;
+  SDValue TargetAddr = DAG.getTargetBlockAddress(Node->getBlockAddress(),
+                                                 MVT::i16, Node->getOffset());
+  return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
+}
+
 SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
                                              SelectionDAG &DAG) const {
   GlobalAddressSDNode *Node = dyn_cast<GlobalAddressSDNode>(Op);
-  SDLoc DL = Op;
+  assert(Node);
 
+  SDLoc DL = Op;
   SDValue TargetAddr =
       DAG.getTargetGlobalAddress(Node->getGlobal(), DL, MVT::i16);
   return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
 }
 
-SDValue GBTargetLowering::LowerBlockAddress(SDValue Op,
-                                            SelectionDAG &DAG) const {
-  BlockAddressSDNode *Node = dyn_cast<BlockAddressSDNode>(Op);
+SDValue GBTargetLowering::LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
   SDLoc DL = Op;
 
-  SDValue TargetAddr = DAG.getTargetBlockAddress(Node->getBlockAddress(),
-                                                 MVT::i16, Node->getOffset());
-  return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
+  SDValue LHSLower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, LHS);
+  SDValue RHSLower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, RHS);
+  SDValue ResultLower =
+      DAG.getNode(Op->getOpcode(), DL, MVT::i8, LHSLower, RHSLower);
+
+  SDValue LHSUpper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, LHS);
+  SDValue RHSUpper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, RHS);
+  SDValue ResultUpper =
+      DAG.getNode(Op->getOpcode(), DL, MVT::i8, LHSUpper, RHSUpper);
+
+  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, ResultLower, ResultUpper);
 }
 
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((GBISD::NodeType)Opcode) {
   case GBISD::FIRST_NUMBER:
     break;
+  case GBISD::ADDR_WRAPPER:
+    return "GBISD::ADDR_WRAPPER";
   case GBISD::BR_CC:
     return "GBISD::BR_CC";
+  case GBISD::COMBINE_CHAIN:
+    return "GBISD::COMBINE_CHAIN";
   case GBISD::COMBINE:
     return "GBISD::COMBINE";
-  case GBISD::LOWER:
-    return "GBISD::LOWER";
-  case GBISD::UPPER:
-    return "GBISD::UPPER";
   case GBISD::CP:
     return "GBISD::CP";
+  case GBISD::LOWER:
+    return "GBISD::LOWER";
   case GBISD::RET:
     return "GBISD::RET";
   case GBISD::RLA:
     return "GBISD::RLA";
   case GBISD::RLCA:
     return "GBISD::RLCA";
-  case GBISD::ADDR_WRAPPER:
-    return "GBISD::ADDR_WRAPPER";
+  case GBISD::UPPER:
+    return "GBISD::UPPER";
   }
   return nullptr;
 }
