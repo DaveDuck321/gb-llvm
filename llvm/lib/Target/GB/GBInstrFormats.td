@@ -204,8 +204,8 @@ class _GB_SimpleImm8<string format, bits<8> opcode, GBImm immType, FixupKind fix
   let Size = 2;
 }
 
-class GBAbsImm16<string format, bits<8> opcode>
-  : GBInstr<format, "", opcode, (outs), (ins bb_absolute:$imm), FixupData16>
+class GBAbsImm16<string format, bits<8> opcode, GBImm immType=bb_absolute>
+  : GBInstr<format, "", opcode, (outs), (ins immType:$imm), FixupData16>
 {
   bits<16> imm;
   let Inst{23 - 8} = imm;

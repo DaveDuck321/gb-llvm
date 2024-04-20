@@ -12,15 +12,19 @@
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
+#include <cstddef>
 #include <utility>
 
 using namespace llvm;
@@ -45,7 +49,6 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   setBooleanContents(UndefinedBooleanContent);
 
   // AssertSext, AssertZext, AssertAlign
-  // CONDCODE
   // RegisterMask
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
   // GlobalTLSAddress
@@ -63,7 +66,10 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // FRAME_TO_ARGS_OFFSET
   // MCSymbol
   // INTRINSIC_WO_CHAIN, INTRINSIC_W_CHAIN, INTRINSIC_VOID
-  // ADD, SUB
+  // SUB
+  setOperationAction(ISD::SUB, MVT::i8, Legal);
+  setOperationAction(ISD::ADD, MVT::i8, Legal);
+  setOperationAction(ISD::ADD, MVT::i16, Legal);
   // MUL, SDIV, UDIV, SREM, UREM
   // SMUL_LOHI, UMUL_LOHI
   // SDIVREM, UDIVREM
@@ -92,7 +98,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // BSWAP
   // CTTZ, CTLZ
   // CTPOP
-  // SELECT, SELECT_CC
+  // SETCC, SELECT, SELECT_CC
   setOperationAction(ISD::SETCC, MVT::i8, Custom);
   // SETCCCARRY         // Expanded
   // SHL_PARTS, SRA_PARTS, SRL_PARTS
@@ -406,12 +412,16 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::ADDR_WRAPPER";
   case GBISD::BR_CC:
     return "GBISD::BR_CC";
+  case GBISD::CALL:
+    return "GBISD::CALL";
   case GBISD::COMBINE_CHAIN:
     return "GBISD::COMBINE_CHAIN";
   case GBISD::COMBINE:
     return "GBISD::COMBINE";
   case GBISD::CP:
     return "GBISD::CP";
+  case GBISD::LD_HL_SP:
+    return "GBISD::LD_HL_SP";
   case GBISD::LOWER:
     return "GBISD::LOWER";
   case GBISD::RET:
@@ -427,6 +437,107 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 #include "GBGenCallingConv.inc"
+
+SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
+                                    SmallVectorImpl<SDValue> &InVals) const {
+  assert(not CLI.IsVarArg);
+
+  SelectionDAG &DAG = CLI.DAG;
+  MachineFunction &MF = DAG.getMachineFunction();
+  const TargetFrameLowering &TFL = *MF.getSubtarget().getFrameLowering();
+
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState ArgCCInfo(CLI.CallConv, CLI.IsVarArg, MF, ArgLocs, *DAG.getContext());
+  ArgCCInfo.AnalyzeCallOperands(CLI.Outs, CC_GB);
+
+  unsigned NumBytes = ArgCCInfo.getStackSize();
+
+  SDValue Chain = CLI.Chain;
+  Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
+
+  SmallVector<SDValue, 8> MemOpChains;
+  SmallVector<std::pair<unsigned, SDValue>, 8> RegToPass;
+  for (unsigned I = 0; I < ArgLocs.size(); ++I) {
+    CCValAssign &VA = ArgLocs[I];
+    SDValue ArgValue = CLI.OutVals[I];
+
+    switch (VA.getLocInfo()) {
+    default:
+      llvm_unreachable("Unknown argument location");
+    case CCValAssign::Full:
+      break;
+    }
+
+    if (VA.isRegLoc()) {
+      RegToPass.push_back(std::make_pair(VA.getLocReg(), ArgValue));
+    } else {
+      int Offset = VA.getLocMemOffset() + 1;
+      assert(isInt<8>(Offset));
+
+      SDValue Address = DAG.getNode(GBISD::LD_HL_SP, CLI.DL, MVT::i16,
+                                    DAG.getConstant(Offset, CLI.DL, MVT::i8));
+      MemOpChains.push_back(
+          DAG.getStore(Chain, CLI.DL, ArgValue, Address,
+                       MachinePointerInfo::getStack(MF, Offset)));
+    }
+  }
+
+  if (!MemOpChains.empty()) {
+    Chain = DAG.getNode(ISD::TokenFactor, CLI.DL, MVT::Other, MemOpChains);
+  }
+
+  // Copy registers into physical register as per the calling convention
+  SDValue Glue;
+  for (auto &Reg : RegToPass) {
+    Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, Glue);
+    Glue = Chain.getValue(1);
+  }
+
+  SDValue Callee = CLI.Callee;
+  // TODO GB: maybe generate a TargetGlobalAddress here?
+
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  for (auto &Reg : RegToPass) {
+    Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
+  }
+
+  // Add a register mask for the call-preserved registers
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(MF, CLI.CallConv);
+  assert(Mask != nullptr);
+  Ops.push_back(DAG.getRegisterMask(Mask));
+
+  if (Glue.getNode()) {
+    Ops.push_back(Glue);
+  }
+
+  // Emit the call
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  Chain = DAG.getNode(GBISD::CALL, CLI.DL, NodeTys, Ops);
+  Glue = Chain.getValue(1);
+
+  Chain = DAG.getCALLSEQ_END(
+      Chain, DAG.getConstant(NumBytes, CLI.DL, MVT::i16, true),
+      DAG.getConstant(0, CLI.DL, MVT::i16, true), Glue, CLI.DL);
+  Glue = Chain.getValue(1);
+
+  // Handle the return values
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState RetCCInfo(CLI.CallConv, CLI.IsVarArg, MF, RVLocs, *DAG.getContext());
+  RetCCInfo.AnalyzeCallResult(CLI.Ins, RetCC_GB);
+
+  for (auto &VA : RVLocs) {
+    SDValue RetValue =
+        DAG.getCopyFromReg(Chain, CLI.DL, VA.getLocReg(), VA.getLocVT(), Glue);
+    Chain = RetValue.getValue(1);
+    Glue = RetValue.getValue(2);
+    InVals.push_back(Chain.getValue(0));
+  }
+  return Chain;
+}
 
 SDValue GBTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
@@ -477,6 +588,19 @@ SDValue GBTargetLowering::LowerFormalArguments(
     InVals.push_back(ArgIn);
   }
   return Chain;
+}
+
+bool GBTargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+  assert(not IsVarArg);
+  assert(CallConv == CallingConv::C);
+
+  size_t TotalSize = 0;
+  for (const auto &Arg : Outs) {
+    TotalSize += Arg.VT.getStoreSize();
+  }
+  return TotalSize <= 2;
 }
 
 SDValue

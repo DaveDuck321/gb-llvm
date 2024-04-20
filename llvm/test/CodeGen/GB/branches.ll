@@ -379,6 +379,7 @@ label2:
 define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-LABEL: phi:
 ; GBI-O0:       ; %bb.0:
+; GBI-O0-NEXT:    add sp, -1
 ; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    cp $00
@@ -397,6 +398,7 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-NEXT:  .LBB11_3: ; %end
 ; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    add sp, 1
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: phi:
@@ -425,6 +427,7 @@ end:
 define i8 @select(i1 %b) nounwind {
 ; GBI-O0-LABEL: select:
 ; GBI-O0:       ; %bb.0:
+; GBI-O0-NEXT:    add sp, -1
 ; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    cp $00
@@ -443,6 +446,7 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:  .LBB12_3: ; %select.end
 ; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    add sp, 1
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: select:
@@ -465,68 +469,65 @@ define i8 @select(i1 %b) nounwind {
 define void @jt(i8 %in, ptr %out) {
 ; GBI-O0-LABEL: jt:
 ; GBI-O0:       ; %bb.0: ; %entry
-; GBI-O0-NEXT:    add sp, 4
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    ld a, b
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    cp $01
 ; GBI-O0-NEXT:    jr z, .LBB13_1
 ; GBI-O0-NEXT:    jr .LBB13_6
 ; GBI-O0-NEXT:  .LBB13_6: ; %entry
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    cp $02
 ; GBI-O0-NEXT:    jr z, .LBB13_2
 ; GBI-O0-NEXT:    jr .LBB13_7
 ; GBI-O0-NEXT:  .LBB13_7: ; %entry
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    cp $03
 ; GBI-O0-NEXT:    jr z, .LBB13_3
 ; GBI-O0-NEXT:    jr .LBB13_8
 ; GBI-O0-NEXT:  .LBB13_8: ; %entry
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    cp $04
 ; GBI-O0-NEXT:    jr z, .LBB13_4
 ; GBI-O0-NEXT:    jr .LBB13_5
 ; GBI-O0-NEXT:  .LBB13_1: ; %bb1
-; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, $04
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld (hl), $04
 ; GBI-O0-NEXT:    jr .LBB13_5
 ; GBI-O0-NEXT:  .LBB13_2: ; %bb2
-; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, $03
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld (hl), $03
 ; GBI-O0-NEXT:    jr .LBB13_5
 ; GBI-O0-NEXT:  .LBB13_3: ; %bb3
-; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, $02
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld (hl), $02
 ; GBI-O0-NEXT:    jr .LBB13_5
 ; GBI-O0-NEXT:  .LBB13_4: ; %bb4
-; GBI-O0-NEXT:    add sp, 2
+; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, $01
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld (hl), $01
 ; GBI-O0-NEXT:    jr .LBB13_5
 ; GBI-O0-NEXT:  .LBB13_5: ; %exit
+; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: jt:
 ; GBI-O3:       ; %bb.0: ; %entry
-; GBI-O3-NEXT:    ld c, $02
-; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    cp $80
 ; GBI-O3-NEXT:    jr nc, .LBB13_3
@@ -542,8 +543,7 @@ define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-NEXT:    jr z, .LBB13_6
 ; GBI-O3-NEXT:    jr .LBB13_9
 ; GBI-O3-NEXT:  .LBB13_6: ; %bb2
-; GBI-O3-NEXT:    ld a, $03
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (hl), $03
 ; GBI-O3-NEXT:    jr .LBB13_9
 ; GBI-O3-NEXT:  .LBB13_3: ; %entry
 ; GBI-O3-NEXT:    ld a, b
@@ -556,16 +556,14 @@ define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-NEXT:    jr z, .LBB13_8
 ; GBI-O3-NEXT:    jr .LBB13_9
 ; GBI-O3-NEXT:  .LBB13_8: ; %bb4
-; GBI-O3-NEXT:    ld a, $01
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (hl), $01
 ; GBI-O3-NEXT:  .LBB13_9: ; %exit
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB13_5: ; %bb1
-; GBI-O3-NEXT:    ld a, $04
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (hl), $04
 ; GBI-O3-NEXT:    jr .LBB13_9
 ; GBI-O3-NEXT:  .LBB13_7: ; %bb3
-; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld (hl), $02
 ; GBI-O3-NEXT:    jr .LBB13_9
 entry:
   switch i8 %in, label %exit [

@@ -28,6 +28,8 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       }
       MCOp = MCOperand::createReg(MO.getReg());
       break;
+    case MachineOperand::MO_RegisterMask:
+      continue;
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::createExpr(
           MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));

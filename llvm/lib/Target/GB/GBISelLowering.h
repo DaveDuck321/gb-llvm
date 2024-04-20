@@ -18,9 +18,11 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   ADDR_WRAPPER,
   BR_CC,
+  CALL,
   COMBINE_CHAIN,
   COMBINE,
   CP,
+  LD_HL_SP,
   LOWER,
   RET,
   RLA,
@@ -46,10 +48,16 @@ private:
   SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerCall(CallLoweringInfo &CLI,
+                    SmallVectorImpl<SDValue> &InVals) const override;
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID, bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                const SDLoc &DL, SelectionDAG &,
                                SmallVectorImpl<SDValue> &InVals) const override;
+  bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
+                      bool IsVarArg,
+                      const SmallVectorImpl<ISD::OutputArg> &Outs,
+                      LLVMContext &Context) const override;
   SDValue LowerReturn(SDValue Chain, CallingConv::ID, bool IsVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutsVals, const SDLoc &DL,

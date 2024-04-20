@@ -2,6 +2,7 @@
 #include "GB.h"
 #include "GBRegisterInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Register.h"
@@ -16,7 +17,8 @@
 
 using namespace llvm;
 
-GBInstrInfo::GBInstrInfo() : GBGenInstrInfo() {}
+GBInstrInfo::GBInstrInfo()
+    : GBGenInstrInfo(GB::ADJCALLSTACKDOWN, GB::ADJCALLSTACKUP) {}
 
 void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
@@ -64,12 +66,8 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  // Special case: 16-bit copy from HL to SP
-  if (SrcReg == GB::HL && DestReg == GB::SP) {
-    BuildMI(MBB, MBBI, DL, get(GB::LD_SP_HL), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  }
-
+  dbgs() << SrcReg << "\n";
+  dbgs() << DestReg << "\n";
   llvm_unreachable("Unsupported register copy!");
 }
 
@@ -121,6 +119,9 @@ void GBInstrInfo::storeRegToStackSlot(
   }
 
   if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+    // TODO GB: generate smarter code here
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setHasCopyImplyingStackAdjustment(true);
     BuildMI(MBB, MI, DL, get(GB::Save16ToFrameIndex))
         .addReg(SrcReg, getKillRegState(isKill))
         .addFrameIndex(FrameIndex);
@@ -147,6 +148,9 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
   if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+    // TODO GB: generate smarter code here
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setHasCopyImplyingStackAdjustment(true);
     BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex))
         .addDef(DestReg)
         .addFrameIndex(FrameIndex);

@@ -17,6 +17,8 @@
 #define GET_REGINFO_TARGET_DESC
 #include "GBGenRegisterInfo.inc"
 
+#define DEBUG_TYPE "gb-register-info"
+
 using namespace llvm;
 
 GBRegisterInfo::GBRegisterInfo() : GBGenRegisterInfo(GB::A) {}
@@ -24,6 +26,11 @@ GBRegisterInfo::GBRegisterInfo() : GBGenRegisterInfo(GB::A) {}
 const MCPhysReg *
 GBRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return GB_CSRs_SaveList;
+}
+
+const uint32_t *GBRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                                     CallingConv::ID) const {
+  return GB_CSRs_RegMask;
 }
 
 BitVector GBRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -40,9 +47,7 @@ bool GBRegisterInfo::requiresRegisterScavenging(
 }
 
 bool GBRegisterInfo::eliminateStackSlotFrameIndex(
-    MachineBasicBlock::iterator MI, int SPAdj, unsigned FrameIndex,
-    RegScavenger &RS) const {
-  assert(SPAdj == 0 && "Unexpected SPAdj value");
+    MachineBasicBlock::iterator MI, int Offset, RegScavenger &RS) const {
 
   MachineInstr &OldMI = *MI;
   DebugLoc DL = MI->getDebugLoc();
@@ -51,10 +56,8 @@ bool GBRegisterInfo::eliminateStackSlotFrameIndex(
 
   MachineBasicBlock &MBB = *MI->getParent();
   const MachineFunction &MF = *MBB.getParent();
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
-  int Offset = -MFI.getObjectOffset(FrameIndex);
   assert(isInt<8>(Offset));
 
   bool PreserveHL = RS.isRegUsed(GB::HL);
@@ -98,6 +101,7 @@ bool GBRegisterInfo::eliminateStackSlotFrameIndex(
     return true;
   }
   case GB::Save16ToFrameIndex: {
+    Offset += 1; // TODO GB: understand this
     BuildMI(MBB, MI, DL, TII.get(GB::ADD_SP)).addImm(Offset);
     BuildMI(MBB, MI, DL, TII.get(GB::PUSH))
         .addReg(Reg, getKillRegState(IsKill));
@@ -106,6 +110,7 @@ bool GBRegisterInfo::eliminateStackSlotFrameIndex(
     return true;
   }
   case GB::Load16FromFrameIndex: {
+    Offset += 1; // TODO GB: understand this
     BuildMI(MBB, MI, DL, TII.get(GB::ADD_SP)).addImm(Offset - 2);
     BuildMI(MBB, MI, DL, TII.get(GB::POP)).addDef(Reg);
     BuildMI(MBB, MI, DL, TII.get(GB::ADD_SP)).addImm(-Offset);
@@ -125,16 +130,28 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   const MachineFunction &MF = *MBB.getParent();
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const TargetFrameLowering &TFL = *MF.getSubtarget().getFrameLowering();
 
   // Stack slots require actual loads, this is MUCH more work
   const int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
+  const int Offset = MFI.getObjectOffset(FrameIndex) + MFI.getStackSize() -
+                     TFL.getOffsetOfLocalArea() + SPAdj + 1;
+
+  LLVM_DEBUG(dbgs() << "Eliminate frame index: " << MF.getName() << "\n"
+                    << "FrameIndex: " << FrameIndex << ", "
+                    << "Object Offset: " << MFI.getObjectOffset(FrameIndex)
+                    << ", "
+                    << "Stack size: " << MFI.getStackSize() << ", "
+                    << "LAO: " << TFL.getOffsetOfLocalArea() << ", "
+                    << "SPAdj: " << SPAdj << "\n"
+                    << "Computed offset: " << Offset << "\n\n");
+
   if (int _;
       TII.isLoadFromStackSlot(*MI, _) || TII.isStoreToStackSlot(*MI, _)) {
-    return eliminateStackSlotFrameIndex(MI, SPAdj, FrameIndex, *RS);
+    return eliminateStackSlotFrameIndex(MI, Offset, *RS);
   }
 
   // Otherwise the complexity is handled by the GBISelLowering
-  const int Offset = -MFI.getObjectOffset(FrameIndex);
   assert(MI->getOpcode() == GB::LD_HL_SP);
   assert(isInt<8>(Offset));
   MI->getOperand(FIOperandNum).ChangeToImmediate(Offset);

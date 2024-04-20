@@ -150,7 +150,7 @@ let isReturn = true, isTerminator = true in {
 
 let mayStore = true, isCall = true in {
   let Uses = [SP], Defs = [SP] in
-  def CALL : GBAbsImm16<"call $imm", 0xCD>;
+  def CALL : GBAbsImm16<"call $imm", 0xCD, uimm16>;
 
   let Uses = [F, SP], Defs = [SP] in
   def CALL_COND : GBAbsFlagImm16<"call", 0xC4>;
@@ -195,12 +195,12 @@ def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPV
 def : Pat<(RET_NODE), (RET)>;
 
 //   ADDR_WRAPPER exists to match targetaddr against i16
-def SDTGBAddrWrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
-def ADDR_WRAPPER : SDNode<"GBISD::ADDR_WRAPPER", SDTGBAddrWrapper>;
+def SDT_GBAddrWrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
+def ADDR_WRAPPER : SDNode<"GBISD::ADDR_WRAPPER", SDT_GBAddrWrapper>;
 
 //   CP operands: 0) condition code, 1) LHS, 2) RHS
-def SDTGBCP : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
-def CP_NODE : SDNode<"GBISD::CP", SDTGBCP, [SDNPOutGlue]>;
+def SDT_GBCP : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
+def CP_NODE : SDNode<"GBISD::CP", SDT_GBCP, [SDNPOutGlue]>;
 def : Pat<(CP_NODE SETUGT, GPR8:$rs, A), (CP_r GPR8:$rs)>;
 def : Pat<(CP_NODE SETUGE, A, GPR8:$rs), (CP_r GPR8:$rs)>;
 def : Pat<(CP_NODE SETULT, A, GPR8:$rs), (CP_r GPR8:$rs)>;
@@ -217,12 +217,12 @@ def : Pat<(CP_NODE SETNE,  A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETULT, GPR8:$rs, 1), (DEC_r GPR8:$rs)>;
 
 // Rotates the carry into A, used as our setcc
-def SDTGB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;
-def RLA_NODE : SDNode<"GBISD::RLA", SDTGB1i8, [SDNPInGlue]>;
+def SDT_GB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;
+def RLA_NODE : SDNode<"GBISD::RLA", SDT_GB1i8, [SDNPInGlue]>;
 def : Pat<(RLA_NODE A), (RLA)>;
 
 // Rotates A, useful for %i1 = sign(a)
-def RLCA_NODE : SDNode<"GBISD::RLCA", SDTGB1i8, []>;
+def RLCA_NODE : SDNode<"GBISD::RLCA", SDT_GB1i8, []>;
 def : Pat<(RLCA_NODE A), (RLCA)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
@@ -243,7 +243,9 @@ def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 imm16:$imm)>;
 def : Pat<(ADDR_WRAPPER tblockaddress:$imm), (LDI16 imm16:$imm)>;
 
 // Frame index.
-def to_tframeindex : SDNodeXForm<frameindex, [{ return CurDAG->getTargetFrameIndex(N->getIndex(), N->getValueType(0)); }]>;
+def to_tframeindex : SDNodeXForm<frameindex, [{
+  return CurDAG->getTargetFrameIndex(N->getIndex(), N->getValueType(0));
+}]>;
 def : Pat<(frameindex:$imm), (LD_HL_SP (to_tframeindex $imm))>;
 
 // ALU 8-bit
@@ -280,7 +282,12 @@ def : Pat<(brind HL), (JP_HL)>;
 // Memory
 def : Pat<(load HL), (LD_r_iHL)>;
 def : Pat<(store GPR8:$rs, HL), (LD_iHL_r GPR8:$rs)>;
+def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
+// Required when passing arguments on the stack
+def SDT_GBLDHLSP : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i8>]>;
+def LD_HL_SP_NODE : SDNode<"GBISD::LD_HL_SP", SDT_GBLDHLSP, []>;
+def : Pat<(LD_HL_SP_NODE imm8:$imm), (LD_HL_SP imm8:$imm)>;
 
 // Pseudos hack an extra operand for frame lowering
 class Pseudo<string name, string args, dag outs, dag ins>
@@ -289,27 +296,24 @@ class Pseudo<string name, string args, dag outs, dag ins>
   let isCodeGenOnly = 1;
 }
 
-def Save16ToFrameIndex : Pseudo<"save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)> {
-    let mayStore = true;
+let mayLoad = true, Uses = [SP] in {
+  def Load16FromFrameIndex : Pseudo<"load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;
+
+  let Defs = [HL] in
+  def Load8FromFrameIndex : Pseudo<"load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)>;
 }
 
-def Load16FromFrameIndex : Pseudo<"load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)> {
-    let mayLoad = true;
-}
+let mayStore = true, Uses = [SP] in {
+  def Save16ToFrameIndex : Pseudo<"save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)>;
 
-def Save8ToFrameIndex : Pseudo<"save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)> {
-    let mayStore = true;
+  let Defs = [HL] in
+  def Save8ToFrameIndex : Pseudo<"save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
 }
-
-def Load8FromFrameIndex : Pseudo<"load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)> {
-    let mayLoad = true;
-}
-
 
 // Combine and split
-def SDTGBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
-def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDTGBCOMBINE, [SDNPHasChain]>;
-def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDTGBCOMBINE, []>;
+def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
+def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDT_GBCOMBINE, [SDNPHasChain]>;
+def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
 
 def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
           (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
@@ -317,9 +321,30 @@ def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
 def : Pat<(COMBINE_CHAIN_NODE GPR8:$rs1, GPR8:$rs2),
           (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
 
-def SDTGBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
-def LOWER_NODE : SDNode<"GBISD::LOWER", SDTGBSPLIT, []>;
-def UPPER_NODE : SDNode<"GBISD::UPPER", SDTGBSPLIT, []>;
+def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
+def LOWER_NODE : SDNode<"GBISD::LOWER", SDT_GBSPLIT, []>;
+def UPPER_NODE : SDNode<"GBISD::UPPER", SDT_GBSPLIT, []>;
 
 def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
 def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
+
+// Calling
+def SDT_GBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
+def SDT_GBCallSeqEnd : SDCallSeqEnd<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
+def SDT_GBCall : SDTypeProfile<0, -1, [SDTCisVT<0, i16>]>;
+def GBcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_GBCallSeqStart,
+                             [SDNPHasChain, SDNPOutGlue]>;
+def GBcallseq_end : SDNode<"ISD::CALLSEQ_END", SDT_GBCallSeqEnd,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def GBcall : SDNode<"GBISD::CALL", SDT_GBCall,
+                     [SDNPMayStore, SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
+
+let Uses = [SP], Defs = [SP, F] in {
+  def ADJCALLSTACKDOWN : Pseudo<"adjcallstackdown", "", (outs), (ins uimm16:$imm, uimm16:$out)>;
+  def ADJCALLSTACKUP : Pseudo<"adjcallstackup", "", (outs), (ins uimm16:$imm, uimm16:$out)>;
+}
+
+def : Pat<(GBcallseq_start timm:$imm, timm:$out), (ADJCALLSTACKDOWN imm16:$imm, imm16:$out)>;
+def : Pat<(GBcallseq_end timm:$imm, timm:$out), (ADJCALLSTACKUP imm16:$imm, imm16:$out)>;
+def : Pat<(GBcall imm16:$imm), (CALL imm16:$imm)>;
+def : Pat<(GBcall (ADDR_WRAPPER tglobaladdr:$imm)), (CALL imm16:$imm)>;
