@@ -13,7 +13,7 @@ define void @test_addresses() nounwind {
 ; GBI-O0-NEXT:    ld bc, .Ltmp0
 ; GBI-O0-NEXT:    ld d, b
 ; GBI-O0-NEXT:    ld e, c
-; GBI-O0-NEXT:    ld a, d
+; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld hl, addr
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    push hl
@@ -22,7 +22,7 @@ define void @test_addresses() nounwind {
 ; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld a, c
+; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    push hl
@@ -42,10 +42,10 @@ define void @test_addresses() nounwind {
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    jp (hl)
 ; GBI-O0-NEXT:  .Ltmp0: ; Block address taken
 ; GBI-O0-NEXT:  .LBB0_1: ; %block
@@ -63,7 +63,7 @@ define void @test_addresses() nounwind {
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    add sp, 0
-; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld (hl), e
 ; GBI-O3-NEXT:    ; kill: def $hl
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld e, l
@@ -73,15 +73,15 @@ define void @test_addresses() nounwind {
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    add sp, -4
-; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    add sp, 0
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
@@ -120,19 +120,19 @@ define i16 @load_i16_global() nounwind {
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 2
-; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: load_i16_global:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld hl, val16
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
@@ -154,7 +154,7 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
@@ -166,8 +166,8 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ; kill: def $b killed $b def $bc
-; GBI-O0-NEXT:    ld c, a
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    add sp, 10
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    add sp, -8
@@ -186,7 +186,7 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    add sp, 8
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    add sp, -6
-; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -6
@@ -194,16 +194,16 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ; kill: def $b killed $b def $bc
-; GBI-O0-NEXT:    ; kill: def $c killed $a
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ; kill: def $b killed $a
 ; GBI-O0-NEXT:    ld b, d
 ; GBI-O0-NEXT:    ld c, e
-; GBI-O0-NEXT:    ld b, c
+; GBI-O0-NEXT:    ; kill: def $b killed $b killed $bc
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, d
+; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    pop hl
@@ -228,7 +228,7 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    ld de, G
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    add sp, 10
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    add sp, -8
@@ -239,7 +239,7 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    add sp, 8
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    add sp, -10
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    add sp, 10
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    add sp, -8
@@ -274,19 +274,19 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    add sp, 4
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    add sp, -6
-; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    add sp, 6
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    add sp, -8
-; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    add sp, 0
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    add sp, 8
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    add sp, -10

@@ -20,14 +20,14 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ; kill: def $b killed $b def $bc
-; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    ld d, c
-; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
@@ -36,16 +36,16 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld d, c
 ; GBI-O0-NEXT:    and d
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 6
 ; GBI-O0-NEXT:    ret
 ;
@@ -59,20 +59,20 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld e, l
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    add sp, 0
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    and c
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    and b
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    and c
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = and i16 %b, %c
@@ -85,38 +85,38 @@ define i16 @andi(i16 %b) nounwind {
 ; GBI-O0-NEXT:    add sp, -1
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld a, c
+; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    ld bc, $0001
 ; GBI-O0-NEXT:    ld d, b
 ; GBI-O0-NEXT:    ld e, c
-; GBI-O0-NEXT:    ld d, e
+; GBI-O0-NEXT:    ; kill: def $d killed $d killed $de
 ; GBI-O0-NEXT:    and d
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ; kill: def $b killed $b killed $bc
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld b, c
 ; GBI-O0-NEXT:    and b
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 1
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: andi:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld de, $0001
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    and e
-; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    and d
 ; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    and e
+; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
@@ -141,14 +141,14 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ; kill: def $b killed $b def $bc
-; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    ld d, c
-; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
@@ -157,16 +157,16 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld d, c
 ; GBI-O0-NEXT:    xor d
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 6
 ; GBI-O0-NEXT:    ret
 ;
@@ -180,20 +180,20 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld e, l
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    add sp, 0
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    xor b
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    xor c
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = xor i16 %b, %c
@@ -206,38 +206,38 @@ define i16 @xori(i16 %b) nounwind {
 ; GBI-O0-NEXT:    add sp, -1
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld a, c
+; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    ld bc, $0001
 ; GBI-O0-NEXT:    ld d, b
 ; GBI-O0-NEXT:    ld e, c
-; GBI-O0-NEXT:    ld d, e
+; GBI-O0-NEXT:    ; kill: def $d killed $d killed $de
 ; GBI-O0-NEXT:    xor d
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ; kill: def $b killed $b killed $bc
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld b, c
 ; GBI-O0-NEXT:    xor b
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 1
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: xori:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld de, $0001
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    xor e
-; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    xor d
 ; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    xor e
+; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
@@ -262,14 +262,14 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    add sp, 0
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ; kill: def $b killed $b def $bc
-; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    ld d, c
-; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add sp, -4
@@ -278,16 +278,16 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld d, c
 ; GBI-O0-NEXT:    or d
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 6
 ; GBI-O0-NEXT:    ret
 ;
@@ -301,20 +301,20 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld e, l
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    add sp, 0
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    or c
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    or b
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    or c
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = or i16 %b, %c
@@ -327,38 +327,38 @@ define i16 @ori(i16 %b) nounwind {
 ; GBI-O0-NEXT:    add sp, -1
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld a, c
+; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    ld bc, $0001
 ; GBI-O0-NEXT:    ld d, b
 ; GBI-O0-NEXT:    ld e, c
-; GBI-O0-NEXT:    ld d, e
+; GBI-O0-NEXT:    ; kill: def $d killed $d killed $de
 ; GBI-O0-NEXT:    or d
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    ; kill: def $b killed $b killed $bc
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld b, c
 ; GBI-O0-NEXT:    or b
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, -1
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $h killed $h def $hl
-; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    add sp, 1
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: ori:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld de, $0001
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    or e
-; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    or d
 ; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    or e
+; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c

@@ -8,7 +8,7 @@ def LowerSubReg : SubRegIndex<8, 0>;
 
 class GBCombinedReg<string name, bits<16> enc, list<GBReg> halves> : GBReg<name, enc> {
     let SubRegs = halves;
-    let SubRegIndices = [LowerSubReg, UpperSubReg];
+    let SubRegIndices = [UpperSubReg, LowerSubReg];
     let CoveredBySubRegs = true;
 }
 

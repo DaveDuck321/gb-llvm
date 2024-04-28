@@ -103,8 +103,12 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SETCCCARRY         // Expanded
   // SHL_PARTS, SRA_PARTS, SRL_PARTS
   // SIGN_EXTEND, ZERO_EXTEND, ANY_EXTEND
-  // TRUNCATE
-  // SIGN_EXTEND_INREG
+  setOperationAction(ISD::SIGN_EXTEND, MVT::i16, Custom);
+  setOperationAction(ISD::ZERO_EXTEND, MVT::i16, Custom);
+  setOperationAction(ISD::ANY_EXTEND, MVT::i16, Custom);
+  setOperationAction(ISD::TRUNCATE, MVT::i8, Legal); // i16 to i8
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand); // -> SIGN_EXTEND
   // BITCAST
   // ADDRSPACECAST
   for (const auto &MemoryOp : {ISD::LOAD, ISD::STORE}) {
@@ -162,6 +166,12 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::AND:
   case ISD::XOR:
     return LowerBinaryOp(Op, DAG);
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
+    return LowerXExtend(Op, DAG);
+  case ISD::SIGN_EXTEND_INREG:
+    return LowerSignExtendInReg(Op, DAG);
   }
 }
 
@@ -404,6 +414,64 @@ SDValue GBTargetLowering::LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, ResultLower, ResultUpper);
 }
 
+SDValue GBTargetLowering::LowerXExtend(SDValue Op, SelectionDAG &DAG) const {
+  unsigned Opcode = Op.getOpcode();
+  SDValue Src = Op.getOperand(0);
+  EVT DestType = Op->getValueType(0);
+  SDLoc DL = Op;
+
+  assert(Src.getSimpleValueType() == MVT::i8 && DestType == MVT::i16);
+
+  // Zero/ undef extensions are easy, just add correct upper subreg
+  if (Opcode == ISD::ZERO_EXTEND || Opcode == ISD::ANY_EXTEND) {
+    SDValue Lower = Src;
+    SDValue Upper = Opcode == ISD::ZERO_EXTEND ? DAG.getConstant(0, DL, MVT::i8)
+                                               : DAG.getUNDEF(MVT::i8);
+
+    return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lower, Upper);
+  }
+
+  // Sign extensions require a bit of maths
+  assert(Opcode == ISD::SIGN_EXTEND);
+
+  SDValue SignBiti1 = DAG.getNode(GBISD::RLCA, DL, MVT::i8, Src);
+  SDValue SignBiti8 = DAG.getNode(ISD::AND, DL, MVT::i8, SignBiti1,
+                                  DAG.getConstant(1, DL, MVT::i8));
+
+  SDValue Lower = Src;
+  SDValue Upper = DAG.getNode(ISD::SUB, DL, MVT::i8,
+                              DAG.getConstant(0, DL, MVT::i8), SignBiti8);
+
+  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lower, Upper);
+}
+
+SDValue GBTargetLowering::LowerSignExtendInReg(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+  assert(ExtraVT.getSizeInBits() == 1); // Everything else is lowered out-of-reg
+
+  SDLoc DL = Op;
+
+  // Optimized to exclusively use 8-bit operations but otherwise the same
+  // procedure as LegalizeDAG.cpp
+
+  // LLVM tries to be helpful and gives us the value in a 16 bit register via
+  // AnyExtend, lets just undo that... hopefully this is folded into nothing.
+  SDValue Trunc = DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, Op.getOperand(0));
+
+  SDValue And = DAG.getNode(ISD::AND, DL, MVT::i8, Trunc,
+                            DAG.getConstant(1, DL, MVT::i8));
+  SDValue Result =
+      DAG.getNode(ISD::SUB, DL, MVT::i8, DAG.getConstant(0, DL, MVT::i8), And);
+
+  if (Op.getValueType() == MVT::i8) {
+    return Result;
+  }
+
+  assert(Op.getValueType() == MVT::i16);
+  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Result, Result);
+}
+
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((GBISD::NodeType)Opcode) {
   case GBISD::FIRST_NUMBER:
@@ -444,7 +512,6 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   SelectionDAG &DAG = CLI.DAG;
   MachineFunction &MF = DAG.getMachineFunction();
-  const TargetFrameLowering &TFL = *MF.getSubtarget().getFrameLowering();
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState ArgCCInfo(CLI.CallConv, CLI.IsVarArg, MF, ArgLocs, *DAG.getContext());
