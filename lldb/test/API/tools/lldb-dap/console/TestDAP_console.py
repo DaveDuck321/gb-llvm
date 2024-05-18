@@ -3,16 +3,28 @@ Test lldb-dap setBreakpoints request
 """
 
 import dap_server
+import lldbdap_testcase
+from lldbsuite.test import lldbutil
 from lldbsuite.test.decorators import *
 from lldbsuite.test.lldbtest import *
-from lldbsuite.test import lldbutil
-import lldbdap_testcase
 
+
+def get_subprocess(root_process, process_name):
+    queue = [root_process]
+    while queue:
+        process = queue.pop()
+        if process.name() == process_name:
+            return process
+        queue.extend(process.children())
+
+    self.assertTrue(False, "No subprocess with name %s found" % process_name)
 
 class TestDAP_console(lldbdap_testcase.DAPTestCaseBase):
-    def check_lldb_command(self, lldb_command, contains_string, assert_msg):
+    def check_lldb_command(
+        self, lldb_command, contains_string, assert_msg, command_escape_prefix="`"
+    ):
         response = self.dap_server.request_evaluate(
-            "`%s" % (lldb_command), context="repl"
+            f"{command_escape_prefix}{lldb_command}", context="repl"
         )
         output = response["body"]["result"]
         self.assertIn(
@@ -68,3 +80,93 @@ class TestDAP_console(lldbdap_testcase.DAPTestCaseBase):
         # currently selected frame.
 
         self.check_lldb_command("frame select", "frame #1", "frame 1 is selected")
+
+    @skipIfWindows
+    @skipIfRemote
+    def test_custom_escape_prefix(self):
+        program = self.getBuildArtifact("a.out")
+        self.build_and_launch(program, commandEscapePrefix="::")
+        source = "main.cpp"
+        breakpoint1_line = line_number(source, "// breakpoint 1")
+        breakpoint_ids = self.set_source_breakpoints(source, [breakpoint1_line])
+        self.continue_to_breakpoints(breakpoint_ids)
+
+        self.check_lldb_command(
+            "help",
+            "For more information on any command",
+            "Help can be invoked",
+            command_escape_prefix="::",
+        )
+
+    @skipIfWindows
+    @skipIfRemote
+    def test_empty_escape_prefix(self):
+        program = self.getBuildArtifact("a.out")
+        self.build_and_launch(program, commandEscapePrefix="")
+        source = "main.cpp"
+        breakpoint1_line = line_number(source, "// breakpoint 1")
+        breakpoint_ids = self.set_source_breakpoints(source, [breakpoint1_line])
+        self.continue_to_breakpoints(breakpoint_ids)
+
+        self.check_lldb_command(
+            "help",
+            "For more information on any command",
+            "Help can be invoked",
+            command_escape_prefix="",
+        )
+
+    @skipIfWindows
+    @skipIfRemote
+    def test_exit_status_message_sigterm(self):
+        source = "main.cpp"
+        program = self.getBuildArtifact("a.out")
+        self.build_and_launch(program, commandEscapePrefix="")
+        breakpoint1_line = line_number(source, "// breakpoint 1")
+        breakpoint_ids = self.set_source_breakpoints(source, [breakpoint1_line])
+        self.continue_to_breakpoints(breakpoint_ids)
+
+        # Kill lldb-server process.
+        process_name = (
+            "debugserver" if platform.system() in ["Darwin"] else "lldb-server"
+        )
+
+        try:
+            import psutil
+        except ImportError:
+            print(
+                "psutil not installed, please install using 'pip install psutil'. "
+                "Skipping test_exit_status_message_sigterm test.",
+                file=sys.stderr,
+            )
+            return
+        process = get_subprocess(psutil.Process(os.getpid()), process_name)
+        process.terminate()
+        process.wait()
+
+        # Get the console output
+        console_output = self.collect_console(1.0)
+
+        # Verify the exit status message is printed.
+        self.assertIn(
+            "exited with status = -1 (0xffffffff) debugserver died with signal SIGTERM",
+            console_output,
+            "Exit status does not contain message 'exited with status'",
+        )
+
+    @skipIfWindows
+    @skipIfRemote
+    def test_exit_status_message_ok(self):
+        source = "main.cpp"
+        program = self.getBuildArtifact("a.out")
+        self.build_and_launch(program, commandEscapePrefix="")
+        self.continue_to_exit()
+
+        # Get the console output
+        console_output = self.collect_console(1.0)
+
+        # Verify the exit status message is printed.
+        self.assertIn(
+            "exited with status = 0 (0x00000000)",
+            console_output,
+            "Exit status does not contain message 'exited with status'",
+        )

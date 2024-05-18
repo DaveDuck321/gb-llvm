@@ -35,13 +35,16 @@ namespace fir {
 static llvm::cl::opt<bool>
     enableDummyArgs("dummy-arg-tbaa", llvm::cl::init(true), llvm::cl::Hidden,
                     llvm::cl::desc("Add TBAA tags to dummy arguments"));
-// These two are **known unsafe** (misscompare in spec2017/wrf_r). They should
+static llvm::cl::opt<bool>
+    enableGlobals("globals-tbaa", llvm::cl::init(true), llvm::cl::Hidden,
+                  llvm::cl::desc("Add TBAA tags to global variables"));
+static llvm::cl::opt<bool>
+    enableDirect("direct-tbaa", llvm::cl::init(true), llvm::cl::Hidden,
+                 llvm::cl::desc("Add TBAA tags to direct variables"));
+// This is **known unsafe** (misscompare in spec2017/wrf_r). It should
 // not be enabled by default.
 // The code is kept so that these may be tried with new benchmarks to see if
 // this is worth fixing in the future.
-static llvm::cl::opt<bool>
-    enableGlobals("globals-tbaa", llvm::cl::init(false), llvm::cl::Hidden,
-                  llvm::cl::desc("Add TBAA tags to global variables. UNSAFE."));
 static llvm::cl::opt<bool> enableLocalAllocs(
     "local-alloc-tbaa", llvm::cl::init(false), llvm::cl::Hidden,
     llvm::cl::desc("Add TBAA tags to local allocations. UNSAFE."));
@@ -102,6 +105,7 @@ static std::string getFuncArgName(mlir::Value arg) {
          "arg is a function argument");
   mlir::FunctionOpInterface func = mlir::dyn_cast<mlir::FunctionOpInterface>(
       blockArg.getOwner()->getParentOp());
+  assert(func && "This is not a function argument");
   mlir::StringAttr attr = func.getArgAttrOfType<mlir::StringAttr>(
       blockArg.getArgNumber(), "fir.bindc_name");
   if (!attr)
@@ -141,7 +145,7 @@ void AddAliasTagsPass::runOnAliasInterface(fir::FirAliasTagOpInterface op,
       source.kind == fir::AliasAnalysis::SourceKind::Argument) {
     LLVM_DEBUG(llvm::dbgs().indent(2)
                << "Found reference to dummy argument at " << *op << "\n");
-    std::string name = getFuncArgName(source.u.get<mlir::Value>());
+    std::string name = getFuncArgName(source.origin.u.get<mlir::Value>());
     if (!name.empty())
       tag = state.getFuncTree(func).dummyArgDataTree.getTag(name);
     else
@@ -151,18 +155,37 @@ void AddAliasTagsPass::runOnAliasInterface(fir::FirAliasTagOpInterface op,
 
     // TBAA for global variables
   } else if (enableGlobals &&
-             source.kind == fir::AliasAnalysis::SourceKind::Global) {
-    mlir::SymbolRefAttr glbl = source.u.get<mlir::SymbolRefAttr>();
+             source.kind == fir::AliasAnalysis::SourceKind::Global &&
+             !source.isBoxData()) {
+    mlir::SymbolRefAttr glbl = source.origin.u.get<mlir::SymbolRefAttr>();
     const char *name = glbl.getRootReference().data();
     LLVM_DEBUG(llvm::dbgs().indent(2) << "Found reference to global " << name
                                       << " at " << *op << "\n");
     tag = state.getFuncTree(func).globalDataTree.getTag(name);
 
+    // TBAA for SourceKind::Direct
+  } else if (enableDirect &&
+             source.kind == fir::AliasAnalysis::SourceKind::Global &&
+             source.isBoxData()) {
+    if (source.origin.u.is<mlir::SymbolRefAttr>()) {
+      mlir::SymbolRefAttr glbl = source.origin.u.get<mlir::SymbolRefAttr>();
+      const char *name = glbl.getRootReference().data();
+      LLVM_DEBUG(llvm::dbgs().indent(2) << "Found reference to direct " << name
+                                        << " at " << *op << "\n");
+      tag = state.getFuncTree(func).directDataTree.getTag(name);
+    } else {
+      // SourceKind::Direct is likely to be extended to cases which are not a
+      // SymbolRefAttr in the future
+      LLVM_DEBUG(llvm::dbgs().indent(2) << "Can't get name for direct "
+                                        << source << " at " << *op << "\n");
+    }
+
     // TBAA for local allocations
   } else if (enableLocalAllocs &&
              source.kind == fir::AliasAnalysis::SourceKind::Allocate) {
     std::optional<llvm::StringRef> name;
-    mlir::Operation *sourceOp = source.u.get<mlir::Value>().getDefiningOp();
+    mlir::Operation *sourceOp =
+        source.origin.u.get<mlir::Value>().getDefiningOp();
     if (auto alloc = mlir::dyn_cast_or_null<fir::AllocaOp>(sourceOp))
       name = alloc.getUniqName();
     else if (auto alloc = mlir::dyn_cast_or_null<fir::AllocMemOp>(sourceOp))
@@ -203,8 +226,4 @@ void AddAliasTagsPass::runOnOperation() {
       [&](fir::FirAliasTagOpInterface op) { runOnAliasInterface(op, state); });
 
   LLVM_DEBUG(llvm::dbgs() << "=== End " DEBUG_TYPE " ===\n");
-}
-
-std::unique_ptr<mlir::Pass> fir::createAliasTagsPass() {
-  return std::make_unique<AddAliasTagsPass>();
 }

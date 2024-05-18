@@ -103,7 +103,7 @@ See the :doc:`LLDB Build Page <resources/build>` for build instructions.
 
 Discussions about LLDB should go to the `LLDB forum
 <https://discourse.llvm.org/c/subprojects/lldb>`__ or the ``lldb`` channel on
-the `LLVM Discord server <https://discord.gg/HexWwB5z>`__.
+the `LLVM Discord server <https://discord.com/invite/xS7Z362>`__.
 
 For contributions follow the
 `LLVM contribution process <https://llvm.org/docs/Contributing.html>`__. Commit
@@ -157,8 +157,11 @@ interesting areas to contribute to lldb.
    resources/sbapi
    resources/dataformatters
    resources/extensions
+   resources/lldbgdbremote
+   resources/lldbplatformpackets
    resources/caveats
    resources/projects
+   resources/lldbdap
    Public C++ API <https://lldb.llvm.org/cpp_reference/namespacelldb.html>
    Private C++ API <https://lldb.llvm.org/cpp_reference/index.html>
 

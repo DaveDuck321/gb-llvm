@@ -431,6 +431,10 @@ ContentCache &SourceManager::createMemBufferContentCache(
 
 const SrcMgr::SLocEntry &SourceManager::loadSLocEntry(unsigned Index,
                                                       bool *Invalid) const {
+  return const_cast<SourceManager *>(this)->loadSLocEntry(Index, Invalid);
+}
+
+SrcMgr::SLocEntry &SourceManager::loadSLocEntry(unsigned Index, bool *Invalid) {
   assert(!SLocEntryLoaded[Index]);
   if (ExternalSLocEntries->ReadSLocEntry(-(static_cast<int>(Index) + 2))) {
     if (Invalid)
@@ -2121,14 +2125,16 @@ void SourceManager::PrintStats() const {
   llvm::errs() << "\n*** Source Manager Stats:\n";
   llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
                << " mem buffers mapped.\n";
-  llvm::errs() << LocalSLocEntryTable.size() << " local SLocEntry's allocated ("
+  llvm::errs() << LocalSLocEntryTable.size() << " local SLocEntries allocated ("
                << llvm::capacity_in_bytes(LocalSLocEntryTable)
-               << " bytes of capacity), "
-               << NextLocalOffset << "B of Sloc address space used.\n";
+               << " bytes of capacity), " << NextLocalOffset
+               << "B of SLoc address space used.\n";
   llvm::errs() << LoadedSLocEntryTable.size()
-               << " loaded SLocEntries allocated, "
+               << " loaded SLocEntries allocated ("
+               << llvm::capacity_in_bytes(LoadedSLocEntryTable)
+               << " bytes of capacity), "
                << MaxLoadedOffset - CurrentLoadedOffset
-               << "B of Sloc address space used.\n";
+               << "B of SLoc address space used.\n";
 
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;

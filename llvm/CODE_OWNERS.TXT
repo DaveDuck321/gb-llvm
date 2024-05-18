@@ -79,8 +79,8 @@ N: Hal Finkel
 E: hfinkel@anl.gov
 D: The loop reroller and alias analysis
 
-N: Nemanja Ivanovic
-E: nemanja.i.ibm@gmail.com
+N: Zheng Chen
+E: czhengsz@cn.ibm.com
 D: PowerPC Backend
 
 N: Dan Gohman
@@ -114,6 +114,10 @@ D: MCJIT, RuntimeDyld and JIT event listeners, Orcish Warchief
 N: Min-Yih Hsu
 E: min@myhsu.dev
 D: M68k Target (lib/Target/M68k/*)
+
+N: Cyndy Ishida
+E: cyndyishida@gmail.com
+D: TextAPI (lib/TextAPI/*) and related TAPI tools
 
 N: Teresa Johnson
 E: tejohnson@google.com

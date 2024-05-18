@@ -223,13 +223,13 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 
 MachineBasicBlock::iterator
 MachineBasicBlock::SkipPHIsLabelsAndDebug(MachineBasicBlock::iterator I,
-                                          bool SkipPseudoOp) {
+                                          Register Reg, bool SkipPseudoOp) {
   const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
 
   iterator E = end();
   while (I != E && (I->isPHI() || I->isPosition() || I->isDebugInstr() ||
                     (SkipPseudoOp && I->isPseudoProbe()) ||
-                    TII->isBasicBlockPrologue(*I)))
+                    TII->isBasicBlockPrologue(*I, Reg)))
     ++I;
   // FIXME: This needs to change if we wish to bundle labels / dbg_values
   // inside the bundle.
@@ -567,7 +567,9 @@ void MachineBasicBlock::printName(raw_ostream &os, unsigned printNameFlags,
     }
     if (getBBID().has_value()) {
       os << (hasAttributes ? ", " : " (");
-      os << "bb_id " << *getBBID();
+      os << "bb_id " << getBBID()->BaseID;
+      if (getBBID()->CloneID != 0)
+        os << " " << getBBID()->CloneID;
       hasAttributes = true;
     }
     if (CallFrameSize != 0) {
@@ -886,7 +888,7 @@ void MachineBasicBlock::replaceSuccessor(MachineBasicBlock *Old,
   removeSuccessor(OldI);
 }
 
-void MachineBasicBlock::copySuccessor(MachineBasicBlock *Orig,
+void MachineBasicBlock::copySuccessor(const MachineBasicBlock *Orig,
                                       succ_iterator I) {
   if (!Orig->Probs.empty())
     addSuccessor(*I, Orig->getSuccProbability(I));
@@ -1135,7 +1137,6 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
 
   MachineFunction *MF = getParent();
   MachineBasicBlock *PrevFallthrough = getNextNode();
-  DebugLoc DL;  // FIXME: this is nowhere
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   NMBB->setCallFrameSize(Succ->getCallFrameSize());
@@ -1216,6 +1217,15 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
     SlotIndexUpdateDelegate SlotUpdater(*MF, Indexes);
     SmallVector<MachineOperand, 4> Cond;
     const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
+
+    // In original 'this' BB, there must be a branch instruction targeting at
+    // Succ. We can not find it out since currently getBranchDestBlock was not
+    // implemented for all targets. However, if the merged DL has column or line
+    // number, the scope and non-zero column and line number is same with that
+    // branch instruction so we can safely use it.
+    DebugLoc DL, MergedDL = findBranchDebugLoc();
+    if (MergedDL && (MergedDL.getLine() || MergedDL.getCol()))
+      DL = MergedDL;
     TII->insertBranch(*NMBB, Succ, nullptr, Cond, DL);
   }
 
@@ -1281,6 +1291,8 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
           assert(VNI &&
                  "PHI sources should be live out of their predecessors.");
           LI.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+          for (auto &SR : LI.subranges())
+            SR.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
         }
       }
     }
@@ -1300,8 +1312,16 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
         VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
         assert(VNI && "LiveInterval should have VNInfo where it is live.");
         LI.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+        // Update subranges with live values
+        for (auto &SR : LI.subranges()) {
+          VNInfo *VNI = SR.getVNInfoAt(PrevIndex);
+          if (VNI)
+            SR.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+        }
       } else if (!isLiveOut && !isLastMBB) {
         LI.removeSegment(StartIndex, EndIndex);
+        for (auto &SR : LI.subranges())
+          SR.removeSegment(StartIndex, EndIndex);
       }
     }
 
@@ -1706,6 +1726,12 @@ MachineBasicBlock::getEndClobberMask(const TargetRegisterInfo *TRI) const {
 
 void MachineBasicBlock::clearLiveIns() {
   LiveIns.clear();
+}
+
+void MachineBasicBlock::clearLiveIns(
+    std::vector<RegisterMaskPair> &OldLiveIns) {
+  assert(OldLiveIns.empty() && "Vector must be empty");
+  std::swap(LiveIns, OldLiveIns);
 }
 
 MachineBasicBlock::livein_iterator MachineBasicBlock::livein_begin() const {

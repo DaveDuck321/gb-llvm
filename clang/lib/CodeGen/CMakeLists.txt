@@ -9,8 +9,10 @@ set(LLVM_LINK_COMPONENTS
   Coverage
   Demangle
   Extensions
+  FrontendDriver
   FrontendHLSL
   FrontendOpenMP
+  FrontendOffloading
   HIPStdPar
   IPO
   IRPrinter
@@ -102,6 +104,7 @@ add_clang_library(clangCodeGen
   ConstantInitBuilder.cpp
   CoverageMappingGen.cpp
   ItaniumCXXABI.cpp
+  LinkInModulesPass.cpp
   MacroPPCallbacks.cpp
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
@@ -140,6 +143,9 @@ add_clang_library(clangCodeGen
   DEPENDS
   intrinsics_gen
   ClangDriverOptions
+  # These generated headers are included transitively.
+  ARMTargetParserTableGen
+  AArch64TargetParserTableGen
 
   LINK_LIBS
   clangAST

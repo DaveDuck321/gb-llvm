@@ -29,27 +29,7 @@ class CrashLogScriptedProcess(ScriptedProcess):
         if hasattr(self.crashlog, "asb"):
             self.extended_thread_info = self.crashlog.asb
 
-        if self.load_all_images:
-            for image in self.crashlog.images:
-                image.resolve = True
-        else:
-            for thread in self.crashlog.threads:
-                if thread.did_crash():
-                    for ident in thread.idents:
-                        for image in self.crashlog.find_images_with_identifier(ident):
-                            image.resolve = True
-
-        with tempfile.TemporaryDirectory() as obj_dir:
-            for image in self.crashlog.images:
-                if image not in self.loaded_images:
-                    if image.uuid == uuid.UUID(int=0):
-                        continue
-                    err = image.add_module(self.target, obj_dir)
-                    if err:
-                        # Append to SBCommandReturnObject
-                        print(err)
-                    else:
-                        self.loaded_images.append(image)
+        crashlog.load_images(self.options, self.loaded_images)
 
         for thread in self.crashlog.threads:
             if (
@@ -70,6 +50,10 @@ class CrashLogScriptedProcess(ScriptedProcess):
                 self.app_specific_thread, self.addr_mask, self.target
             )
 
+    class CrashLogOptions:
+        load_all_images = False
+        crashed_only = True
+
     def __init__(self, exe_ctx: lldb.SBExecutionContext, args: lldb.SBStructuredData):
         super().__init__(exe_ctx, args)
 
@@ -88,13 +72,17 @@ class CrashLogScriptedProcess(ScriptedProcess):
             # Return error
             return
 
+        self.options = self.CrashLogOptions()
+
         load_all_images = args.GetValueForKey("load_all_images")
         if load_all_images and load_all_images.IsValid():
             if load_all_images.GetType() == lldb.eStructuredDataTypeBoolean:
-                self.load_all_images = load_all_images.GetBooleanValue()
+                self.options.load_all_images = load_all_images.GetBooleanValue()
 
-        if not self.load_all_images:
-            self.load_all_images = False
+        crashed_only = args.GetValueForKey("crashed_only")
+        if crashed_only and crashed_only.IsValid():
+            if crashed_only.GetType() == lldb.eStructuredDataTypeBoolean:
+                self.options.crashed_only = crashed_only.GetBooleanValue()
 
         self.pid = super().get_process_id()
         self.crashed_thread_idx = 0
@@ -159,14 +147,14 @@ class CrashLogScriptedThread(ScriptedThread):
         return frames
 
     def create_stackframes(self):
-        if not (self.scripted_process.load_all_images or self.has_crashed):
+        if not (self.originating_process.options.load_all_images or self.has_crashed):
             return None
 
         if not self.backing_thread or not len(self.backing_thread.frames):
             return None
 
         self.frames = CrashLogScriptedThread.resolve_stackframes(
-            self.backing_thread, self.scripted_process.addr_mask, self.target
+            self.backing_thread, self.originating_process.addr_mask, self.target
         )
 
         return self.frames
@@ -182,7 +170,7 @@ class CrashLogScriptedThread(ScriptedThread):
         else:
             self.name = self.backing_thread.name
         self.queue = self.backing_thread.queue
-        self.has_crashed = self.scripted_process.crashed_thread_idx == self.idx
+        self.has_crashed = self.originating_process.crashed_thread_idx == self.idx
         self.create_stackframes()
 
     def get_state(self):
@@ -195,8 +183,8 @@ class CrashLogScriptedThread(ScriptedThread):
             return {"type": lldb.eStopReasonNone}
         # TODO: Investigate what stop reason should be reported when crashed
         stop_reason = {"type": lldb.eStopReasonException, "data": {}}
-        if self.scripted_process.exception:
-            stop_reason["data"]["mach_exception"] = self.scripted_process.exception
+        if self.originating_process.exception:
+            stop_reason["data"]["mach_exception"] = self.originating_process.exception
         return stop_reason
 
     def get_register_context(self) -> str:
@@ -209,5 +197,5 @@ class CrashLogScriptedThread(ScriptedThread):
 
     def get_extended_info(self):
         if self.has_crashed:
-            self.extended_info = self.scripted_process.extended_thread_info
+            self.extended_info = self.originating_process.extended_thread_info
         return self.extended_info
