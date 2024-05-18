@@ -116,7 +116,7 @@ public:
 
     // Return the first successful decoding
     uint64_t Inst = 0;
-    for (unsigned I = 0; I <= Tables.size(); I++) {
+    for (unsigned I = 0; I < Tables.size(); I++) {
       if (I >= Bytes.size()) {
         break;
       }
