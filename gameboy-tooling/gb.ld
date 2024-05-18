@@ -18,7 +18,8 @@ SECTIONS {
     . = DEFINED( rst28 ) ? 0x0028 : .; *(.text.rst28)
     . = DEFINED( rst30 ) ? 0x0030 : .; *(.text.rst30)
     . = DEFINED( rst38 ) ? 0x0038 : .; *(.text.rst38)
-  } > rom0 = 0x10001000 /* STOP 00 */
+    . = 0x0040;
+  } > rom0 = 0xd3d3d3d3 /* trap */
 
   .int 0x0040 : {
     . = 0x0040; *(.text.int_vblank)
@@ -26,7 +27,8 @@ SECTIONS {
     . = 0x0050; *(.text.int_timer)
     . = 0x0058; *(.text.int_serial)
     . = 0x0060; *(.text.int_input)
-  } > rom0 = 0x10001000 /* STOP 00 */
+    . = 0x0068;
+  } > rom0 = 0xd3d3d3d3 /* trap */
 
   .entry 0x0100 : {
     BYTE(0)         /* NOP */
