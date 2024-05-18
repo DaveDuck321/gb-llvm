@@ -158,6 +158,8 @@ static const CoreDefinition g_core_definitions[] = {
     {eByteOrderLittle, 2, 2, 4, llvm::Triple::msp430, ArchSpec::eCore_msp430,
      "msp430"},
 
+    {eByteOrderLittle, 2, 1, 3, llvm::Triple::gb, ArchSpec::eCore_gb, "gb"},
+
     {eByteOrderBig, 4, 4, 4, llvm::Triple::ppc, ArchSpec::eCore_ppc_generic,
      "powerpc"},
     {eByteOrderBig, 4, 4, 4, llvm::Triple::ppc, ArchSpec::eCore_ppc_ppc601,
@@ -408,6 +410,8 @@ static const ArchDefinitionEntry g_elf_arch_entries[] = {
      ArchSpec::eMIPSSubType_mips64r6el, 0xFFFFFFFFu, 0xFFFFFFFFu}, // mips64r6el
     {ArchSpec::eCore_msp430, llvm::ELF::EM_MSP430, LLDB_INVALID_CPUTYPE,
      0xFFFFFFFFu, 0xFFFFFFFFu}, // MSP430
+    {ArchSpec::eCore_gb, llvm::ELF::EM_GB, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu,
+     0xFFFFFFFFu}, // GB
     {ArchSpec::eCore_hexagon_generic, llvm::ELF::EM_HEXAGON,
      LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu}, // HEXAGON
     {ArchSpec::eCore_arc, llvm::ELF::EM_ARC_COMPACT2, LLDB_INVALID_CPUTYPE,
@@ -672,13 +676,9 @@ uint32_t ArchSpec::GetMachOCPUSubType() const {
   return LLDB_INVALID_CPUTYPE;
 }
 
-uint32_t ArchSpec::GetDataByteSize() const {
-  return 1;
-}
+uint32_t ArchSpec::GetDataByteSize() const { return 1; }
 
-uint32_t ArchSpec::GetCodeByteSize() const {
-  return 1;
-}
+uint32_t ArchSpec::GetCodeByteSize() const { return 1; }
 
 llvm::Triple::ArchType ArchSpec::GetMachine() const {
   const CoreDefinition *core_def = FindCoreDefinition(m_core);
@@ -1138,8 +1138,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv7em:
     if (!enforce_exact_match) {
@@ -1156,8 +1156,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv7m:
     if (!enforce_exact_match) {
@@ -1174,8 +1174,8 @@ static bool cores_match(const ArchSpec::Core core1, const ArchSpec::Core core2,
     break;
 
   // v. https://en.wikipedia.org/wiki/ARM_Cortex-M#Silicon_customization
-  // Cortex-M0 - ARMv6-M - armv6m 
-  // Cortex-M3 - ARMv7-M - armv7m 
+  // Cortex-M0 - ARMv6-M - armv6m
+  // Cortex-M3 - ARMv7-M - armv7m
   // Cortex-M4 - ARMv7E-M - armv7em
   case ArchSpec::eCore_arm_armv6m:
     if (!enforce_exact_match) {
@@ -1400,7 +1400,6 @@ bool lldb_private::operator<(const ArchSpec &lhs, const ArchSpec &rhs) {
   const ArchSpec::Core rhs_core = rhs.GetCore();
   return lhs_core < rhs_core;
 }
-
 
 bool lldb_private::operator==(const ArchSpec &lhs, const ArchSpec &rhs) {
   return lhs.GetCore() == rhs.GetCore();

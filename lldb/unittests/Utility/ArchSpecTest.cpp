@@ -129,6 +129,13 @@ TEST(ArchSpecTest, TestSetTriple) {
   EXPECT_STREQ("msp430", AS.GetArchitectureName());
   EXPECT_EQ(ArchSpec::eCore_msp430, AS.GetCore());
 
+
+  AS = ArchSpec();
+  EXPECT_TRUE(AS.SetTriple("gb---elf"));
+  EXPECT_EQ(llvm::Triple::gb, AS.GetTriple().getArch());
+  EXPECT_STREQ("gb", AS.GetArchitectureName());
+  EXPECT_EQ(ArchSpec::eCore_gb, AS.GetCore());
+
   // Various flavors of invalid triples.
   AS = ArchSpec();
   EXPECT_FALSE(AS.SetTriple("unknown-unknown-unknown"));
