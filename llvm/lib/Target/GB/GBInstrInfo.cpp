@@ -71,7 +71,7 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   llvm_unreachable("Unsupported register copy!");
 }
 
-unsigned GBInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+Register GBInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
                                           int &FrameIndex) const {
   switch (MI.getOpcode()) {
   case GB::Load8FromFrameIndex:
@@ -83,7 +83,7 @@ unsigned GBInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   }
 }
 
-unsigned GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+Register GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
                                          int &FrameIndex) const {
   switch (MI.getOpcode()) {
   case GB::Save8ToFrameIndex:

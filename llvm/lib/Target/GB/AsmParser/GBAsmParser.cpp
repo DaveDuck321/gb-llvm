@@ -121,7 +121,7 @@ public:
   bool isFlag() const { return std::holds_alternative<Flag>(Data); }
 
   bool isReg() const override { return std::holds_alternative<Reg>(Data); };
-  unsigned getReg() const override { return std::get<Reg>(Data).RegNum; };
+  MCRegister getReg() const override { return std::get<Reg>(Data).RegNum; };
   bool isMem() const override { return false; };
 
   SMLoc getStartLoc() const override { return StartLoc; };
