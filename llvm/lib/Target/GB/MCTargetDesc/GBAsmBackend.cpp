@@ -70,6 +70,9 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     case FK_Data_1:
     case FK_Data_2:
       return false;
+    // For dwarf information
+    case FK_Data_4:
+      return false;
     }
   }();
 

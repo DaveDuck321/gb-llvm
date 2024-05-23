@@ -1,9 +1,9 @@
 # RUN: llvm-mc %s -triple=gb -show-encoding \
 # RUN:      | FileCheck -check-prefixes=CHECK-FIXUP %s
-# RUN: llvm-mc %s -triple=gb -filetype=obj \
+# RUN: llvm-mc %s -triple=gb -filetype=obj -g \
 # RUN:      | llvm-objdump -d - \
 # RUN:      | FileCheck -check-prefixes=CHECK-ENCODED %s
-# RUN: llvm-mc %s -triple=gb -filetype=obj \
+# RUN: llvm-mc %s -triple=gb -filetype=obj -g \
 # RUN:      | llvm-readelf -r - \
 # RUN:      | FileCheck -check-prefixes=CHECK-RELOC-TYPE,CHECK-RELOC-OFFSET,CHECK-RELOC-NAME %s
 

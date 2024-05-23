@@ -2,8 +2,8 @@
 #error "ELF_RELOC must be defined"
 #endif
 
-// TODO: almost all instructions support immediates, also support these
 ELF_RELOC(R_GB_NONE,            0)
 ELF_RELOC(R_GB_8,               1)
 ELF_RELOC(R_GB_16,              2)
 ELF_RELOC(R_GB_PCREL_8,         3)
+ELF_RELOC(R_GB_DWARF_32,        4)

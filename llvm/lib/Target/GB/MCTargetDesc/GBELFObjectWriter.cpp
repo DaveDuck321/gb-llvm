@@ -2,6 +2,7 @@
 
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -38,6 +39,8 @@ unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
     return ELF::R_GB_8;
   case FK_Data_2:
     return ELF::R_GB_16;
+  case FK_Data_4:
+    return ELF::R_GB_DWARF_32;
   }
 }
 
