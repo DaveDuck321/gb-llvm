@@ -161,3 +161,17 @@ define i16 @zext16_i8(i8 %0) {
   %res = zext i8 %0 to i16
   ret i16 %res
 }
+
+declare void @llvm.trap() noreturn nounwind
+
+define void @trap(i8 %0) noreturn {
+; GBI-O0-LABEL: trap:
+; GBI-O0:       ; %bb.0:
+; GBI-O0-NEXT:    trap
+;
+; GBI-O3-LABEL: trap:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    trap
+  call void @llvm.trap()
+  unreachable
+}

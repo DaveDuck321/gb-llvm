@@ -3,10 +3,14 @@
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -100,6 +104,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // CTPOP
   // SETCC, SELECT, SELECT_CC
   setOperationAction(ISD::SETCC, MVT::i8, Custom);
+  setOperationAction(ISD::SELECT, MVT::i8, Expand); // -> select_cc
+  setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
   // SETCCCARRY         // Expanded
   // SHL_PARTS, SRA_PARTS, SRL_PARTS
   // SIGN_EXTEND, ZERO_EXTEND, ANY_EXTEND
@@ -134,7 +140,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // READCYCLECOUNTER
   // HANDLENODE
   // INIT_TRAMPOLINE, ADJUST_TRAMPOLINE
-  // TRAP
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
   // LIFETIME_START, LIFETIME_END
   // GET_DYNAMIC_AREA_OFFSET
   // PSEUDO_PROBE
@@ -155,9 +161,8 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerBR_CC(Op, DAG);
   case ISD::SETCC:
     return LowerSETCC(Op, DAG);
-  case ISD::SELECT:
   case ISD::SELECT_CC:
-    llvm_unreachable("DAG tried to lower ISD::SELECT_(CC)");
+    return LowerSELECT_CC(Op, DAG);
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:
@@ -236,15 +241,10 @@ SDValue GBTargetLowering::LowerSTORE16(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getStore(Chain, DL, Upper, PtrUpper, Node->getMemOperand());
 }
 
-SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Chain = Op.getOperand(0);
-  ISD::CondCode CCode =
-      dyn_cast<CondCodeSDNode>(Op.getOperand(1).getNode())->get();
-  SDValue LHS = Op.getOperand(2);
-  SDValue RHS = Op.getOperand(3);
-  SDValue BB = Op.getOperand(4);
-  SDLoc DL = Op;
-
+SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
+                                      ISD::CondCode &CCode, SelectionDAG &DAG,
+                                      SDLoc DL) const {
+  assert(LHS.getValueType() == MVT::i8 && RHS.getValueType() == MVT::i8);
   auto ConvertToSubCp = [&](ISD::CondCode UCond, unsigned Val) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, LHS.getValueType(), LHS, RHS);
     LHS = Sub;
@@ -287,8 +287,36 @@ SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   }
 
   SDValue CC = DAG.getCondCode(CCode);
-  SDValue Cmp = DAG.getNode(GBISD::CP, DL, MVT::Glue, CC, LHS, RHS);
-  return DAG.getNode(GBISD::BR_CC, DL, MVT::Other, Chain, CC, BB, Cmp);
+  return DAG.getNode(GBISD::CP, DL, MVT::Glue, CC, LHS, RHS);
+}
+
+SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CCode =
+      dyn_cast<CondCodeSDNode>(Op.getOperand(1).getNode())->get();
+  SDValue LHS = Op.getOperand(2);
+  SDValue RHS = Op.getOperand(3);
+  SDValue BB = Op.getOperand(4);
+  SDLoc DL = Op;
+
+  SDValue CmpGlue = LowerCMP_CC(LHS, RHS, CCode, DAG, DL);
+  SDValue CC = DAG.getCondCode(CCode);
+  return DAG.getNode(GBISD::BR_CC, DL, MVT::Other, Chain, CC, BB, CmpGlue);
+}
+
+SDValue GBTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue IfTrue = Op->getOperand(2);
+  SDValue IfFalse = Op->getOperand(3);
+  ISD::CondCode CCode =
+      dyn_cast<CondCodeSDNode>(Op.getOperand(4).getNode())->get();
+  SDLoc DL = Op;
+
+  SDValue CmpGlue = LowerCMP_CC(LHS, RHS, CCode, DAG, DL);
+  SDValue CC = DAG.getCondCode(CCode);
+  return DAG.getNode(GBISD::SELECT_CC, DL, IfTrue.getValueType(), CC, IfTrue,
+                     IfFalse, CmpGlue);
 }
 
 SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
@@ -356,9 +384,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     // Subtract, move the sign bit directly into the accumulator and reverse
     SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
     SDValue Result = DAG.getNode(GBISD::RLCA, DL, MVT::i8, Sub);
-    Result = DAG.getNode(ISD::XOR, DL, MVT::i8, Result,
-                         DAG.getConstant(-1, DL, MVT::i8));
-    return Result;
+    return DAG.getNOT(DL, Result, MVT::i8);
   }
 
   SDValue CC = DAG.getCondCode(CCode);
@@ -368,8 +394,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Result =
       DAG.getNode(GBISD::RLA, DL, MVT::i8, DAG.getUNDEF(MVT::i8), Cmp);
   if (ReverseResult) {
-    Result = DAG.getNode(ISD::XOR, DL, MVT::i8, Result,
-                         DAG.getConstant(-1, DL, MVT::i8));
+    Result = DAG.getNOT(DL, Result, MVT::i8);
   }
   return Result;
 }
@@ -498,6 +523,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::RLA";
   case GBISD::RLCA:
     return "GBISD::RLCA";
+  case GBISD::SELECT_CC:
+    return "GBISD::SELECT_CC";
   case GBISD::UPPER:
     return "GBISD::UPPER";
   }
@@ -668,6 +695,83 @@ bool GBTargetLowering::CanLowerReturn(
     TotalSize += Arg.VT.getStoreSize();
   }
   return TotalSize <= 2;
+}
+
+MachineBasicBlock *
+GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
+                                              MachineBasicBlock *MBB) const {
+  switch (MI.getOpcode()) {
+  default:
+    assert(!"Instruction emitter implemented!");
+  case GB::P_SELECT_CC:
+    return emitSelectCCWithCustomInserter(MI, MBB);
+  }
+}
+
+MachineBasicBlock *
+GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
+                                                 MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+  // Atm, we've got the following sequence
+  // cmp xx
+  // P_SELECT_CC flag ifTrue, ifFalse
+  const auto MIResult = MI.getOperand(0).getReg();
+  const auto MIFlag = MI.getOperand(1).getImm();
+  const auto MIIfTrue = MI.getOperand(2).getReg();
+  const auto MIIfFalse = MI.getOperand(3).getReg();
+
+  // This should codegen to:
+  //      cmp xx
+  //      resultReg = ifTrue
+  //      BR_CC flag .end
+  //      resultReg = ifFalse
+  //  .end:
+
+  // In llvm world that is:
+  // .start
+  //      cmp xx
+  //      BR_CC flag .end
+  //      BR .false
+  // .false
+  //      BR .end
+  // .end
+  //      PHI ifTrue .start ifFalse .false
+  MachineFunction *Func = MBB->getParent();
+  const BasicBlock *BB = MBB->getBasicBlock();
+  MachineFunction::iterator I = ++MBB->getIterator();
+  DebugLoc DL = MI.getDebugLoc();
+
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *FalseMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *EndMBB = Func->CreateMachineBasicBlock(BB);
+  Func->insert(I, FalseMBB);
+  Func->insert(I, EndMBB);
+
+  // Split the basic block after the select
+  EndMBB->splice(EndMBB->begin(), StartMBB,
+                 std::next(MachineBasicBlock::iterator(MI)), StartMBB->end());
+  EndMBB->transferSuccessorsAndUpdatePHIs(StartMBB);
+
+  // Insert the new basic blocks
+  StartMBB->addSuccessor(FalseMBB);
+  StartMBB->addSuccessor(EndMBB);
+  FalseMBB->addSuccessor(EndMBB);
+
+  // Add the jumps
+  BuildMI(StartMBB, DL, TII.get(GB::JR_COND)).addImm(MIFlag).addMBB(EndMBB);
+  BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(FalseMBB);
+  BuildMI(FalseMBB, DL, TII.get(GB::JR)).addMBB(EndMBB);
+
+  // Add the PHI
+  // %result = phi [ %TrueValue, StartMBB ], [ %FalseValue, FalseMBB ]
+  BuildMI(*EndMBB, EndMBB->begin(), DL, TII.get(GB::PHI), MIResult)
+      .addReg(MIIfTrue)
+      .addMBB(StartMBB)
+      .addReg(MIIfFalse)
+      .addMBB(FalseMBB);
+
+  MI.eraseFromParent(); // The pseudo instruction is gone now.
+  return EndMBB;
 }
 
 SDValue

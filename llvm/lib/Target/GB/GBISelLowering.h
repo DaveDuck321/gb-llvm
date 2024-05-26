@@ -27,6 +27,7 @@ enum NodeType : unsigned {
   RET,
   RLA,
   RLCA,
+  SELECT_CC,
   UPPER,
 };
 } // namespace GBISD
@@ -43,7 +44,10 @@ public:
 private:
   SDValue LowerLOAD16(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE16(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerCMP_CC(SDValue LHS, SDValue RHS, ISD::CondCode &CCode,
+                      SelectionDAG &DAG, SDLoc DL) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
@@ -64,6 +68,15 @@ private:
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutsVals, const SDLoc &DL,
                       SelectionDAG &) const override;
+
+  MachineBasicBlock *
+  EmitInstrWithCustomInserter(MachineInstr &MI,
+                              MachineBasicBlock *MBB) const override;
+
+  MachineBasicBlock *
+  emitSelectCCWithCustomInserter(MachineInstr &MI,
+                                 MachineBasicBlock *MBB) const;
+
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
   bool isSelectSupported(SelectSupportKind) const override;

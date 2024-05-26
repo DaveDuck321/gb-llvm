@@ -174,7 +174,8 @@ let hasSideEffects = true in {
   def STOP : GBInstrNoOperands<"stop", 0x10>;
   def HALT : GBInstrNoOperands<"halt", 0x76>;
   def DI   : GBInstrNoOperands<"di", 0xF3>;
-  def EI   : GBInstrNoOperands<"ei", 0xFb>;
+  def EI   : GBInstrNoOperands<"ei", 0xFB>;
+  def TRAP : GBInstrNoOperands<"trap", 0xD3>;
 }
 
 let mayLoad = true in {
@@ -189,6 +190,29 @@ let mayStore = true in {
 // Immediate types
 def imm8 : ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
 def imm16 : ImmLeaf<i16, [{return isInt<16>(Imm);}]>;
+
+def to_lower_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant(N->getZExtValue() & 0xFF, SDLoc(N), MVT::i8); }]>;
+def to_upper_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant((N->getZExtValue() >> 8) & 0xFF, SDLoc(N), MVT::i8); }]>;
+
+// Combine and split
+def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
+def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDT_GBCOMBINE, [SDNPHasChain]>;
+def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
+
+def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
+          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
+
+def : Pat<(COMBINE_CHAIN_NODE GPR8:$rs1, GPR8:$rs2),
+          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
+
+def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
+def LOWER_NODE : SDNode<"GBISD::LOWER", SDT_GBSPLIT, []>;
+def UPPER_NODE : SDNode<"GBISD::UPPER", SDT_GBSPLIT, []>;
+
+def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
+def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
+
+def : Pat<(trunc GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
 
 // GB-Specific DAG nodes
 def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
@@ -229,8 +253,8 @@ def : Pat<(RLCA_NODE A), (RLCA)>;
 // TODO GB: generate JP here and optimize into JR in another pass
 def SDTGBBR_CC  : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>]>;
 def BR_CC_NODE : SDNode<"GBISD::BR_CC", SDTGBBR_CC, [SDNPInGlue, SDNPHasChain]>;
-def : Pat<(BR_CC_NODE SETUGT, bb:$imm), (JR_COND GBFLAG_C.Encoding, bb:$imm)>;
-def : Pat<(BR_CC_NODE SETUGE, bb:$imm), (JR_COND GBFLAG_NC.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETUGT, bb:$imm), (JR_COND GBFLAG_C.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETUGE, bb:$imm), (JR_COND GBFLAG_NC.Encoding, bb:$imm)>;
 def : Pat<(BR_CC_NODE SETULT, bb:$imm), (JR_COND GBFLAG_C.Encoding,  bb:$imm)>;
 def : Pat<(BR_CC_NODE SETULE, bb:$imm), (JR_COND GBFLAG_NC.Encoding, bb:$imm)>;
 def : Pat<(BR_CC_NODE SETEQ,  bb:$imm), (JR_COND GBFLAG_Z.Encoding,  bb:$imm)>;
@@ -261,6 +285,8 @@ def : Pat<(and A, imm8:$imm), (ANDI imm8:$imm)>;
 def : Pat<(and A, GPR8:$rs), (AND_r GPR8:$rs)>;
 def : Pat<(and A, (load HL)), (AND_iHL)>;
 
+def : Pat<(xor A, (LOWER_NODE imm16:$imm)), (XORI (to_lower_imm $imm))>;
+def : Pat<(xor A, (UPPER_NODE imm16:$imm)), (XORI (to_upper_imm $imm))>;
 def : Pat<(xor A, imm8:$imm), (XORI imm8:$imm)>;
 def : Pat<(xor A, GPR8:$rs), (XOR_r GPR8:$rs)>;
 def : Pat<(xor A, (load HL)), (XOR_iHL)>;
@@ -289,7 +315,6 @@ def SDT_GBLDHLSP : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i8>]>;
 def LD_HL_SP_NODE : SDNode<"GBISD::LD_HL_SP", SDT_GBLDHLSP, []>;
 def : Pat<(LD_HL_SP_NODE imm8:$imm), (LD_HL_SP imm8:$imm)>;
 
-// Pseudos hack an extra operand for frame lowering
 class Pseudo<string name, string args, dag outs, dag ins>
     : GBInstr<"pseudo " # name, args, -1, outs, ins, FixupNone> {
   let isPseudo = 1;
@@ -297,38 +322,36 @@ class Pseudo<string name, string args, dag outs, dag ins>
 }
 
 let mayLoad = true, Uses = [SP] in {
-  def Load16FromFrameIndex : Pseudo<"load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;
+  def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;
 
   let Defs = [HL] in
-  def Load8FromFrameIndex : Pseudo<"load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)>;
+  def Load8FromFrameIndex : Pseudo<"#load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)>;
 }
 
 let mayStore = true, Uses = [SP] in {
-  def Save16ToFrameIndex : Pseudo<"save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)>;
+  def Save16ToFrameIndex : Pseudo<"#save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)>;
 
   let Defs = [HL] in
-  def Save8ToFrameIndex : Pseudo<"save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
+  def Save8ToFrameIndex : Pseudo<"#save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
 }
 
-// Combine and split
-def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
-def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDT_GBCOMBINE, [SDNPHasChain]>;
-def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
+// Select
+def P_SELECT_CC
+    : Pseudo<"#select_cc", "$rd, $flag, $ifTrue, $ifFalse",
+        (outs GPR8:$rd),
+        (ins flag:$flag, GPR8:$ifTrue, GPR8:$ifFalse)> {
+  let usesCustomInserter = true;
+  let Uses = [F];
+}
 
-def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
-          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
-
-def : Pat<(COMBINE_CHAIN_NODE GPR8:$rs1, GPR8:$rs2),
-          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
-
-def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
-def LOWER_NODE : SDNode<"GBISD::LOWER", SDT_GBSPLIT, []>;
-def UPPER_NODE : SDNode<"GBISD::UPPER", SDT_GBSPLIT, []>;
-
-def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
-def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
-
-def : Pat<(trunc GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
+def SDT_GBSELECT_CC : SDTypeProfile<1, 3, [/*Out=*/SDTCisVT<0, i8>, /*CCODE=*/ SDTCisVT<1, OtherVT>, /*IfTrue=*/ SDTCisVT<2, i8>, /*IfFalse=*/ SDTCisVT<3, i8>]>;
+def SELECT_CC_NODE : SDNode<"GBISD::SELECT_CC", SDT_GBSELECT_CC, [SDNPInGlue]>;
+def : Pat<(SELECT_CC_NODE SETUGT, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_C.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SELECT_CC_NODE SETUGE, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NC.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SELECT_CC_NODE SETULT, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_C.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SELECT_CC_NODE SETULE, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NC.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SELECT_CC_NODE SETEQ,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_Z.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SELECT_CC_NODE SETNE,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NZ.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
 
 // Calling
 def SDT_GBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
@@ -350,3 +373,6 @@ def : Pat<(GBcallseq_start timm:$imm, timm:$out), (ADJCALLSTACKDOWN imm16:$imm, 
 def : Pat<(GBcallseq_end timm:$imm, timm:$out), (ADJCALLSTACKUP imm16:$imm, imm16:$out)>;
 def : Pat<(GBcall imm16:$imm), (CALL imm16:$imm)>;
 def : Pat<(GBcall (ADDR_WRAPPER tglobaladdr:$imm)), (CALL imm16:$imm)>;
+
+// Special instructions
+def : Pat<(trap), (TRAP)>;

@@ -60,19 +60,12 @@ public:
     return getTM<GBTargetMachine>();
   }
 
-  bool addPreISel() override;
   bool addInstSelector() override;
 };
 } // namespace
 
 TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new GBPassConfig(*this, PM);
-}
-
-bool GBPassConfig::addPreISel() {
-  // Expand any remaining select instructions into branches
-  addPass(createGBPreISelSelectExpand());
-  return false;
 }
 
 bool GBPassConfig::addInstSelector() {
