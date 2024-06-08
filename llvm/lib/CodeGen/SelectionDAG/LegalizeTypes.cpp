@@ -14,8 +14,10 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -246,7 +248,7 @@ bool DAGTypeLegalizer::run() {
     for (unsigned i = 0, NumResults = N->getNumValues(); i < NumResults; ++i) {
       EVT ResultVT = N->getValueType(i);
       LLVM_DEBUG(dbgs() << "Analyzing result type: " << ResultVT << "\n");
-      switch (getTypeAction(ResultVT)) {
+      switch (TLI.getTypeActionForResult(N, i)) {
       case TargetLowering::TypeLegal:
         LLVM_DEBUG(dbgs() << "Legal result type\n");
         break;
@@ -310,8 +312,7 @@ ScanOperands:
 
       const auto &Op = N->getOperand(i);
       LLVM_DEBUG(dbgs() << "Analyzing operand: "; Op.dump(&DAG));
-      EVT OpVT = Op.getValueType();
-      switch (getTypeAction(OpVT)) {
+      switch (TLI.getTypeActionForOperand(N, i)) {
       case TargetLowering::TypeLegal:
         LLVM_DEBUG(dbgs() << "Legal operand\n");
         continue;

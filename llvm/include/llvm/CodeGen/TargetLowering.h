@@ -1129,6 +1129,17 @@ public:
   LegalizeTypeAction getTypeAction(LLVMContext &Context, EVT VT) const {
     return getTypeConversion(Context, VT).first;
   }
+
+  virtual LegalizeTypeAction getTypeActionForOperand(SDNode *N,
+                                                     unsigned Operand) const {
+    return getTypeAction(N->getOperand(Operand).getSimpleValueType());
+  }
+
+  virtual LegalizeTypeAction getTypeActionForResult(SDNode *N,
+                                                    unsigned Result) const {
+    return getTypeAction(SDValue{N, Result}.getSimpleValueType());
+  }
+
   LegalizeTypeAction getTypeAction(MVT VT) const {
     return ValueTypeActions.getTypeAction(VT);
   }
@@ -3878,6 +3889,15 @@ public:
                           unsigned OpNo) const {
     return false;
   }
+
+  virtual void splitValue(SelectionDAG &DAG, SDValue Value, SDValue &Lo,
+                          SDValue &Hi) const {
+    llvm_unreachable("Target has not implemented 'splitValue'");
+  };
+
+  virtual SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi) const {
+    llvm_unreachable("Target has not implemented 'mergeValues'");
+  };
 
   bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
                             SDValue &Chain) const;

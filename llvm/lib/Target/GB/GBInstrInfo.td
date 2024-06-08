@@ -196,13 +196,9 @@ def to_upper_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant((N->getZ
 
 // Combine and split
 def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
-def COMBINE_CHAIN_NODE : SDNode<"GBISD::COMBINE_CHAIN", SDT_GBCOMBINE, [SDNPHasChain]>;
 def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
 
 def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
-          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
-
-def : Pat<(COMBINE_CHAIN_NODE GPR8:$rs1, GPR8:$rs2),
           (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
 
 def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
@@ -285,8 +281,6 @@ def : Pat<(and A, imm8:$imm), (ANDI imm8:$imm)>;
 def : Pat<(and A, GPR8:$rs), (AND_r GPR8:$rs)>;
 def : Pat<(and A, (load HL)), (AND_iHL)>;
 
-def : Pat<(xor A, (LOWER_NODE imm16:$imm)), (XORI (to_lower_imm $imm))>;
-def : Pat<(xor A, (UPPER_NODE imm16:$imm)), (XORI (to_upper_imm $imm))>;
 def : Pat<(xor A, imm8:$imm), (XORI imm8:$imm)>;
 def : Pat<(xor A, GPR8:$rs), (XOR_r GPR8:$rs)>;
 def : Pat<(xor A, (load HL)), (XOR_iHL)>;

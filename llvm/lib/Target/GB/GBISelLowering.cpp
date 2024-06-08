@@ -22,6 +22,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
@@ -73,29 +74,28 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SUB
   setOperationAction(ISD::SUB, MVT::i8, Legal);
   setOperationAction(ISD::ADD, MVT::i8, Legal);
-  setOperationAction(ISD::ADD, MVT::i16, Legal);
-  // MUL, SDIV, UDIV, SREM, UREM
-  // SMUL_LOHI, UMUL_LOHI
-  // SDIVREM, UDIVREM
-  // CARRY_FALSE
-  // ADDC                // Expanded
-  // SUBC                // Expanded
-  // ADDE                // Expanded
-  // SUBE                // Expanded
-  // UADDO_CARRY         // Expanded
-  // USUBO_CARRY         // Expanded
-  // SADDO_CARRY         // Expanded
-  // SSUBO_CARRY         // Expanded
-  // SADDO               // Expanded
-  // UADDO               // Expanded
-  // SSUBO               // Expanded
-  // USUBO               // Expanded
-  // SMULO               // Expanded
-  // UMULO               // Expanded
-  // MULHU, MULHS
+  // (implicit) setOperationAction(ISD::ADD, MVT::i16, Legal);
+  //  MUL, SDIV, UDIV, SREM, UREM
+  //  SMUL_LOHI, UMUL_LOHI
+  //  SDIVREM, UDIVREM
+  //  CARRY_FALSE
+  //  ADDC                // Expanded
+  //  SUBC                // Expanded
+  //  ADDE                // Expanded
+  //  SUBE                // Expanded
+  //  UADDO_CARRY         // Expanded
+  //  USUBO_CARRY         // Expanded
+  //  SADDO_CARRY         // Expanded
+  //  SSUBO_CARRY         // Expanded
+  //  SADDO               // Expanded
+  //  UADDO               // Expanded
+  //  SSUBO               // Expanded
+  //  USUBO               // Expanded
+  //  SMULO               // Expanded
+  //  UMULO               // Expanded
+  //  MULHU, MULHS
   for (const auto &BinaryOp : {ISD::AND, ISD::OR, ISD::XOR}) {
     setOperationAction(BinaryOp, MVT::i8, Legal);
-    setOperationAction(BinaryOp, MVT::i16, Custom);
   }
   // SHL, SRA, SRL
   // ROTL, ROTR
@@ -109,9 +109,6 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SETCCCARRY         // Expanded
   // SHL_PARTS, SRA_PARTS, SRL_PARTS
   // SIGN_EXTEND, ZERO_EXTEND, ANY_EXTEND
-  setOperationAction(ISD::SIGN_EXTEND, MVT::i16, Custom);
-  setOperationAction(ISD::ZERO_EXTEND, MVT::i16, Custom);
-  setOperationAction(ISD::ANY_EXTEND, MVT::i16, Custom);
   setOperationAction(ISD::TRUNCATE, MVT::i8, Legal); // i16 to i8
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand); // -> SIGN_EXTEND
@@ -119,7 +116,6 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // ADDRSPACECAST
   for (const auto &MemoryOp : {ISD::LOAD, ISD::STORE}) {
     setOperationAction(MemoryOp, MVT::i8, Legal);
-    setOperationAction(MemoryOp, MVT::i16, Custom);
   }
   //  DYNAMIC_STACKALLOC
   //  BR_JT
@@ -152,11 +148,8 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
     Op->print(dbgs(), &DAG);
+    dbgs() << "\n";
     report_fatal_error("GBTargetLowering::LowerOperation unimplemented!!");
-  case ISD::LOAD:
-    return LowerLOAD16(Op, DAG);
-  case ISD::STORE:
-    return LowerSTORE16(Op, DAG);
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
   case ISD::SETCC:
@@ -167,10 +160,6 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:
     return LowerBlockAddress(Op, DAG);
-  case ISD::OR:
-  case ISD::AND:
-  case ISD::XOR:
-    return LowerBinaryOp(Op, DAG);
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
@@ -178,67 +167,6 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SIGN_EXTEND_INREG:
     return LowerSignExtendInReg(Op, DAG);
   }
-}
-
-SDValue GBTargetLowering::LowerLOAD16(SDValue Op, SelectionDAG &DAG) const {
-  LoadSDNode *Node = dyn_cast<LoadSDNode>(Op);
-  assert(Op.getSimpleValueType() == MVT::i16);
-  assert(Node != nullptr);
-
-  SDValue Chain = Node->getChain();
-  SDValue BasePtr = Node->getBasePtr();
-  SDValue Offset = Node->getOffset();
-  SDLoc DL = Op;
-
-  SDValue PtrLower;
-  if (Node->isIndexed()) {
-    PtrLower = DAG.getNode(ISD::ADD, DL, MVT::i16, BasePtr, Offset);
-  } else {
-    assert(Offset->isUndef());
-    PtrLower = BasePtr;
-  }
-
-  SDValue PtrUpper = DAG.getNode(ISD::ADD, DL, MVT::i16, PtrLower,
-                                 DAG.getConstant(1, DL, MVT::i16));
-  SDValue Lower =
-      DAG.getLoad(MVT::i8, DL, Chain, PtrLower, Node->getMemOperand());
-  Chain = Lower.getValue(1);
-
-  SDValue Upper =
-      DAG.getLoad(MVT::i8, DL, Chain, PtrUpper, Node->getMemOperand());
-  Chain = Upper.getValue(1);
-
-  SDVTList VTs = DAG.getVTList(MVT::i16, MVT::Other);
-  return DAG.getNode(GBISD::COMBINE_CHAIN, DL, VTs, Chain, Lower, Upper);
-}
-
-SDValue GBTargetLowering::LowerSTORE16(SDValue Op, SelectionDAG &DAG) const {
-  StoreSDNode *Node = dyn_cast<StoreSDNode>(Op);
-  assert(Node != nullptr);
-  assert(Node->getValue().getSimpleValueType() == MVT::i16);
-
-  SDValue Chain = Node->getChain();
-  SDValue BasePtr = Node->getBasePtr();
-  SDValue Offset = Node->getOffset();
-  SDValue Value = Node->getValue();
-  SDLoc DL = Op;
-
-  SDValue PtrLower;
-  if (Node->isIndexed()) {
-    PtrLower = DAG.getNode(ISD::ADD, DL, MVT::i16, BasePtr, Offset);
-  } else {
-    assert(Offset->isUndef());
-    PtrLower = BasePtr;
-  }
-
-  SDValue PtrUpper = DAG.getNode(ISD::ADD, DL, MVT::i16, PtrLower,
-                                 DAG.getConstant(1, DL, MVT::i16));
-
-  SDValue Upper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, Value);
-  SDValue Lower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, Value);
-
-  Chain = DAG.getStore(Chain, DL, Lower, PtrLower, Node->getMemOperand());
-  return DAG.getStore(Chain, DL, Upper, PtrUpper, Node->getMemOperand());
 }
 
 SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
@@ -421,24 +349,6 @@ SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
   return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
 }
 
-SDValue GBTargetLowering::LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const {
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDLoc DL = Op;
-
-  SDValue LHSLower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, LHS);
-  SDValue RHSLower = DAG.getNode(GBISD::LOWER, DL, MVT::i8, RHS);
-  SDValue ResultLower =
-      DAG.getNode(Op->getOpcode(), DL, MVT::i8, LHSLower, RHSLower);
-
-  SDValue LHSUpper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, LHS);
-  SDValue RHSUpper = DAG.getNode(GBISD::UPPER, DL, MVT::i8, RHS);
-  SDValue ResultUpper =
-      DAG.getNode(Op->getOpcode(), DL, MVT::i8, LHSUpper, RHSUpper);
-
-  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, ResultLower, ResultUpper);
-}
-
 SDValue GBTargetLowering::LowerXExtend(SDValue Op, SelectionDAG &DAG) const {
   unsigned Opcode = Op.getOpcode();
   SDValue Src = Op.getOperand(0);
@@ -486,15 +396,8 @@ SDValue GBTargetLowering::LowerSignExtendInReg(SDValue Op,
 
   SDValue And = DAG.getNode(ISD::AND, DL, MVT::i8, Trunc,
                             DAG.getConstant(1, DL, MVT::i8));
-  SDValue Result =
-      DAG.getNode(ISD::SUB, DL, MVT::i8, DAG.getConstant(0, DL, MVT::i8), And);
-
-  if (Op.getValueType() == MVT::i8) {
-    return Result;
-  }
-
-  assert(Op.getValueType() == MVT::i16);
-  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Result, Result);
+  return DAG.getNode(ISD::SUB, DL, MVT::i8, DAG.getConstant(0, DL, MVT::i8),
+                     And);
 }
 
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -507,8 +410,6 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::BR_CC";
   case GBISD::CALL:
     return "GBISD::CALL";
-  case GBISD::COMBINE_CHAIN:
-    return "GBISD::COMBINE_CHAIN";
   case GBISD::COMBINE:
     return "GBISD::COMBINE";
   case GBISD::CP:
@@ -817,6 +718,10 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   return DAG.getNode(GBISD::RET, DL, MVT::Other, RetOps);
 }
 
+MVT GBTargetLowering::getScalarShiftAmountTy(const DataLayout &, EVT) const {
+  return MVT::i8;
+}
+
 EVT GBTargetLowering::getSetCCResultType(const DataLayout &DL,
                                          LLVMContext &Context, EVT VT) const {
   return MVT::i8;
@@ -845,4 +750,65 @@ bool GBTargetLowering::allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace,
     *Fast = 1;
   }
   return true;
+}
+
+void GBTargetLowering::splitValue(SelectionDAG &DAG, SDValue Value, SDValue &Lo,
+                                  SDValue &Hi) const {
+  assert(Value.getSimpleValueType() == MVT::i16);
+  SDLoc DL = Value;
+  Lo = DAG.getNode(GBISD::LOWER, DL, MVT::i8, Value);
+  Hi = DAG.getNode(GBISD::UPPER, DL, MVT::i8, Value);
+}
+
+SDValue GBTargetLowering::mergeValues(SelectionDAG &DAG, SDValue Lo,
+                                      SDValue Hi) const {
+  assert(Lo.getSimpleValueType() == MVT::i8);
+  SDLoc DL = Lo;
+  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lo, Hi);
+}
+
+EVT GBTargetLowering::getTypeToTransformTo(LLVMContext &Context, EVT VT) const {
+  if (VT == MVT::i16) {
+    return MVT::i8;
+  }
+  return getTypeConversion(Context, VT).second;
+}
+
+GBTargetLowering::LegalizeTypeAction
+GBTargetLowering::getTypeActionForOperand(SDNode *N, unsigned Operand) const {
+  EVT Cur = N->getOperand(Operand).getValueType();
+  if (Cur != MVT::i16) {
+    // 16 bit nodes require special legalization
+    return getTypeAction(Cur.getSimpleVT());
+  }
+
+  if (N->getOpcode() == GBISD::UPPER || N->getOpcode() == GBISD::LOWER) {
+    // We use UPPER/ LOWER to legalize arbitrary 16 bit values
+    return LegalizeTypeAction::TypeLegal;
+  }
+
+  // TODO GB: natively support add
+  switch (N->getOperand(Operand)->getOpcode()) {
+  case GBISD::COMBINE: // We've already decided this must be 16 bit
+    return LegalizeTypeAction::TypeLegal;
+  default:
+    return LegalizeTypeAction::TypeExpandInteger;
+  }
+}
+
+GBTargetLowering::LegalizeTypeAction
+GBTargetLowering::getTypeActionForResult(SDNode *N, unsigned Result) const {
+  EVT Cur = SDValue{N, Result}.getValueType();
+  if (Cur != MVT::i16) {
+    // 16 bit nodes require special legalization
+    return getTypeAction(Cur.getSimpleVT());
+  }
+
+  // TODO GB: natively support add
+  switch (N->getOpcode()) {
+  case GBISD::COMBINE: // We've already decided this must be 16 bit
+    return LegalizeTypeAction::TypeLegal;
+  default:
+    return LegalizeTypeAction::TypeExpandInteger;
+  }
 }

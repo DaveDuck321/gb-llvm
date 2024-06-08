@@ -19,7 +19,6 @@ enum NodeType : unsigned {
   ADDR_WRAPPER,
   BR_CC,
   CALL,
-  COMBINE_CHAIN,
   COMBINE,
   CP,
   LD_HL_SP,
@@ -42,8 +41,6 @@ public:
   const char *getTargetNodeName(unsigned Opcode) const override;
 
 private:
-  SDValue LowerLOAD16(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSTORE16(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCMP_CC(SDValue LHS, SDValue RHS, ISD::CondCode &CCode,
                       SelectionDAG &DAG, SDLoc DL) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
@@ -51,7 +48,6 @@ private:
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerBinaryOp(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerXExtend(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSignExtendInReg(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCall(CallLoweringInfo &CLI,
@@ -77,6 +73,7 @@ private:
   emitSelectCCWithCustomInserter(MachineInstr &MI,
                                  MachineBasicBlock *MBB) const;
 
+  MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
   bool isSelectSupported(SelectSupportKind) const override;
@@ -87,6 +84,16 @@ private:
   bool allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace, Align,
                                       MachineMemOperand::Flags,
                                       unsigned *Fast) const override;
+
+  void splitValue(SelectionDAG &DAG, SDValue Value, SDValue &Lo,
+                  SDValue &Hi) const override;
+  SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi) const override;
+
+  EVT getTypeToTransformTo(LLVMContext &Context, EVT VT) const override;
+  LegalizeTypeAction getTypeActionForOperand(SDNode *N,
+                                             unsigned Operand) const override;
+  LegalizeTypeAction getTypeActionForResult(SDNode *N,
+                                            unsigned Result) const override;
 };
 } // namespace llvm
 #endif

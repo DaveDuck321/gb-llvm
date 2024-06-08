@@ -18,10 +18,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
@@ -2628,13 +2631,19 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   LLVM_DEBUG(dbgs() << "Expand integer result: "; N->dump(&DAG));
   SDValue Lo, Hi;
   Lo = Hi = SDValue();
+  bool IsLegal = isSimpleLegalType(N->getValueType(ResNo));
 
   // See if the target wants to custom expand this node.
-  if (CustomLowerNode(N, N->getValueType(ResNo), true))
+  if (not IsLegal && CustomLowerNode(N, N->getValueType(ResNo), true))
     return;
 
   switch (N->getOpcode()) {
   default:
+    if (IsLegal) {
+      // The type is technically legal but we'd rather make it smaller
+      TLI.splitValue(DAG, SDValue(N, ResNo), Lo, Hi);
+      break;
+    }
 #ifndef NDEBUG
     dbgs() << "ExpandIntegerResult #" << ResNo << ": ";
     N->dump(&DAG); dbgs() << "\n";
@@ -5103,16 +5112,24 @@ void DAGTypeLegalizer::ExpandIntRes_VSCALE(SDNode *N, SDValue &Lo,
 bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   LLVM_DEBUG(dbgs() << "Expand integer operand: "; N->dump(&DAG));
   SDValue Res = SDValue();
+  bool IsLegal = isSimpleLegalType(N->getOperand(OpNo).getValueType());
 
-  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
+  if (not IsLegal &&
+      CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
   switch (N->getOpcode()) {
   default:
-  #ifndef NDEBUG
+    if (IsLegal) {
+      // The type is technically legal but we'd rather make it smaller
+      Res = ExpandIntOp_Revert(N, OpNo);
+      break;
+    }
+#ifndef NDEBUG
     dbgs() << "ExpandIntegerOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); dbgs() << "\n";
-  #endif
+    N->dump(&DAG);
+    dbgs() << "\n";
+#endif
     report_fatal_error("Do not know how to expand this operator's operand!");
 
   case ISD::BITCAST:           Res = ExpandOp_BITCAST(N); break;
@@ -5166,6 +5183,23 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 
   ReplaceValueWith(SDValue(N, 0), Res);
   return false;
+}
+
+SDValue DAGTypeLegalizer::ExpandIntOp_Revert(SDNode *N, unsigned OpNo) {
+  SDValue Lo, Hi, Res;
+  GetExpandedInteger(N->getOperand(OpNo), Lo, Hi);
+  Res = TLI.mergeValues(DAG, Lo, Hi);
+
+  SmallVector<SDValue> NewOps;
+  for (unsigned I = 0; I < N->getNumOperands(); I++) {
+    if (I == OpNo) {
+      NewOps.push_back(Res);
+    } else {
+      NewOps.push_back(N->getOperand(I));
+    }
+  }
+  DAG.UpdateNodeOperands(N, NewOps);
+  return SDValue(N, 0);
 }
 
 /// IntegerExpandSetCCOperands - Expand the operands of a comparison.  This code

@@ -18,6 +18,7 @@
 #include "MatchContext.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Support/Compiler.h"
 
@@ -480,6 +481,7 @@ private:
 
   // Integer Operand Expansion.
   bool ExpandIntegerOperand(SDNode *N, unsigned OpNo);
+  SDValue ExpandIntOp_Revert(SDNode *N, unsigned OpNo);
   SDValue ExpandIntOp_BR_CC(SDNode *N);
   SDValue ExpandIntOp_SELECT_CC(SDNode *N);
   SDValue ExpandIntOp_SETCC(SDNode *N);
