@@ -22,7 +22,7 @@ struct GBInstrInfo final : public GBGenInstrInfo {
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, Register SrcReg,
-                           bool isKill, int FrameIndex,
+                           bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
                            const TargetRegisterInfo *TRI,
                            Register VReg) const override;

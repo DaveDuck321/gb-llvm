@@ -87,7 +87,8 @@ private:
 
   void splitValue(SelectionDAG &DAG, SDValue Value, SDValue &Lo,
                   SDValue &Hi) const override;
-  SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi) const override;
+  SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi,
+                      bool &FreshNode) const override;
 
   EVT getTypeToTransformTo(LLVMContext &Context, EVT VT) const override;
   LegalizeTypeAction getTypeActionForOperand(SDNode *N,

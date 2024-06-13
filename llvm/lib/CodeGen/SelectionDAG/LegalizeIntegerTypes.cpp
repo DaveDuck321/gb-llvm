@@ -5127,8 +5127,6 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
     }
 #ifndef NDEBUG
     dbgs() << "ExpandIntegerOperand Op #" << OpNo << ": ";
-    N->dump(&DAG);
-    dbgs() << "\n";
 #endif
     report_fatal_error("Do not know how to expand this operator's operand!");
 
@@ -5188,7 +5186,9 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 SDValue DAGTypeLegalizer::ExpandIntOp_Revert(SDNode *N, unsigned OpNo) {
   SDValue Lo, Hi, Res;
   GetExpandedInteger(N->getOperand(OpNo), Lo, Hi);
-  Res = TLI.mergeValues(DAG, Lo, Hi);
+
+  bool FreshNode;
+  Res = TLI.mergeValues(DAG, Lo, Hi, FreshNode);
 
   SmallVector<SDValue> NewOps;
   for (unsigned I = 0; I < N->getNumOperands(); I++) {
@@ -5199,7 +5199,11 @@ SDValue DAGTypeLegalizer::ExpandIntOp_Revert(SDNode *N, unsigned OpNo) {
     }
   }
   DAG.UpdateNodeOperands(N, NewOps);
-  return SDValue(N, 0);
+
+  if (FreshNode) {
+    return SDValue(N, 0);
+  }
+  return SDValue();
 }
 
 /// IntegerExpandSetCCOperands - Expand the operands of a comparison.  This code

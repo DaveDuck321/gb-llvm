@@ -13,6 +13,7 @@ class AsmPrinter;
 class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
+FunctionPass *createGBStackSlotLowering(GBTargetMachine &, CodeGenOptLevel);
 
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);

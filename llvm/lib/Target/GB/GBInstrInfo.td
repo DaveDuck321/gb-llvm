@@ -71,8 +71,10 @@ let Uses = [A], Defs = [A, F] in {
   def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, uimm8, FixupData8>;
   def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, uimm8, FixupData8>;
   def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, uimm8, FixupData8>;
-  def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, uimm8, FixupData8>;
 }
+
+let Uses = [A], Defs = [F], isCompare = true in
+def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, uimm8, FixupData8>;
 
 let Size = 1 in {
   defm INC : _GB_GPR8S8Sequence<"inc", 0x04, (ins)>;
@@ -317,15 +319,11 @@ class Pseudo<string name, string args, dag outs, dag ins>
 
 let mayLoad = true, Uses = [SP] in {
   def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;
-
-  let Defs = [HL] in
   def Load8FromFrameIndex : Pseudo<"#load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)>;
 }
 
 let mayStore = true, Uses = [SP] in {
   def Save16ToFrameIndex : Pseudo<"#save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)>;
-
-  let Defs = [HL] in
   def Save8ToFrameIndex : Pseudo<"#save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
 }
 

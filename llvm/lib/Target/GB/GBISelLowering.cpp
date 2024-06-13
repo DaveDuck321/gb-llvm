@@ -760,10 +760,19 @@ void GBTargetLowering::splitValue(SelectionDAG &DAG, SDValue Value, SDValue &Lo,
   Hi = DAG.getNode(GBISD::UPPER, DL, MVT::i8, Value);
 }
 
-SDValue GBTargetLowering::mergeValues(SelectionDAG &DAG, SDValue Lo,
-                                      SDValue Hi) const {
+SDValue GBTargetLowering::mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi,
+                                      bool &FreshNode) const {
   assert(Lo.getSimpleValueType() == MVT::i8);
   SDLoc DL = Lo;
+
+  if (Lo.getOpcode() == GBISD::LOWER && Hi->getOpcode() == GBISD::UPPER) {
+    if (Lo->getOperand(0) == Hi->getOperand(0)) {
+      // Rather than split-then-merge just remove the split
+      FreshNode = false;
+      return Lo.getOperand(0);
+    }
+  }
+  FreshNode = true;
   return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lo, Hi);
 }
 

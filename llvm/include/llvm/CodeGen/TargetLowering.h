@@ -3895,7 +3895,8 @@ public:
     llvm_unreachable("Target has not implemented 'splitValue'");
   };
 
-  virtual SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi) const {
+  virtual SDValue mergeValues(SelectionDAG &DAG, SDValue Lo, SDValue Hi,
+                              bool &FreshNode) const {
     llvm_unreachable("Target has not implemented 'mergeValues'");
   };
 

@@ -61,6 +61,7 @@ public:
   }
 
   bool addInstSelector() override;
+  void addPreSched2() override;
 };
 } // namespace
 
@@ -71,4 +72,8 @@ TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool GBPassConfig::addInstSelector() {
   addPass(createGBISelDag(getGBTargetMachine(), getOptLevel()));
   return false;
+}
+
+void GBPassConfig::addPreSched2() {
+  addPass(createGBStackSlotLowering(getGBTargetMachine(), getOptLevel()));
 }

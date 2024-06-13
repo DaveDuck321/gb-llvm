@@ -97,7 +97,7 @@ Register GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
 
 void GBInstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
-    bool isKill, int FrameIndex, const TargetRegisterClass *RC,
+    bool IsKill, int FrameIndex, const TargetRegisterClass *RC,
     const TargetRegisterInfo *TRI, Register VReg) const {
   DebugLoc DL;
   if (MI != MBB.end()) {
@@ -106,25 +106,27 @@ void GBInstrInfo::storeRegToStackSlot(
 
   // TODO GB: The GameBoy is really ill-suited for this constant stack offset...
   // find a way to only use push/ pops (almost exclusively?)
-  // FIXME GB: ahhh, use push and pop HL rather than the automatic stack slot
-  // allocation... this could save 50+ cycles here
-  // TODO GB: We are using illegal instructions here, this is corrected in
-  // eliminateFrameIndex... is there a better way to do this?
+
+  MachineFunction *MF = MBB.getParent();
+  MachineFrameInfo &MFI = MF->getFrameInfo();
+  MachineMemOperand *MMO = MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex),
+      MachineMemOperand::MOStore, LocationSize::beforeOrAfterPointer(),
+      MFI.getObjectAlign(FrameIndex));
 
   if (GB::GPR8RegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, MI, DL, get(GB::Save8ToFrameIndex))
-        .addReg(SrcReg, getKillRegState(isKill))
-        .addFrameIndex(FrameIndex);
+        .addReg(SrcReg, getKillRegState(IsKill))
+        .addFrameIndex(FrameIndex)
+        .addMemOperand(MMO);
     return;
   }
 
   if (GB::GPR16RegClass.hasSubClassEq(RC)) {
-    // TODO GB: generate smarter code here
-    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
-    MFI.setHasCopyImplyingStackAdjustment(true);
     BuildMI(MBB, MI, DL, get(GB::Save16ToFrameIndex))
-        .addReg(SrcReg, getKillRegState(isKill))
-        .addFrameIndex(FrameIndex);
+        .addReg(SrcReg, getKillRegState(IsKill))
+        .addFrameIndex(FrameIndex)
+        .addMemOperand(MMO);
     return;
   }
   llvm_unreachable("Could not save reg to stack slot!");
@@ -141,19 +143,23 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     DL = MI->getDebugLoc();
   }
 
+  MachineFunction *MF = MBB.getParent();
+  MachineFrameInfo &MFI = MF->getFrameInfo();
+  MachineMemOperand *MMO = MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex),
+      MachineMemOperand::MOLoad, MFI.getObjectSize(FrameIndex),
+      MFI.getObjectAlign(FrameIndex));
+
   if (GB::GPR8RegClass.hasSubClassEq(RC)) {
-    BuildMI(MBB, MI, DL, get(GB::Load8FromFrameIndex))
-        .addDef(DestReg)
-        .addFrameIndex(FrameIndex);
+    BuildMI(MBB, MI, DL, get(GB::Load8FromFrameIndex), DestReg)
+        .addFrameIndex(FrameIndex)
+        .addMemOperand(MMO);
     return;
   }
   if (GB::GPR16RegClass.hasSubClassEq(RC)) {
-    // TODO GB: generate smarter code here
-    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
-    MFI.setHasCopyImplyingStackAdjustment(true);
-    BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex))
-        .addDef(DestReg)
-        .addFrameIndex(FrameIndex);
+    BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex), DestReg)
+        .addFrameIndex(FrameIndex)
+        .addMemOperand(MMO);
     return;
   }
   llvm_unreachable("Could not load reg to stack slot!");

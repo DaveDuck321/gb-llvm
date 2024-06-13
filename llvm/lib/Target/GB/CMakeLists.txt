@@ -24,6 +24,7 @@ add_llvm_target(GBCodeGen
     GBRegisterInfo.cpp
     GBSubtarget.cpp
     GBTargetMachine.cpp
+    GBStackSlotLowering.cpp
 
     LINK_COMPONENTS
     CodeGen
