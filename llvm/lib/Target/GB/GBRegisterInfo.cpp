@@ -61,8 +61,7 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                     << "SPAdj: " << SPAdj << "\n"
                     << "Computed offset: " << Offset << "\n\n");
 
-  // Otherwise the complexity is handled by the GBISelLowering
-  assert(MI->getOpcode() == GB::LD_HL_SP);
+  // Otherwise the complexity is handled by custom passes
   assert(isInt<8>(Offset));
   MI->getOperand(FIOperandNum).ChangeToImmediate(Offset);
   return false;

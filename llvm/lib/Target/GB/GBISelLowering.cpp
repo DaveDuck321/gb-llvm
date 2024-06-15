@@ -349,37 +349,6 @@ SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
   return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
 }
 
-SDValue GBTargetLowering::LowerXExtend(SDValue Op, SelectionDAG &DAG) const {
-  unsigned Opcode = Op.getOpcode();
-  SDValue Src = Op.getOperand(0);
-  EVT DestType = Op->getValueType(0);
-  SDLoc DL = Op;
-
-  assert(Src.getSimpleValueType() == MVT::i8 && DestType == MVT::i16);
-
-  // Zero/ undef extensions are easy, just add correct upper subreg
-  if (Opcode == ISD::ZERO_EXTEND || Opcode == ISD::ANY_EXTEND) {
-    SDValue Lower = Src;
-    SDValue Upper = Opcode == ISD::ZERO_EXTEND ? DAG.getConstant(0, DL, MVT::i8)
-                                               : DAG.getUNDEF(MVT::i8);
-
-    return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lower, Upper);
-  }
-
-  // Sign extensions require a bit of maths
-  assert(Opcode == ISD::SIGN_EXTEND);
-
-  SDValue SignBiti1 = DAG.getNode(GBISD::RLCA, DL, MVT::i8, Src);
-  SDValue SignBiti8 = DAG.getNode(ISD::AND, DL, MVT::i8, SignBiti1,
-                                  DAG.getConstant(1, DL, MVT::i8));
-
-  SDValue Lower = Src;
-  SDValue Upper = DAG.getNode(ISD::SUB, DL, MVT::i8,
-                              DAG.getConstant(0, DL, MVT::i8), SignBiti8);
-
-  return DAG.getNode(GBISD::COMBINE, DL, MVT::i16, Lower, Upper);
-}
-
 SDValue GBTargetLowering::LowerSignExtendInReg(SDValue Op,
                                                SelectionDAG &DAG) const {
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
