@@ -1,3 +1,4 @@
+#include "GBInstrInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "TargetInfo/GBTargetInfo.h"
 
@@ -28,16 +29,16 @@ namespace {
 
 static std::optional<unsigned> getFlagEncoding(StringRef Flag) {
   if (Flag == "nz") {
-    return 0u;
+    return GBFlag::NZ;
   }
   if (Flag == "z") {
-    return 1u;
+    return GBFlag::Z;
   }
   if (Flag == "nc") {
-    return 2u;
+    return GBFlag::NC;
   }
   if (Flag == "c") {
-    return 3u;
+    return GBFlag::C;
   }
   return std::nullopt;
 }

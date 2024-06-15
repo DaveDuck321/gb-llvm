@@ -76,10 +76,9 @@ let Uses = [A], Defs = [A, F] in {
 let Uses = [A], Defs = [F], isCompare = true in
 def CPI  : _GB_SimpleImm8<"cp $imm",  0xFE, uimm8, FixupData8>;
 
-let Size = 1 in {
-  defm INC : _GB_GPR8S8Sequence<"inc", 0x04, (ins)>;
-  defm DEC : _GB_GPR8S8Sequence<"dec", 0x05, (ins)>;
-}
+defm INC : GBIncDec8<"inc", 0x04>;
+defm DEC : GBIncDec8<"dec", 0x05>;
+
 
 let Size = 1 in {
   let Constraints = "$rs = $rd", Defs = [F] in {
@@ -344,6 +343,26 @@ def : Pat<(SELECT_CC_NODE SETULT, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBF
 def : Pat<(SELECT_CC_NODE SETULE, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NC.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
 def : Pat<(SELECT_CC_NODE SETEQ,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_Z.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
 def : Pat<(SELECT_CC_NODE SETNE,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NZ.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
+
+// Shifts
+// TODO GB: match constant operands
+class P_SHIFT<string name> : Pseudo<"#" # name, "$rd, $amount", (outs GPR8:$rd), (ins GPR8:$rs, GPR8:$amount)> {
+  let Constraints = "$rs = $rd";
+  let Defs = [F];
+  let usesCustomInserter = true;
+}
+
+def P_SLA : P_SHIFT<"sla">;
+def P_SRA : P_SHIFT<"sra">;
+def P_SRL : P_SHIFT<"srl">;
+def P_ROTL : P_SHIFT<"rotl">;
+def P_ROTR : P_SHIFT<"rotr">;
+
+def : Pat<(shl GPR8:$rs, GPR8:$amount),  (P_SLA GPR8:$rs, GPR8:$amount)>;
+def : Pat<(sra GPR8:$rs, GPR8:$amount),  (P_SRA GPR8:$rs, GPR8:$amount)>;
+def : Pat<(srl GPR8:$rs, GPR8:$amount),  (P_SRL GPR8:$rs, GPR8:$amount)>;
+def : Pat<(rotl GPR8:$rs, GPR8:$amount), (P_ROTL GPR8:$rs, GPR8:$amount)>;
+def : Pat<(rotr GPR8:$rs, GPR8:$amount), (P_ROTR GPR8:$rs, GPR8:$amount)>;
 
 // Calling
 def SDT_GBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;

@@ -13,7 +13,8 @@ define i8 @constant8() nounwind {
 define i16 @constantS16() nounwind {
 ; GBI-LABEL: constantS16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $ffff
+; GBI-NEXT:    ld l, $ff
+; GBI-NEXT:    ld h, l
 ; GBI-NEXT:    ret
   ret i16 -1
 }
@@ -21,7 +22,8 @@ define i16 @constantS16() nounwind {
 define i16 @constantU16() nounwind {
 ; GBI-LABEL: constantU16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $09a0
+; GBI-NEXT:    ld h, $09
+; GBI-NEXT:    ld l, $a0
 ; GBI-NEXT:    ret
   ret i16 2464
 }
@@ -29,7 +31,8 @@ define i16 @constantU16() nounwind {
 define i16 @constantAmbiguousU16() nounwind {
 ; GBI-LABEL: constantAmbiguousU16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld hl, $0001
+; GBI-NEXT:    ld h, $00
+; GBI-NEXT:    ld l, $01
 ; GBI-NEXT:    ret
   ret i16 1
 }

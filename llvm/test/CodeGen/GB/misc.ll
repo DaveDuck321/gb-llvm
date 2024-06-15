@@ -7,28 +7,76 @@
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-LABEL: trunc_i32:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    add sp, 4
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld hl, sp, 7
-; GBI-O0-NEXT:    add sp, 2
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    add sp, 0
-; GBI-O0-NEXT:    inc hl
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add sp, 0
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    add sp, 2
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    ; kill: def $bc killed $hl
+; GBI-O0-NEXT:    add sp, -8
+; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    add sp, 4
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld hl, sp, 11
+; GBI-O0-NEXT:    ld b, h
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ld h, b
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    add $01
+; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld b, $00
+; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld b, $01
+; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    cp $00
+; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr z, .LBB0_2
+; GBI-O0-NEXT:    jr .LBB0_1
+; GBI-O0-NEXT:  .LBB0_1:
+; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr .LBB0_2
+; GBI-O0-NEXT:  .LBB0_2:
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld c, (hl)
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld l, (hl)
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    ld d, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld c, (hl)
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add d
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld d, (hl)
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, d
+; GBI-O0-NEXT:    ld e, (hl)
+; GBI-O0-NEXT:    ; kill: def $e killed $e def $de
+; GBI-O0-NEXT:    ld d, a
+; GBI-O0-NEXT:    ; kill: def $de killed $bc
+; GBI-O0-NEXT:    ld a, c
+; GBI-O0-NEXT:    add sp, 8
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: trunc_i32:
@@ -118,27 +166,56 @@ define i16 @sext16_i1(i1 %0) {
 define i16 @sext16_i8(i8 %0) {
 ; GBI-O0-LABEL: sext16_i8:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ld l, b
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    rlca
-; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    ld a, $00
-; GBI-O0-NEXT:    sub b
+; GBI-O0-NEXT:    add sp, -3
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld a, $07
+; GBI-O0-NEXT:    dec a
+; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr c, .LBB5_2
+; GBI-O0-NEXT:    jr .LBB5_1
+; GBI-O0-NEXT:  .LBB5_1: ; =>This Inner Loop Header: Depth=1
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    sra b
+; GBI-O0-NEXT:    dec a
+; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    jr nc, .LBB5_1
+; GBI-O0-NEXT:    jr .LBB5_2
+; GBI-O0-NEXT:  .LBB5_2:
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld l, (hl)
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 4
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    add sp, 3
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: sext16_i8:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, $07
+; GBI-O3-NEXT:    dec a
+; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:    jr c, .LBB5_2
+; GBI-O3-NEXT:    jr .LBB5_1
+; GBI-O3-NEXT:  .LBB5_1: ; =>This Inner Loop Header: Depth=1
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    dec a
+; GBI-O3-NEXT:    jr nc, .LBB5_1
+; GBI-O3-NEXT:    jr .LBB5_2
+; GBI-O3-NEXT:  .LBB5_2:
 ; GBI-O3-NEXT:    ret
   %res = sext i8 %0 to i16
   ret i16 %res

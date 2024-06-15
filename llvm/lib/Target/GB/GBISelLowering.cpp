@@ -1,4 +1,5 @@
 #include "GBISelLowering.h"
+#include "GBInstrInfo.h"
 #include "GBRegisterInfo.h"
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
@@ -13,11 +14,13 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
@@ -71,18 +74,17 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // FRAME_TO_ARGS_OFFSET
   // MCSymbol
   // INTRINSIC_WO_CHAIN, INTRINSIC_W_CHAIN, INTRINSIC_VOID
-  // SUB
   setOperationAction(ISD::SUB, MVT::i8, Legal);
   setOperationAction(ISD::ADD, MVT::i8, Legal);
-  // (implicit) setOperationAction(ISD::ADD, MVT::i16, Legal);
+  // TODO GB: setOperationAction(ISD::ADD, MVT::i16, Legal);
   //  MUL, SDIV, UDIV, SREM, UREM
   //  SMUL_LOHI, UMUL_LOHI
   //  SDIVREM, UDIVREM
   //  CARRY_FALSE
-  //  ADDC                // Expanded
-  //  SUBC                // Expanded
-  //  ADDE                // Expanded
-  //  SUBE                // Expanded
+  // setOperationAction(ISD::ADDC, MVT::i8, Legal);
+  // setOperationAction(ISD::SUBC, MVT::i8, Legal);
+  // setOperationAction(ISD::ADDE, MVT::i8, Legal);
+  // setOperationAction(ISD::SUBE, MVT::i8, Legal);
   //  UADDO_CARRY         // Expanded
   //  USUBO_CARRY         // Expanded
   //  SADDO_CARRY         // Expanded
@@ -97,8 +99,10 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   for (const auto &BinaryOp : {ISD::AND, ISD::OR, ISD::XOR}) {
     setOperationAction(BinaryOp, MVT::i8, Legal);
   }
-  // SHL, SRA, SRL
-  // ROTL, ROTR
+  for (const auto &BinaryOp :
+       {ISD::SHL, ISD::SRA, ISD::SRL, ISD::ROTL, ISD::ROTR}) {
+    setOperationAction(BinaryOp, MVT::i8, Legal);
+  }
   // BSWAP
   // CTTZ, CTLZ
   // CTPOP
@@ -108,7 +112,6 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
   // SETCCCARRY         // Expanded
   // SHL_PARTS, SRA_PARTS, SRL_PARTS
-  // SIGN_EXTEND, ZERO_EXTEND, ANY_EXTEND
   setOperationAction(ISD::TRUNCATE, MVT::i8, Legal); // i16 to i8
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand); // -> SIGN_EXTEND
@@ -147,8 +150,6 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
 SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
-    Op->print(dbgs(), &DAG);
-    dbgs() << "\n";
     report_fatal_error("GBTargetLowering::LowerOperation unimplemented!!");
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
@@ -160,10 +161,6 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerGlobalAddress(Op, DAG);
   case ISD::BlockAddress:
     return LowerBlockAddress(Op, DAG);
-  case ISD::SIGN_EXTEND:
-  case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
-    return LowerXExtend(Op, DAG);
   case ISD::SIGN_EXTEND_INREG:
     return LowerSignExtendInReg(Op, DAG);
   }
@@ -572,9 +569,15 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                               MachineBasicBlock *MBB) const {
   switch (MI.getOpcode()) {
   default:
-    assert(!"Instruction emitter implemented!");
+    llvm_unreachable("Instruction emitter not implemented!");
   case GB::P_SELECT_CC:
     return emitSelectCCWithCustomInserter(MI, MBB);
+  case GB::P_SLA:
+  case GB::P_SRA:
+  case GB::P_SRL:
+  case GB::P_ROTL:
+  case GB::P_ROTR:
+    return emitShiftWithCustomInserter(MI, MBB);
   }
 }
 
@@ -641,6 +644,125 @@ GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
       .addMBB(FalseMBB);
 
   MI.eraseFromParent(); // The pseudo instruction is gone now.
+  return EndMBB;
+}
+
+MachineBasicBlock *
+GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
+                                              MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+  MachineFunction *MF = MBB->getParent();
+  MachineRegisterInfo &RI = MF->getRegInfo();
+
+  DebugLoc DL = MI.getDebugLoc();
+  const auto MIResult = MI.getOperand(0).getReg();
+  const auto MISrc = MI.getOperand(1).getReg();
+  const auto MIAmount = MI.getOperand(2).getReg();
+
+  const auto OpCode = [&] {
+    switch (MI.getOpcode()) {
+    case GB::P_SLA:
+      return GB::SLA_r;
+    case GB::P_SRA:
+      return GB::SRA_r;
+    case GB::P_SRL:
+      return GB::SRL_r;
+    case GB::P_ROTL:
+      return GB::RLC_r;
+    case GB::P_ROTR:
+      return GB::RRC_r;
+    default:
+      llvm_unreachable("Unexpected Opcode");
+    }
+  }();
+  // This should codegen to:
+  //  dec $amount
+  //  JR C .end
+  //  .main_loop:
+  //    dec $amount
+  //    sla $rs
+  //    JR NC .loop
+  //  .end:
+
+  // In llvm world that is:
+  // .BB
+  //    ...
+  //    %amount = dec $shift_n
+  //    JR C .end
+  //    JR .LoopBB
+  // .LoopBB
+  //    %to_shift = PHI[%src, BB] [%shifted, LoopBB]
+  //    %shifted = sla $to_shift
+  //
+  //    %to_decrement = PHI[%amount, BB] [%decremented, LoopBB]
+  //    %decremented = dec $to_decrement
+  //
+  //    JR NZ .start
+  //    JR .end
+  // .end
+  //      PHI [%src BB] [shifted LoopBB
+  const BasicBlock *BB = MBB->getBasicBlock();
+  MachineFunction::iterator I = ++MBB->getIterator();
+
+  // Create the basic blocks
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *EndMBB = MF->CreateMachineBasicBlock(BB);
+
+  MF->insert(I, LoopMBB);
+  MF->insert(I, EndMBB);
+
+  // Move everything after the shift into the new BB
+  EndMBB->splice(EndMBB->begin(), StartMBB,
+                 std::next(MachineBasicBlock::iterator(MI)), StartMBB->end());
+  EndMBB->transferSuccessorsAndUpdatePHIs(StartMBB);
+
+  StartMBB->addSuccessor(LoopMBB);
+  StartMBB->addSuccessor(EndMBB);
+  LoopMBB->addSuccessor(EndMBB);
+  LoopMBB->addSuccessor(LoopMBB);
+
+  // Populate the registers
+  Register InitialDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+  Register LoopDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+  Register ToDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+
+  Register SrcShiftReg = MISrc;
+  Register LoopShiftReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+  Register ToShiftReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+
+  // StartBB
+  BuildMI(StartMBB, DL, TII.get(GB::DEC_r), InitialDecReg).addReg(MIAmount);
+  BuildMI(StartMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::C).addMBB(EndMBB);
+  BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(LoopMBB);
+
+  // Loop BB
+  BuildMI(LoopMBB, DL, TII.get(GB::PHI), ToShiftReg)
+      .addReg(SrcShiftReg)
+      .addMBB(StartMBB)
+      .addReg(LoopShiftReg)
+      .addMBB(LoopMBB);
+
+  BuildMI(LoopMBB, DL, TII.get(GB::PHI), ToDecReg)
+      .addReg(InitialDecReg)
+      .addMBB(StartMBB)
+      .addReg(LoopDecReg)
+      .addMBB(LoopMBB);
+
+  BuildMI(LoopMBB, DL, TII.get(OpCode), LoopShiftReg).addReg(ToShiftReg);
+  BuildMI(LoopMBB, DL, TII.get(GB::DEC_r), LoopDecReg).addReg(ToDecReg);
+
+  BuildMI(LoopMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::NC).addMBB(LoopMBB);
+  BuildMI(LoopMBB, DL, TII.get(GB::JR)).addMBB(EndMBB);
+
+  // End BB
+  BuildMI(*EndMBB, EndMBB->begin(), DL, TII.get(GB::PHI), MIResult)
+      .addReg(SrcShiftReg)
+      .addMBB(StartMBB)
+      .addReg(LoopShiftReg)
+      .addMBB(LoopMBB);
+
+  MI.eraseFromParent();
   return EndMBB;
 }
 

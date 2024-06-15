@@ -7,6 +7,16 @@
 #include "GBGenInstrInfo.inc"
 
 namespace llvm {
+
+namespace GBFlag {
+enum NodeType : unsigned {
+  NZ = 0,
+  Z = 1,
+  NC = 2,
+  C = 3,
+};
+} // namespace GBFlag
+
 struct GBInstrInfo final : public GBGenInstrInfo {
   GBInstrInfo();
 

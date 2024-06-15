@@ -1,4 +1,5 @@
 #include "GBInstPrinter.h"
+#include "GBInstrInfo.h"
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
@@ -88,16 +89,16 @@ void GBInstPrinter::printFlagOperand(const MCInst *MI, unsigned OpNo,
          (isUInt<2>(Operand.getImm()) || isInt<2>(Operand.getImm())));
 
   switch (Operand.getImm() & 0b11) {
-  case 0:
+  case GBFlag::NZ:
     OS << "nz";
     break;
-  case 1:
+  case GBFlag::Z:
     OS << "z";
     break;
-  case 2:
+  case GBFlag::NC:
     OS << "nc";
     break;
-  case 3:
+  case GBFlag::C:
     OS << "c";
     break;
   default:
