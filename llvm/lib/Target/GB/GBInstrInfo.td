@@ -270,27 +270,25 @@ def to_tframeindex : SDNodeXForm<frameindex, [{
 def : Pat<(frameindex:$imm), (LD_HL_SP (to_tframeindex $imm))>;
 
 // ALU 8-bit
-def : Pat<(add A, imm8:$imm), (ADDI imm8:$imm)>;
-def : Pat<(add A, GPR8:$rs), (ADD_r GPR8:$rs)>;
-def : Pat<(add A, (load HL)), (ADD_iHL)>;
+multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, GBInstr indInstr> {
+  def : Pat<!setdagop((? A, imm8:$imm), node), !setdagop((? imm8:$imm), immInstr)>;
+  def : Pat<!setdagop((? A, GPR8:$rs),  node), !setdagop((? GPR8:$rs),  regInstr)>;
+  def : Pat<!setdagop((? A, (load HL)), node), !setdagop((?),           indInstr)>;
+}
 
-def : Pat<(sub A, imm8:$imm), (SUBI imm8:$imm)>;
-def : Pat<(sub A, GPR8:$rs), (SUB_r GPR8:$rs)>;
-def : Pat<(sub A, (load HL)), (SUB_iHL)>;
+defm : ALU_Pat<add,  ADDI, ADD_r, ADD_iHL>;
+defm : ALU_Pat<addc, ADDI, ADD_r, ADD_iHL>;
+defm : ALU_Pat<adde, ADCI, ADC_r, ADC_iHL>;
 
-def : Pat<(and A, imm8:$imm), (ANDI imm8:$imm)>;
-def : Pat<(and A, GPR8:$rs), (AND_r GPR8:$rs)>;
-def : Pat<(and A, (load HL)), (AND_iHL)>;
+defm : ALU_Pat<sub,  SUBI, SUB_r, SUB_iHL>;
+defm : ALU_Pat<subc, SUBI, SUB_r, SUB_iHL>;
+defm : ALU_Pat<sube, SBCI, SBC_r, SBC_iHL>;
 
-def : Pat<(xor A, imm8:$imm), (XORI imm8:$imm)>;
-def : Pat<(xor A, GPR8:$rs), (XOR_r GPR8:$rs)>;
-def : Pat<(xor A, (load HL)), (XOR_iHL)>;
+defm : ALU_Pat<and, ANDI, AND_r, AND_iHL>;
+defm : ALU_Pat<xor, XORI, XOR_r, XOR_iHL>;
+defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
 
-def : Pat<(or A, imm8:$imm), (ORI imm8:$imm)>;
-def : Pat<(or A, GPR8:$rs), (OR_r GPR8:$rs)>;
-def : Pat<(or A, (load HL)), (OR_iHL)>;
-
-// ALU 16-bit
+// ALU 16-bit (currently inactive)
 def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
 def : Pat<(add GPR16:$rs, 1), (INC16 GPR16:$rs)>;
 def : Pat<(add GPR16:$rs, -1), (DEC16 GPR16:$rs)>;

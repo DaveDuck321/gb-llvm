@@ -74,17 +74,15 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // FRAME_TO_ARGS_OFFSET
   // MCSymbol
   // INTRINSIC_WO_CHAIN, INTRINSIC_W_CHAIN, INTRINSIC_VOID
-  setOperationAction(ISD::SUB, MVT::i8, Legal);
-  setOperationAction(ISD::ADD, MVT::i8, Legal);
+  for (const auto &ArithmeticOp :
+       {ISD::SUB, ISD::ADD, ISD::ADDC, ISD::SUBC, ISD::ADDE, ISD::SUBE}) {
+    setOperationAction(ArithmeticOp, MVT::i8, Legal);
+  }
   // TODO GB: setOperationAction(ISD::ADD, MVT::i16, Legal);
   //  MUL, SDIV, UDIV, SREM, UREM
   //  SMUL_LOHI, UMUL_LOHI
   //  SDIVREM, UDIVREM
   //  CARRY_FALSE
-  // setOperationAction(ISD::ADDC, MVT::i8, Legal);
-  // setOperationAction(ISD::SUBC, MVT::i8, Legal);
-  // setOperationAction(ISD::ADDE, MVT::i8, Legal);
-  // setOperationAction(ISD::SUBE, MVT::i8, Legal);
   //  UADDO_CARRY         // Expanded
   //  USUBO_CARRY         // Expanded
   //  SADDO_CARRY         // Expanded

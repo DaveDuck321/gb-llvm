@@ -163,16 +163,8 @@ define i16 @add16(i16 %a) nounwind {
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $14
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld d, $01
-; GBI-NEXT:    cp l
-; GBI-NEXT:    jr c, .LBB15_2
-; GBI-NEXT:    jr .LBB15_1
-; GBI-NEXT:  .LBB15_1:
-; GBI-NEXT:    ld d, $00
-; GBI-NEXT:    jr .LBB15_2
-; GBI-NEXT:  .LBB15_2:
 ; GBI-NEXT:    ld a, h
-; GBI-NEXT:    add d
+; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ; kill: def $bc
 ; GBI-NEXT:    ld h, b
