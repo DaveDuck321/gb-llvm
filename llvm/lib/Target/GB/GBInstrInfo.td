@@ -130,7 +130,8 @@ let Defs = [F] in {
 defm RES : GBCBGPR8S1Imm3<"res", 0x80>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0>;
 
-let isTerminator = true, isBranch = true, isBarrier = true in {
+let isTerminator = true, isBranch = true in {
+  let isBarrier = true in
   def JR : _GB_SimpleImm8<"jr $imm", 0x18, bb_pc_rel, FixupPCRel8>;
 
   let Uses = [F] in
@@ -157,13 +158,14 @@ let mayStore = true, isCall = true in {
   def CALL_COND : GBAbsFlagImm16<"call", 0xC4>;
 }
 
-let isTerminator = true in {
+let isTerminator = true, isBranch = true in {
+  let isBarrier = true in
   def JP : GBAbsImm16<"jp $imm", 0xC3>;
 
-  let isBranch = true, Uses = [F] in
+  let Uses = [F] in
   def JP_COND : GBAbsFlagImm16<"jp", 0xC2>;
 
-  let isIndirectBranch = true, Uses = [HL] in
+  let isBarrier = true, isIndirectBranch = true, Uses = [HL] in
   def JP_HL : GBInstrNoOperands<"jp (hl)", 0xE9>;
 }
 
@@ -247,15 +249,15 @@ def RLCA_NODE : SDNode<"GBISD::RLCA", SDT_GB1i8, []>;
 def : Pat<(RLCA_NODE A), (RLCA)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
-// TODO GB: generate JP here and optimize into JR in another pass
+// TODO GB: optimize into JR in another pass
 def SDTGBBR_CC  : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>]>;
 def BR_CC_NODE : SDNode<"GBISD::BR_CC", SDTGBBR_CC, [SDNPInGlue, SDNPHasChain]>;
-def : Pat<(BR_CC_NODE SETUGT, bb:$imm), (JR_COND GBFLAG_C.Encoding,  bb:$imm)>;
-def : Pat<(BR_CC_NODE SETUGE, bb:$imm), (JR_COND GBFLAG_NC.Encoding, bb:$imm)>;
-def : Pat<(BR_CC_NODE SETULT, bb:$imm), (JR_COND GBFLAG_C.Encoding,  bb:$imm)>;
-def : Pat<(BR_CC_NODE SETULE, bb:$imm), (JR_COND GBFLAG_NC.Encoding, bb:$imm)>;
-def : Pat<(BR_CC_NODE SETEQ,  bb:$imm), (JR_COND GBFLAG_Z.Encoding,  bb:$imm)>;
-def : Pat<(BR_CC_NODE SETNE,  bb:$imm), (JR_COND GBFLAG_NZ.Encoding, bb:$imm)>;
+def : Pat<(BR_CC_NODE SETUGT, bb:$imm), (JP_COND GBFLAG_C.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETUGE, bb:$imm), (JP_COND GBFLAG_NC.Encoding, bb:$imm)>;
+def : Pat<(BR_CC_NODE SETULT, bb:$imm), (JP_COND GBFLAG_C.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETULE, bb:$imm), (JP_COND GBFLAG_NC.Encoding, bb:$imm)>;
+def : Pat<(BR_CC_NODE SETEQ,  bb:$imm), (JP_COND GBFLAG_Z.Encoding,  bb:$imm)>;
+def : Pat<(BR_CC_NODE SETNE,  bb:$imm), (JP_COND GBFLAG_NZ.Encoding, bb:$imm)>;
 
 // Constants for pattern matching
 def : Pat<(imm8:$imm), (LDI8_r imm8:$imm)>;
@@ -294,8 +296,8 @@ def : Pat<(add GPR16:$rs, 1), (INC16 GPR16:$rs)>;
 def : Pat<(add GPR16:$rs, -1), (DEC16 GPR16:$rs)>;
 
 // Branches
-// TODO GB: generate JP here and optimize into JR in another pass
-def : Pat<(br bb:$imm), (JR bb_pc_rel:$imm)>;
+// TODO GB: optimize into JR in another pass
+def : Pat<(br bb:$imm), (JP bb_pc_rel:$imm)>;
 def : Pat<(brind HL), (JP_HL)>;
 
 // Memory

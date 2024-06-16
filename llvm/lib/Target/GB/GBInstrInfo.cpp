@@ -5,6 +5,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/DebugLoc.h"
@@ -163,4 +165,149 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
   llvm_unreachable("Could not load reg to stack slot!");
+}
+
+bool GBInstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                                MachineBasicBlock *&FBB,
+                                SmallVectorImpl<MachineOperand> &Cond,
+                                bool AllowModify) const {
+
+  MachineInstr *FinalConditionalBranch = nullptr;
+  MachineInstr *FinalUnconditionalBranch = nullptr;
+  for (auto &MI : *MBB.getIterator()) {
+    if (MI.isUnconditionalBranch()) {
+      FinalUnconditionalBranch = &MI;
+      break;
+    }
+
+    if (MI.isConditionalBranch()) {
+      FinalConditionalBranch = &MI;
+    } else {
+      // TODO GB: should I relax this requirement?
+      FinalConditionalBranch = nullptr;
+    }
+
+    if (MI.isBarrier()) {
+      return true; // Cannot analyze
+    }
+  }
+
+  /// 1. If this block ends with no branches (it just falls through to its succ)
+  ///    just return false, leaving TBB/FBB null.
+  if (FinalUnconditionalBranch == nullptr &&
+      FinalConditionalBranch == nullptr) {
+    return false;
+  }
+
+  /// 2. If this block ends with only an unconditional branch, it sets TBB to be
+  ///    the destination block.
+  if (FinalConditionalBranch == nullptr) {
+    TBB = FinalUnconditionalBranch->getOperand(0).getMBB();
+    return false;
+  }
+
+  /// 3. If this block ends with a conditional branch and it falls through to a
+  ///    successor block, it sets TBB to be the branch destination block and a
+  ///    list of operands that evaluate the condition. These operands can be
+  ///    passed to other TargetInstrInfo methods to create new branches.
+  if (FinalUnconditionalBranch == nullptr &&
+      FinalConditionalBranch != nullptr) {
+    TBB = FinalConditionalBranch->getOperand(1).getMBB();
+    Cond.clear();
+    Cond.push_back(FinalConditionalBranch->getOperand(0));
+    return false;
+  }
+
+  /// 4. If this block ends with a conditional branch followed by an
+  ///    unconditional branch, it returns the 'true' destination in TBB, the
+  ///    'false' destination in FBB, and a list of operands that evaluate the
+  ///    condition.  These operands can be passed to other TargetInstrInfo
+  ///    methods to create new branches.
+  assert(FinalUnconditionalBranch != nullptr and
+         FinalUnconditionalBranch != nullptr);
+
+  TBB = FinalConditionalBranch->getOperand(1).getMBB();
+  FBB = FinalUnconditionalBranch->getOperand(0).getMBB();
+  Cond.clear();
+  Cond.push_back(FinalConditionalBranch->getOperand(0));
+  return false;
+}
+
+unsigned GBInstrInfo::removeBranch(MachineBasicBlock &MBB,
+                                   int *BytesRemoved) const {
+  unsigned BranchesRemoved = 0;
+  if (BytesRemoved != nullptr) {
+    *BytesRemoved = 0;
+  }
+
+  MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
+  while (I != MBB.begin()) {
+    if (not I->isBranch() || I->isIndirectBranch()) {
+      break;
+    }
+    if (BytesRemoved != nullptr) {
+      *BytesRemoved += getInstSizeInBytes(*I);
+    }
+    BranchesRemoved += 1;
+    I->removeFromParent();
+    I = MBB.getLastNonDebugInstr();
+  }
+  return BranchesRemoved;
+}
+
+unsigned GBInstrInfo::insertBranch(MachineBasicBlock &MBB,
+                                   MachineBasicBlock *TBB,
+                                   MachineBasicBlock *FBB,
+                                   ArrayRef<MachineOperand> Cond,
+                                   const DebugLoc &DL, int *BytesAdded) const {
+  size_t SizeInBytes = 0;
+  if (Cond.empty()) {
+    // Unconditional branch
+    MachineInstr &MI = *BuildMI(&MBB, DL, get(GB::JP)).addMBB(TBB);
+    SizeInBytes += getInstSizeInBytes(MI);
+    if (BytesAdded != nullptr) {
+      *BytesAdded = SizeInBytes;
+    }
+    return 1;
+  }
+
+  // Conditional branches
+  MachineInstr &TrueBranchMI =
+      *BuildMI(&MBB, DL, get(GB::JP_COND)).addImm(Cond[0].getImm()).addMBB(TBB);
+  SizeInBytes += getInstSizeInBytes(TrueBranchMI);
+  if (BytesAdded != nullptr) {
+    *BytesAdded = SizeInBytes;
+  }
+
+  if (FBB == nullptr) {
+    return 1;
+  }
+
+  MachineInstr &FalseBranchMI = *BuildMI(&MBB, DL, get(GB::JP)).addMBB(FBB);
+  SizeInBytes += getInstSizeInBytes(FalseBranchMI);
+  if (BytesAdded != nullptr) {
+    *BytesAdded = SizeInBytes;
+  }
+  return 2;
+}
+
+bool GBInstrInfo::reverseBranchCondition(
+    SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 1);
+  Cond[0].setImm([&] {
+    switch (Cond[0].getImm()) {
+    case GBFlag::C:
+      return GBFlag::NC;
+    case GBFlag::NC:
+      return GBFlag::C;
+    case GBFlag::Z:
+      return GBFlag::NZ;
+    case GBFlag::NZ:
+      return GBFlag::Z;
+    default:
+      llvm_unreachable("Unrecognized branch flag");
+    }
+  }());
+
+  return false;
 }

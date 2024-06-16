@@ -184,14 +184,14 @@ define i16 @sext16_i8(i8 %0) {
 ; GBI-O3-NEXT:    ld a, $07
 ; GBI-O3-NEXT:    dec a
 ; GBI-O3-NEXT:    ld h, l
-; GBI-O3-NEXT:    jr c, .LBB5_2
-; GBI-O3-NEXT:    jr .LBB5_1
-; GBI-O3-NEXT:  .LBB5_1: ; =>This Inner Loop Header: Depth=1
+; GBI-O3-NEXT:    jp c, .LBB5_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:  .LBB5_2: ; =>This Inner Loop Header: Depth=1
 ; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    dec a
-; GBI-O3-NEXT:    jr nc, .LBB5_1
-; GBI-O3-NEXT:    jr .LBB5_2
-; GBI-O3-NEXT:  .LBB5_2:
+; GBI-O3-NEXT:    jp nc, .LBB5_2
+; GBI-O3-NEXT:  .LBB5_3:
 ; GBI-O3-NEXT:    ret
   %res = sext i8 %0 to i16
   ret i16 %res
