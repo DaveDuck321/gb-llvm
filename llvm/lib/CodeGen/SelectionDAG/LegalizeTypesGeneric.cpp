@@ -455,10 +455,6 @@ SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
 
 SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
   assert(ISD::isNormalStore(N) && "This routine only for normal stores!");
-  if (OpNo != 1 && isSimpleLegalType(N->getOperand(OpNo).getValueType())) {
-    // Cannot expand, combine back into something we can handle
-    return ExpandIntOp_Revert(N, OpNo);
-  }
   assert(OpNo == 1 && "Can only expand the stored value so far");
   SDLoc dl(N);
 

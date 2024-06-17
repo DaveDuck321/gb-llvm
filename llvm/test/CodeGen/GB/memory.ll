@@ -19,3 +19,32 @@ define void @store8(ptr %a, i8 %b) nounwind {
   store i8 %b, ptr %a
   ret void
 }
+
+define void @store1(ptr %a, i1 %b) nounwind {
+; GBI-LABEL: store1:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    and $01
+; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ret
+  store i1 %b, ptr %a
+  ret void
+}
+
+define i1 @simple_stack(i1 %0) {
+; GBI-LABEL: simple_stack:
+; GBI:       ; %bb.0: ; %begin
+; GBI-NEXT:    add sp, -1
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    and $01
+; GBI-NEXT:    ld hl, sp, 1
+; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    add sp, 1
+; GBI-NEXT:    ret
+begin:
+  %1 = alloca i1, align 1
+  store i1 %0, ptr %1, align 1
+  %2 = load i1, ptr %1, align 1
+  ret i1 %2
+}

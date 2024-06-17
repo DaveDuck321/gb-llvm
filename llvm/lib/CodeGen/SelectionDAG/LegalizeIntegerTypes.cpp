@@ -5475,6 +5475,11 @@ SDValue DAGTypeLegalizer::ExpandIntOp_XINT_TO_FP(SDNode *N) {
 SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
   assert(!N->isAtomic() && "Should have been a ATOMIC_STORE?");
 
+  if (OpNo != 1 && isSimpleLegalType(N->getOperand(OpNo).getValueType())) {
+    // Cannot expand, combine back into something we can handle
+    return ExpandIntOp_Revert(N, OpNo);
+  }
+
   if (ISD::isNormalStore(N))
     return ExpandOp_NormalStore(N, OpNo);
 
