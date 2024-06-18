@@ -41,13 +41,17 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   assert(not MFI.hasVarSizedObjects());
 
+  DebugLoc DL;
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  if (MBB.end() != MBBI) {
+    DL = MBBI->getDebugLoc();
+  }
 
   uint64_t StackSize = MFI.getStackSize();
   if (StackSize == 0) {
     return; // Nothing to do
   }
-  BuildMI(MBB, MBBI, DebugLoc{}, TII.get(GB::ADD_SP)).addImm(StackSize);
+  BuildMI(MBB, MBBI, DL, TII.get(GB::ADD_SP)).addImm(StackSize);
 }
 
 bool GBFrameLowering::hasFP(const MachineFunction &MF) const {

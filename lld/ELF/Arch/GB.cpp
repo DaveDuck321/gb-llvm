@@ -43,11 +43,13 @@ RelExpr GB::getRelExpr(RelType type, const Symbol &s,
 int64_t GB::getImplicitAddend(const uint8_t *buf, RelType type) const {
   switch (type) {
   case R_GB_8:
-    return SignExtend64<8>(*buf);
-  case R_GB_PCREL_8:
     return *buf;
+  case R_GB_PCREL_8:
+    return SignExtend64<8>(*buf);
   case R_GB_16:
     return read16le(buf);
+  case R_GB_DWARF_32:
+    return SignExtend64<32>(read32(buf));
   default:
     error(getErrorLocation(buf) + "unrecognized relocation " + toString(type));
     return 0;
@@ -67,6 +69,9 @@ void GB::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   case R_GB_16:
     checkIntUInt(loc, val, 16, rel);
     write16le(loc, val);
+    break;
+  case R_GB_DWARF_32:
+    write32(loc, val);
     break;
   default:
     error(getErrorLocation(loc) + "unrecognized relocation " +

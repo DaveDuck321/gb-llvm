@@ -16,6 +16,7 @@ public:
     AlignmentIsInBytes = false;
     UseMotorolaIntegers = true;
     CommentString = ";";
+    SupportsDebugInformation = true;
   }
 };
 

@@ -101,10 +101,7 @@ void GBInstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
     bool IsKill, int FrameIndex, const TargetRegisterClass *RC,
     const TargetRegisterInfo *TRI, Register VReg) const {
-  DebugLoc DL;
-  if (MI != MBB.end()) {
-    DL = MI->getDebugLoc();
-  }
+  DebugLoc DL = MBB.findDebugLoc(MI);
 
   // TODO GB: The GameBoy is really ill-suited for this constant stack offset...
   // find a way to only use push/ pops (almost exclusively?)
@@ -140,10 +137,7 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI,
                                        Register VReg) const {
-  DebugLoc DL;
-  if (MI != MBB.end()) {
-    DL = MI->getDebugLoc();
-  }
+  DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction *MF = MBB.getParent();
   MachineFrameInfo &MFI = MF->getFrameInfo();

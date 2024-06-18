@@ -16,8 +16,8 @@ class GBELFObjectWriter : public MCELFObjectTargetWriter {
 
 public:
   GBELFObjectWriter()
-      : MCELFObjectTargetWriter(false, ELF::ELFOSABI_STANDALONE, ELF::EM_GB,
-                                false){};
+      : MCELFObjectTargetWriter(false, ELF::ELFOSABI_NONE, ELF::EM_GB,
+                                true){};
 
   ~GBELFObjectWriter() override = default;
 
@@ -30,16 +30,25 @@ public:
 unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                          const MCFixup &Fixup,
                                          bool IsPCRel) const {
+  unsigned Kind = Fixup.getTargetKind();
+  if (Kind >= FirstLiteralRelocationKind) {
+    return Kind - FirstLiteralRelocationKind;
+  }
+
   switch ((unsigned)Fixup.getKind()) {
   default:
     llvm_unreachable("Unknown fixup kind!");
   case FK_PCRel_1:
+    assert(IsPCRel);
     return ELF::R_GB_PCREL_8;
   case FK_Data_1:
+    assert(not IsPCRel);
     return ELF::R_GB_8;
   case FK_Data_2:
+    assert(not IsPCRel);
     return ELF::R_GB_16;
   case FK_Data_4:
+    assert(not IsPCRel);
     return ELF::R_GB_DWARF_32;
   }
 }
