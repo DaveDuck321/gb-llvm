@@ -52,7 +52,7 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   const int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
   const int Offset = MFI.getObjectOffset(FrameIndex) + MFI.getStackSize() -
-                     TFL.getOffsetOfLocalArea() + SPAdj + 1;
+                     TFL.getOffsetOfLocalArea() + SPAdj;
 
   LLVM_DEBUG(dbgs() << "Eliminate frame index: " << MF.getName() << "\n"
                     << "FrameIndex: " << FrameIndex << ", "
