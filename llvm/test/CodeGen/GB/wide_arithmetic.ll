@@ -8,9 +8,9 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O0-LABEL: and:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -8
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
@@ -99,14 +99,14 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    and (hl)
 ; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = and i16 %b, %c
@@ -139,9 +139,9 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O0-LABEL: xor:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -8
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
@@ -230,14 +230,14 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    xor (hl)
 ; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = xor i16 %b, %c
@@ -247,9 +247,9 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 define i16 @xori(i16 %b) nounwind {
 ; GBI-O0-LABEL: xori:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld l, c
 ; GBI-O0-NEXT:    ld a, l
@@ -274,9 +274,9 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O0-LABEL: or:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -8
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
@@ -365,14 +365,14 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    or (hl)
 ; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = or i16 %b, %c
@@ -382,9 +382,9 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 define i16 @ori(i16 %b) nounwind {
 ; GBI-O0-LABEL: ori:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld l, c
 ; GBI-O0-NEXT:    ld a, l
@@ -435,9 +435,9 @@ define i16 @sub16(i16 %a, i8 %b) nounwind {
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    sbc $00
 ; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ret
   %1 = zext i8 %b to i16
   %2 = sub i16 %a, %1

@@ -177,9 +177,9 @@ define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld (hl), $01
 ; GBI-O3-NEXT:    ld l, $00
 ; GBI-O3-NEXT:    ld h, l
@@ -353,9 +353,9 @@ define i32 @large_return() nounwind {
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld (hl), $00
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    add $01
@@ -574,15 +574,15 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 5
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld (hl), a
@@ -816,13 +816,13 @@ define dso_local i8 @main() {
 ; GBI-O3-NEXT:    ld (hl), $00
 ; GBI-O3-NEXT:    ld d, $00
 ; GBI-O3-NEXT:    ld e, $01
-; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ld (hl), $02
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    call _ZplIssEsss
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    add sp, 2

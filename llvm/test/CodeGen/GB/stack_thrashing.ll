@@ -8,9 +8,9 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-LABEL: large_stack:
 ; GBI-O0:       ; %bb.0: ; %begin
 ; GBI-O0-NEXT:    add sp, -142
-; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
+; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld hl, $0098
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld d, h
@@ -1356,15 +1356,16 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 25
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 30
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    push af
+; GBI-O3-NEXT:    ld hl, sp, 32
+; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, d
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    pop af
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 24
 ; GBI-O3-NEXT:    ld (hl), a
