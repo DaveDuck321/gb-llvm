@@ -37,7 +37,7 @@ define i1 @simple_stack(i1 %0) {
 ; GBI-NEXT:    add sp, -1
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld hl, sp, 1
+; GBI-NEXT:    ld hl, sp, 0
 ; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add sp, 1

@@ -430,9 +430,10 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
     if (VA.isRegLoc()) {
       RegToPass.push_back(std::make_pair(VA.getLocReg(), ArgValue));
     } else {
-      int Offset = VA.getLocMemOffset() + 1;
+      int Offset = VA.getLocMemOffset();
       assert(isInt<8>(Offset));
 
+      // Generated prior to type legalization, a 16-bit store is fine here!
       SDValue Address = DAG.getNode(GBISD::LD_HL_SP, CLI.DL, MVT::i16,
                                     DAG.getConstant(Offset, CLI.DL, MVT::i8));
       MemOpChains.push_back(

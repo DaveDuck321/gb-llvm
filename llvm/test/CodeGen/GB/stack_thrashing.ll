@@ -11,11 +11,11 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ; kill: def $hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld hl, $0099
+; GBI-O0-NEXT:    ld hl, $0098
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 13
+; GBI-O0-NEXT:    ld hl, sp, 12
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    ld l, a
@@ -24,22 +24,22 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld e, l
 ; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld d, h
-; GBI-O0-NEXT:    ld hl, sp, 4
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 4
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 37
+; GBI-O0-NEXT:    ld hl, sp, 36
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld hl, sp, 34
+; GBI-O0-NEXT:    ld hl, sp, 33
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $0095
+; GBI-O0-NEXT:    ld hl, $0094
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 19
+; GBI-O0-NEXT:    ld hl, sp, 18
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    ld l, a
@@ -48,22 +48,22 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld e, l
 ; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld d, h
-; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 47
-; GBI-O0-NEXT:    ld (hl), d
-; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld hl, sp, 46
+; GBI-O0-NEXT:    ld (hl), d
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld hl, sp, 45
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $009b
+; GBI-O0-NEXT:    ld hl, $009a
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 31
+; GBI-O0-NEXT:    ld hl, sp, 30
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    ld l, a
@@ -72,22 +72,22 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld e, l
 ; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld d, h
-; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld hl, sp, 5
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld hl, sp, 5
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 66
-; GBI-O0-NEXT:    ld (hl), d
-; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld hl, sp, 65
+; GBI-O0-NEXT:    ld (hl), d
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld hl, sp, 64
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $009d
+; GBI-O0-NEXT:    ld hl, $009c
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 27
+; GBI-O0-NEXT:    ld hl, sp, 26
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    ld l, a
@@ -96,141 +96,141 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld e, l
 ; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    ld d, h
-; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld hl, sp, 6
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld hl, sp, 6
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 63
+; GBI-O0-NEXT:    ld hl, sp, 62
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 113
+; GBI-O0-NEXT:    ld hl, sp, 112
 ; GBI-O0-NEXT:    ld e, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 77
+; GBI-O0-NEXT:    ld hl, sp, 76
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, e
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 77
+; GBI-O0-NEXT:    ld hl, sp, 76
 ; GBI-O0-NEXT:    ld e, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, e
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    ld hl, sp, 9
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld e, h
-; GBI-O0-NEXT:    ld hl, sp, 9
+; GBI-O0-NEXT:    ld hl, sp, 8
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    add $02
-; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 9
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 50
-; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 8
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 52
-; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    add $04
-; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 9
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 48
-; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld e, a
 ; GBI-O0-NEXT:    ld hl, sp, 8
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ld hl, sp, 49
 ; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    add $08
-; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 9
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 33
-; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld e, a
+; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld (hl), e
+; GBI-O0-NEXT:    add $04
 ; GBI-O0-NEXT:    ld e, a
 ; GBI-O0-NEXT:    ld hl, sp, 8
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 38
-; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    add $01
-; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 9
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 54
+; GBI-O0-NEXT:    ld hl, sp, 47
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld hl, sp, 41
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $0091
-; GBI-O0-NEXT:    add hl, sp
-; GBI-O0-NEXT:    ld e, h
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 75
-; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld e, a
+; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 48
 ; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    ld h, e
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 75
-; GBI-O0-NEXT:    ld e, (hl)
-; GBI-O0-NEXT:    inc hl
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    ld l, e
-; GBI-O0-NEXT:    ld e, h
-; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    add $08
+; GBI-O0-NEXT:    ld e, a
+; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 32
+; GBI-O0-NEXT:    ld (hl), e
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld e, a
+; GBI-O0-NEXT:    ld hl, sp, 7
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 37
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    ld hl, sp, 8
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ld hl, sp, 53
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld hl, sp, 42
+; GBI-O0-NEXT:    ld hl, sp, 40
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $0093
+; GBI-O0-NEXT:    ld hl, $0090
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    ld e, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 23
+; GBI-O0-NEXT:    ld hl, sp, 74
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, e
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 23
+; GBI-O0-NEXT:    ld hl, sp, 74
 ; GBI-O0-NEXT:    ld e, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, e
 ; GBI-O0-NEXT:    ld e, h
-; GBI-O0-NEXT:    ld hl, sp, 11
+; GBI-O0-NEXT:    ld hl, sp, 9
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, sp, 11
+; GBI-O0-NEXT:    ld hl, sp, 9
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld hl, sp, 52
+; GBI-O0-NEXT:    ld (hl), e
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld hl, sp, 41
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld hl, $0092
+; GBI-O0-NEXT:    add hl, sp
+; GBI-O0-NEXT:    ld e, h
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 22
+; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld (hl), e
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ld h, e
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 22
+; GBI-O0-NEXT:    ld e, (hl)
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, e
+; GBI-O0-NEXT:    ld e, h
+; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    ld (hl), e
+; GBI-O0-NEXT:    add $01
+; GBI-O0-NEXT:    ld e, a
+; GBI-O0-NEXT:    ld hl, sp, 10
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 50
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld e, a
-; GBI-O0-NEXT:    ld hl, $009f
+; GBI-O0-NEXT:    ld hl, $009e
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld c, h
 ; GBI-O0-NEXT:    ld b, l
-; GBI-O0-NEXT:    ld hl, sp, 57
+; GBI-O0-NEXT:    ld hl, sp, 56
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), c
@@ -239,7 +239,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 57
+; GBI-O0-NEXT:    ld hl, sp, 56
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
@@ -247,29 +247,29 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ; kill: def $h killed $h killed $hl
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld hl, sp, 14
+; GBI-O0-NEXT:    ld hl, sp, 13
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 14
+; GBI-O0-NEXT:    ld hl, sp, 13
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld hl, sp, 75
+; GBI-O0-NEXT:    ld hl, sp, 74
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld hl, sp, 60
+; GBI-O0-NEXT:    ld hl, sp, 59
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, $0097
+; GBI-O0-NEXT:    ld hl, $0096
 ; GBI-O0-NEXT:    add hl, sp
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld c, h
 ; GBI-O0-NEXT:    ld b, l
-; GBI-O0-NEXT:    ld hl, sp, 41
+; GBI-O0-NEXT:    ld hl, sp, 40
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), c
@@ -278,77 +278,110 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 41
+; GBI-O0-NEXT:    ld hl, sp, 40
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 17
+; GBI-O0-NEXT:    ld hl, sp, 16
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 15
+; GBI-O0-NEXT:    ld hl, sp, 14
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 18
+; GBI-O0-NEXT:    ld hl, sp, 17
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 16
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add $01
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 71
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 17
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add $01
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 72
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 18
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 61
+; GBI-O0-NEXT:    ld hl, sp, 60
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 40
+; GBI-O0-NEXT:    ld hl, sp, 39
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 83
+; GBI-O0-NEXT:    ld hl, sp, 82
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 35
+; GBI-O0-NEXT:    ld hl, sp, 34
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld hl, sp, 50
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 19
+; GBI-O0-NEXT:    ld hl, sp, 18
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 50
+; GBI-O0-NEXT:    ld hl, sp, 49
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 19
+; GBI-O0-NEXT:    ld hl, sp, 18
+; GBI-O0-NEXT:    ldi a, (hl)
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 87
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld hl, sp, 18
+; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, b
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 53
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 22
+; GBI-O0-NEXT:    ld (hl), c
+; GBI-O0-NEXT:    inc hl
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld c, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld b, (hl)
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 22
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
@@ -358,7 +391,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 19
+; GBI-O0-NEXT:    ld hl, sp, 22
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -366,60 +399,27 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 54
+; GBI-O0-NEXT:    ld hl, sp, 34
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 23
-; GBI-O0-NEXT:    ld (hl), c
-; GBI-O0-NEXT:    inc hl
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 52
-; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 23
-; GBI-O0-NEXT:    ldi a, (hl)
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 89
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 23
-; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    inc hl
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    ld l, b
-; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 35
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 27
+; GBI-O0-NEXT:    ld hl, sp, 26
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 25
+; GBI-O0-NEXT:    ld hl, sp, 24
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, c
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 90
+; GBI-O0-NEXT:    ld hl, sp, 89
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 27
+; GBI-O0-NEXT:    ld hl, sp, 26
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -427,42 +427,42 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $04
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 40
+; GBI-O0-NEXT:    ld hl, sp, 39
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 60
+; GBI-O0-NEXT:    ld hl, sp, 59
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 66
+; GBI-O0-NEXT:    ld hl, sp, 65
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 35
+; GBI-O0-NEXT:    ld hl, sp, 34
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 31
+; GBI-O0-NEXT:    ld hl, sp, 30
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 29
+; GBI-O0-NEXT:    ld hl, sp, 28
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, c
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld hl, sp, 93
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 31
+; GBI-O0-NEXT:    ld hl, sp, 30
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -470,69 +470,69 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $02
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 40
+; GBI-O0-NEXT:    ld hl, sp, 39
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 69
+; GBI-O0-NEXT:    ld hl, sp, 68
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 70
+; GBI-O0-NEXT:    ld hl, sp, 69
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 35
+; GBI-O0-NEXT:    ld hl, sp, 34
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 37
+; GBI-O0-NEXT:    ld hl, sp, 36
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 36
+; GBI-O0-NEXT:    ld hl, sp, 35
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 37
+; GBI-O0-NEXT:    ld hl, sp, 36
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 95
+; GBI-O0-NEXT:    ld hl, sp, 94
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), c
-; GBI-O0-NEXT:    ld hl, sp, 37
+; GBI-O0-NEXT:    ld hl, sp, 36
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 96
+; GBI-O0-NEXT:    ld hl, sp, 95
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 40
+; GBI-O0-NEXT:    ld hl, sp, 39
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 50
+; GBI-O0-NEXT:    ld hl, sp, 49
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, c
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 39
+; GBI-O0-NEXT:    ld hl, sp, 38
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -540,114 +540,114 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $02
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld hl, sp, 50
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 71
+; GBI-O0-NEXT:    ld hl, sp, 70
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 73
+; GBI-O0-NEXT:    ld hl, sp, 72
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 45
+; GBI-O0-NEXT:    ld hl, sp, 44
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 43
+; GBI-O0-NEXT:    ld hl, sp, 42
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 44
+; GBI-O0-NEXT:    ld hl, sp, 43
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 45
+; GBI-O0-NEXT:    ld hl, sp, 44
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 99
+; GBI-O0-NEXT:    ld hl, sp, 98
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 46
+; GBI-O0-NEXT:    ld hl, sp, 45
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 47
+; GBI-O0-NEXT:    ld hl, sp, 46
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 50
+; GBI-O0-NEXT:    ld hl, sp, 49
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld hl, sp, 102
+; GBI-O0-NEXT:    ld hl, sp, 101
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld hl, sp, 50
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 102
+; GBI-O0-NEXT:    ld hl, sp, 101
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 50
+; GBI-O0-NEXT:    ld hl, sp, 49
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 51
+; GBI-O0-NEXT:    ld hl, sp, 50
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, e
 ; GBI-O0-NEXT:    ld e, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 103
+; GBI-O0-NEXT:    ld hl, sp, 102
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 54
+; GBI-O0-NEXT:    ld hl, sp, 53
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 60
+; GBI-O0-NEXT:    ld hl, sp, 59
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    ld hl, sp, 53
+; GBI-O0-NEXT:    ld hl, sp, 52
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 54
+; GBI-O0-NEXT:    ld hl, sp, 53
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 93
+; GBI-O0-NEXT:    ld hl, sp, 92
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, c
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 55
+; GBI-O0-NEXT:    ld hl, sp, 54
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -655,48 +655,48 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $02
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 66
+; GBI-O0-NEXT:    ld hl, sp, 65
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 74
+; GBI-O0-NEXT:    ld hl, sp, 73
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld e, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 60
+; GBI-O0-NEXT:    ld hl, sp, 59
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 76
+; GBI-O0-NEXT:    ld hl, sp, 75
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, e
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 63
+; GBI-O0-NEXT:    ld hl, sp, 62
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 61
+; GBI-O0-NEXT:    ld hl, sp, 60
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 62
+; GBI-O0-NEXT:    ld hl, sp, 61
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld e, (hl)
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 63
+; GBI-O0-NEXT:    ld hl, sp, 62
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    ld (hl), e
-; GBI-O0-NEXT:    ld hl, sp, 63
+; GBI-O0-NEXT:    ld hl, sp, 62
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, d
@@ -704,96 +704,96 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 66
+; GBI-O0-NEXT:    ld hl, sp, 65
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 67
+; GBI-O0-NEXT:    ld hl, sp, 66
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), d
-; GBI-O0-NEXT:    ld hl, sp, 66
+; GBI-O0-NEXT:    ld hl, sp, 65
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 69
+; GBI-O0-NEXT:    ld hl, sp, 68
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    push bc
 ; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld hl, sp, 80
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop bc
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 70
+; GBI-O0-NEXT:    ld hl, sp, 69
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld hl, sp, 80
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 69
+; GBI-O0-NEXT:    ld hl, sp, 68
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 70
+; GBI-O0-NEXT:    ld hl, sp, 69
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, c
 ; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 80
+; GBI-O0-NEXT:    ld hl, sp, 79
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 73
+; GBI-O0-NEXT:    ld hl, sp, 72
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 74
+; GBI-O0-NEXT:    ld hl, sp, 73
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, c
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 82
+; GBI-O0-NEXT:    ld hl, sp, 81
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), c
-; GBI-O0-NEXT:    ld hl, sp, 73
+; GBI-O0-NEXT:    ld hl, sp, 72
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 112
+; GBI-O0-NEXT:    ld hl, sp, 111
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 76
+; GBI-O0-NEXT:    ld hl, sp, 75
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 114
+; GBI-O0-NEXT:    ld hl, sp, 113
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, b
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 75
+; GBI-O0-NEXT:    ld hl, sp, 74
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -801,23 +801,43 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld c, e
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld hl, sp, 80
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld hl, sp, 93
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, d
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 95
+; GBI-O0-NEXT:    ld hl, sp, 94
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 97
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 87
+; GBI-O0-NEXT:    ld c, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 98
+; GBI-O0-NEXT:    ld c, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 101
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
@@ -827,17 +847,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 82
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 99
-; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 102
+; GBI-O0-NEXT:    ld hl, sp, 104
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
@@ -847,84 +857,65 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 105
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 90
-; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 93
+; GBI-O0-NEXT:    ld hl, sp, 92
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 77
+; GBI-O0-NEXT:    ld hl, sp, 76
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, b
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 87
+; GBI-O0-NEXT:    ld hl, sp, 86
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 87
+; GBI-O0-NEXT:    ld hl, sp, 86
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld hl, sp, 80
 ; GBI-O0-NEXT:    ld c, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 82
+; GBI-O0-NEXT:    ld hl, sp, 81
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 81
+; GBI-O0-NEXT:    ld hl, sp, 80
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 83
+; GBI-O0-NEXT:    ld hl, sp, 82
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 85
+; GBI-O0-NEXT:    ld hl, sp, 84
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 83
+; GBI-O0-NEXT:    ld hl, sp, 82
 ; GBI-O0-NEXT:    ldi a, (hl)
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 86
+; GBI-O0-NEXT:    ld hl, sp, 85
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 85
+; GBI-O0-NEXT:    ld hl, sp, 84
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add $01
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 92
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 86
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 91
 ; GBI-O0-NEXT:    ld (hl), a
@@ -933,43 +924,61 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld hl, sp, 85
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 90
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 84
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add $02
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 102
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 85
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 103
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 86
+; GBI-O0-NEXT:    ld hl, sp, 84
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    add $04
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 104
+; GBI-O0-NEXT:    ld hl, sp, 99
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 85
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add $04
+; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 100
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 86
+; GBI-O0-NEXT:    ld hl, sp, 84
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    add $08
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 101
+; GBI-O0-NEXT:    ld hl, sp, 95
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 85
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add $08
+; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 96
 ; GBI-O0-NEXT:    ld (hl), a
@@ -978,19 +987,21 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld hl, sp, 86
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 97
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 93
+; GBI-O0-NEXT:    ld l, (hl)
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 87
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 95
+; GBI-O0-NEXT:    ld hl, sp, 98
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld hl, sp, 97
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
@@ -999,32 +1010,45 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 99
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 98
-; GBI-O0-NEXT:    ld l, (hl)
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 89
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 102
-; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ld hl, sp, 101
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld hl, sp, 100
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 90
+; GBI-O0-NEXT:    ld hl, sp, 89
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 89
+; GBI-O0-NEXT:    ld hl, sp, 88
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 90
+; GBI-O0-NEXT:    ld hl, sp, 89
 ; GBI-O0-NEXT:    ld l, (hl)
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 92
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld hl, sp, 93
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    add $04
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 96
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 105
+; GBI-O0-NEXT:    ld (hl), l
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 106
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
@@ -1032,160 +1056,136 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld hl, sp, 93
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add $04
+; GBI-O0-NEXT:    add $02
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 97
+; GBI-O0-NEXT:    ld hl, sp, 96
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 106
-; GBI-O0-NEXT:    ld (hl), l
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 107
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld (hl), l
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 94
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 94
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add $02
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 97
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 108
-; GBI-O0-NEXT:    ld (hl), l
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 109
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 95
+; GBI-O0-NEXT:    ld hl, sp, 94
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 94
+; GBI-O0-NEXT:    ld hl, sp, 93
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 96
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 97
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 98
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 98
+; GBI-O0-NEXT:    ld hl, sp, 97
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    add $02
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 101
+; GBI-O0-NEXT:    ld hl, sp, 100
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 110
+; GBI-O0-NEXT:    ld hl, sp, 109
 ; GBI-O0-NEXT:    ld (hl), l
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 111
+; GBI-O0-NEXT:    ld hl, sp, 110
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 99
+; GBI-O0-NEXT:    ld hl, sp, 98
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 98
+; GBI-O0-NEXT:    ld hl, sp, 97
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 101
+; GBI-O0-NEXT:    ld hl, sp, 100
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 102
+; GBI-O0-NEXT:    ld hl, sp, 101
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 101
+; GBI-O0-NEXT:    ld hl, sp, 100
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 103
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
+; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 104
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld hl, sp, 103
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    add $02
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 106
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 111
+; GBI-O0-NEXT:    ld (hl), l
+; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 112
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 105
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld hl, sp, 104
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add $02
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 107
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 112
-; GBI-O0-NEXT:    ld (hl), l
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 113
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 106
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), e
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 107
+; GBI-O0-NEXT:    ld hl, sp, 106
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld e, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 108
+; GBI-O0-NEXT:    ld hl, sp, 107
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
@@ -1194,13 +1194,13 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 109
+; GBI-O0-NEXT:    ld hl, sp, 108
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld d, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 110
+; GBI-O0-NEXT:    ld hl, sp, 109
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
@@ -1209,13 +1209,13 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 111
+; GBI-O0-NEXT:    ld hl, sp, 110
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 112
+; GBI-O0-NEXT:    ld hl, sp, 111
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
@@ -1224,13 +1224,13 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 113
+; GBI-O0-NEXT:    ld hl, sp, 112
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 114
+; GBI-O0-NEXT:    ld hl, sp, 113
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
@@ -1244,13 +1244,13 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    add sp, -78
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 29
+; GBI-O3-NEXT:    ld hl, sp, 28
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 49
+; GBI-O3-NEXT:    ld hl, sp, 48
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 27
+; GBI-O3-NEXT:    ld hl, sp, 26
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld l, a
@@ -1262,7 +1262,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 45
+; GBI-O3-NEXT:    ld hl, sp, 44
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1274,7 +1274,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 43
+; GBI-O3-NEXT:    ld hl, sp, 42
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1286,7 +1286,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 33
+; GBI-O3-NEXT:    ld hl, sp, 32
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1297,14 +1297,14 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 81
+; GBI-O3-NEXT:    ld hl, sp, 80
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 21
+; GBI-O3-NEXT:    ld hl, sp, 20
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld l, a
@@ -1316,7 +1316,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 41
+; GBI-O3-NEXT:    ld hl, sp, 40
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1328,7 +1328,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld d, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 35
+; GBI-O3-NEXT:    ld hl, sp, 34
 ; GBI-O3-NEXT:    ld (hl), e
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), d
@@ -1340,7 +1340,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1354,9 +1354,9 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 26
+; GBI-O3-NEXT:    ld hl, sp, 25
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 31
+; GBI-O3-NEXT:    ld hl, sp, 30
 ; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
@@ -1366,35 +1366,35 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 25
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 41
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, d
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 39
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 24
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 43
+; GBI-O3-NEXT:    ld hl, sp, 40
 ; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, d
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 45
+; GBI-O3-NEXT:    ld hl, sp, 38
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 23
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 42
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, d
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld hl, sp, 44
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 22
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
@@ -1408,15 +1408,15 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 37
+; GBI-O3-NEXT:    ld hl, sp, 36
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), d
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 31
+; GBI-O3-NEXT:    ld hl, sp, 30
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -1429,7 +1429,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    ld c, h
 ; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 37
+; GBI-O3-NEXT:    ld hl, sp, 36
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), c
@@ -1437,7 +1437,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, c
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 49
+; GBI-O3-NEXT:    ld hl, sp, 48
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1450,37 +1450,95 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    ld c, h
 ; GBI-O3-NEXT:    ld b, l
+; GBI-O3-NEXT:    ld hl, sp, 18
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld l, b
+; GBI-O3-NEXT:    ld h, c
+; GBI-O3-NEXT:    pop bc
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 44
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    push bc
+; GBI-O3-NEXT:    ld c, h
+; GBI-O3-NEXT:    ld b, l
+; GBI-O3-NEXT:    ld hl, sp, 16
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld l, b
+; GBI-O3-NEXT:    ld h, c
+; GBI-O3-NEXT:    pop bc
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 46
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 19
 ; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 32
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld h, c
-; GBI-O3-NEXT:    pop bc
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 45
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 12
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 30
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 40
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    add $02
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    ld c, h
-; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 17
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 10
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld l, b
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, c
-; GBI-O3-NEXT:    pop bc
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 47
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 32
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    add $01
 ; GBI-O3-NEXT:    ld l, a
@@ -1488,245 +1546,187 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 32
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 38
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 40
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 42
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 36
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 8
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 38
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld hl, sp, 34
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 42
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld hl, sp, 36
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 36
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 34
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 16
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 34
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 14
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 12
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 16
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 10
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 8
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 14
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 42
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld hl, sp, 20
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 33
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 13
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 31
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 41
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld c, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 11
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, c
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 33
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 33
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 39
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 41
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 43
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 37
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 9
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 39
-; GBI-O3-NEXT:    ld (hl), d
-; GBI-O3-NEXT:    ld hl, sp, 35
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 43
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld (hl), d
-; GBI-O3-NEXT:    ld hl, sp, 37
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 37
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 35
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 17
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 35
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 15
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 13
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 17
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 11
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 9
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 15
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 43
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 21
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 21
+; GBI-O3-NEXT:    ld hl, sp, 20
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 27
+; GBI-O3-NEXT:    ld hl, sp, 26
 ; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, b
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 29
+; GBI-O3-NEXT:    ld hl, sp, 28
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
@@ -1737,7 +1737,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 29
+; GBI-O3-NEXT:    ld hl, sp, 28
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1749,7 +1749,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 45
+; GBI-O3-NEXT:    ld hl, sp, 44
 ; GBI-O3-NEXT:    ld (hl), c
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
@@ -1767,39 +1767,39 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 23
+; GBI-O3-NEXT:    ld hl, sp, 22
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 28
+; GBI-O3-NEXT:    ld hl, sp, 27
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 27
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 43
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 26
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 27
+; GBI-O3-NEXT:    ld hl, sp, 42
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 25
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld hl, sp, 26
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 24
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1812,7 +1812,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    ld c, h
 ; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 31
+; GBI-O3-NEXT:    ld hl, sp, 30
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), c
@@ -1820,7 +1820,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, c
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 49
+; GBI-O3-NEXT:    ld hl, sp, 48
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1833,7 +1833,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    ld c, h
 ; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 49
+; GBI-O3-NEXT:    ld hl, sp, 48
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), c
@@ -1841,7 +1841,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, c
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1852,7 +1852,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 22
+; GBI-O3-NEXT:    ld hl, sp, 21
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1864,13 +1864,13 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 45
+; GBI-O3-NEXT:    ld hl, sp, 44
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 33
+; GBI-O3-NEXT:    ld hl, sp, 32
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1881,11 +1881,11 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 35
+; GBI-O3-NEXT:    ld hl, sp, 34
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 43
+; GBI-O3-NEXT:    ld hl, sp, 42
 ; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld b, (hl)
@@ -1896,11 +1896,11 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 43
+; GBI-O3-NEXT:    ld hl, sp, 42
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 29
+; GBI-O3-NEXT:    ld hl, sp, 28
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -1913,7 +1913,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 41
+; GBI-O3-NEXT:    ld hl, sp, 40
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1924,11 +1924,11 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 39
+; GBI-O3-NEXT:    ld hl, sp, 38
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 47
+; GBI-O3-NEXT:    ld hl, sp, 46
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -1939,11 +1939,11 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 37
+; GBI-O3-NEXT:    ld hl, sp, 36
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld hl, sp, 45
+; GBI-O3-NEXT:    ld hl, sp, 44
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -1954,7 +1954,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 19
+; GBI-O3-NEXT:    ld hl, sp, 18
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
@@ -1965,7 +1965,7 @@ define i128 @large_stack(i128 %0) {
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 17
+; GBI-O3-NEXT:    ld hl, sp, 16
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), a
