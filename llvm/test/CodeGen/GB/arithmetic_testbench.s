@@ -1,0 +1,306 @@
+; RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll \
+; RUN:   | FileCheck %s -check-prefix=EXPECT
+
+.global _start
+
+; arithmetic.ll
+.global add
+.global addi
+.global add_hl
+.global sub
+.global subi
+.global sub_hl
+.global and
+.global andi
+.global and_hl
+.global xor
+.global xori
+.global xor_hl
+.global or
+.global ori
+.global or_hl
+.global add16
+.global setcc_eq
+.global setcc_ne
+.global setcc_gt
+.global setcc_lt
+.global setcc_le
+.global setcc_ge
+.global setcc_ugt
+.global setcc_ult
+.global setcc_ule
+.global setcc_uge
+.global shl
+.global lshr
+.global ashr
+.global shl_c
+.global lshr_c
+.global ashr_c
+
+_start:
+    di
+    ld a, 0x00
+    ld hl, 0x0000
+; EXPECT: a=00
+; EXPECT: hl=0000
+    debugtrap
+
+    ld b, 0x03
+    ld c, 0x07
+    call add
+; EXPECT: a=0a
+    debugtrap
+
+    ld b, 0xfe
+    call addi
+; EXPECT: a=ff
+    debugtrap
+
+    ld bc, 0x1234
+    push bc
+    ld hl, sp, 0
+    ld b, 0x02
+    call add_hl
+    pop bc
+; EXPECT: a=36
+    debugtrap
+
+    ld b, 7
+    ld c, 2
+    call sub
+; EXPECT: a=05
+    debugtrap
+
+    ld b, 0x06
+    ld c, 0x14
+    call and
+; EXPECT: a=04
+    debugtrap
+
+    ld b, 0x15
+    ld c, 0x14
+    call xor
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0x04
+    ld c, 0x03
+    call or
+; EXPECT: a=07
+    debugtrap
+
+    ld hl, 0x1234
+    call add16
+; EXPECT: hl=1248
+    debugtrap
+
+    ld b, 5
+    ld c, 6
+    call setcc_eq
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 7
+    ld c, 7
+    call setcc_eq
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 5
+    ld c, 6
+    call setcc_ne
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 7
+    ld c, 7
+    call setcc_ne
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+_setcc_gt:
+    ld b, 0xff
+    ld c, 0xfe
+    call setcc_gt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xfe
+    ld c, 0xff
+    call setcc_gt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0x01
+    ld c, 0xff
+    call setcc_gt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x01
+    call setcc_gt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0xff
+    call setcc_gt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+_setcc_lt:
+    ld b, 0xff
+    ld c, 0xfe
+    call setcc_lt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xfe
+    ld c, 0xff
+    call setcc_lt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0x01
+    ld c, 0xff
+    call setcc_lt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x01
+    call setcc_lt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0xff
+    call setcc_lt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+_setcc_le:
+    ld b, 0xff
+    ld c, 0xfe
+    call setcc_le
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xfe
+    ld c, 0xff
+    call setcc_le
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0x01
+    ld c, 0xff
+    call setcc_le
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x01
+    call setcc_le
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0xff
+    call setcc_le
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+_setcc_ge:
+    ld b, 0xff
+    ld c, 0xfe
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xfe
+    ld c, 0xff
+    call setcc_ge
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0x01
+    ld c, 0xff
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x01
+    call setcc_ge
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0xff
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+_shifts:
+    ld b, 0x04
+    ld c, 0x03
+    call shl
+; EXPECT a=10
+    debugtrap
+
+    ld b, 0x80
+    call shl_c
+; EXPECT a=10
+    debugtrap
+
+    ld b, 0x80
+    ld c, 0x02
+    call lshr
+; EXPECT a=20
+    debugtrap
+
+    ld b, 0x80
+    call ashr_c
+; EXPECT a=20
+    debugtrap
+
+    ld b, 0x80
+    ld c, 0x02
+    call ashr
+; EXPECT a=e0
+    debugtrap
+
+    ld b, 0x80
+    ld c, 0x02
+    call ashr_c
+; EXPECT a=e0
+    debugtrap
+
+
+_end:
+    trap
