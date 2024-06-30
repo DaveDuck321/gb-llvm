@@ -675,27 +675,29 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
   }();
   // This should codegen to:
   //  dec $amount
-  //  JR C .end
+  //  inc $amount   (ahh, dec doesn't set carry)
+  //  JR Z .end
   //  .main_loop:
-  //    dec $amount
   //    sla $rs
-  //    JR NC .loop
+  //    dec $amount
+  //    JR NZ .loop
   //  .end:
 
   // In llvm world that is:
   // .BB
   //    ...
-  //    %amount = dec $shift_n
-  //    JR C .end
+  //    %amount1 = dec $shift_n
+  //    %amount2 = inc $shift_n
+  //    JR Z .end
   //    JR .LoopBB
   // .LoopBB
   //    %to_shift = PHI[%src, BB] [%shifted, LoopBB]
   //    %shifted = sla $to_shift
   //
-  //    %to_decrement = PHI[%amount, BB] [%decremented, LoopBB]
+  //    %to_decrement = PHI[%amount2, BB] [%decremented, LoopBB]
   //    %decremented = dec $to_decrement
   //
-  //    JR NZ .start
+  //    JR NZ .LoopBB
   //    JR .end
   // .end
   //      PHI [%src BB] [shifted LoopBB
@@ -722,6 +724,7 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
 
   // Populate the registers
   Register InitialDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+  Register StartAmount = RI.createVirtualRegister(&GB::GPR8RegClass);
   Register LoopDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
   Register ToDecReg = RI.createVirtualRegister(&GB::GPR8RegClass);
 
@@ -731,7 +734,8 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
 
   // StartBB
   BuildMI(StartMBB, DL, TII.get(GB::DEC_r), InitialDecReg).addReg(MIAmount);
-  BuildMI(StartMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::C).addMBB(EndMBB);
+  BuildMI(StartMBB, DL, TII.get(GB::INC_r), StartAmount).addReg(InitialDecReg);
+  BuildMI(StartMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::Z).addMBB(EndMBB);
   BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(LoopMBB);
 
   // Loop BB
@@ -742,7 +746,7 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
       .addMBB(LoopMBB);
 
   BuildMI(LoopMBB, DL, TII.get(GB::PHI), ToDecReg)
-      .addReg(InitialDecReg)
+      .addReg(StartAmount)
       .addMBB(StartMBB)
       .addReg(LoopDecReg)
       .addMBB(LoopMBB);
@@ -750,7 +754,7 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
   BuildMI(LoopMBB, DL, TII.get(OpCode), LoopShiftReg).addReg(ToShiftReg);
   BuildMI(LoopMBB, DL, TII.get(GB::DEC_r), LoopDecReg).addReg(ToDecReg);
 
-  BuildMI(LoopMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::NC).addMBB(LoopMBB);
+  BuildMI(LoopMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::NZ).addMBB(LoopMBB);
   BuildMI(LoopMBB, DL, TII.get(GB::JR)).addMBB(EndMBB);
 
   // End BB

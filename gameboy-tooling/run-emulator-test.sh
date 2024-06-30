@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -e
 
 testbench=$(mktemp)
@@ -17,5 +16,6 @@ if [[ -z $4 ]]
 then
     /home/tom/Programming/GameBoy/emulate.out $binary_out
 else
+    trap '' INT
     /home/tom/Programming/GameBoy/gb_with_gdb.sh $binary_out
 fi

@@ -426,10 +426,14 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:    ld hl, sp, 2
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    cp $00
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 5
 ; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    jr nz, .LBB12_2
 ; GBI-O0-NEXT:    jr .LBB12_1
 ; GBI-O0-NEXT:  .LBB12_1:

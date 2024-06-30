@@ -147,11 +147,16 @@ define i16 @sext16_i8(i8 %0) {
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    ld a, $07
 ; GBI-O0-NEXT:    dec a
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    inc a
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    jr c, .LBB5_2
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    jr z, .LBB5_2
 ; GBI-O0-NEXT:    jr .LBB5_1
 ; GBI-O0-NEXT:  .LBB5_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-O0-NEXT:    ld hl, sp, 2
@@ -160,11 +165,15 @@ define i16 @sext16_i8(i8 %0) {
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    sra b
 ; GBI-O0-NEXT:    dec a
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    jr nc, .LBB5_1
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    jr nz, .LBB5_1
 ; GBI-O0-NEXT:    jr .LBB5_2
 ; GBI-O0-NEXT:  .LBB5_2:
 ; GBI-O0-NEXT:    ld hl, sp, 0
@@ -183,14 +192,15 @@ define i16 @sext16_i8(i8 %0) {
 ; GBI-O3-NEXT:    ld l, b
 ; GBI-O3-NEXT:    ld a, $07
 ; GBI-O3-NEXT:    dec a
+; GBI-O3-NEXT:    inc a
 ; GBI-O3-NEXT:    ld h, l
-; GBI-O3-NEXT:    jp c, .LBB5_3
+; GBI-O3-NEXT:    jp z, .LBB5_3
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld h, l
 ; GBI-O3-NEXT:  .LBB5_2: ; =>This Inner Loop Header: Depth=1
 ; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    dec a
-; GBI-O3-NEXT:    jp nc, .LBB5_2
+; GBI-O3-NEXT:    jp nz, .LBB5_2
 ; GBI-O3-NEXT:  .LBB5_3:
 ; GBI-O3-NEXT:    ret
   %res = sext i8 %0 to i16
