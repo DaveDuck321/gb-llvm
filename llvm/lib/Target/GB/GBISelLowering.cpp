@@ -261,16 +261,15 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     break;
 
   // a == b:
-  // sub a, b
-  // dec
+  // and a, b  (res < b if a != b)
+  // cmp b
   // rla
-  case ISD::CondCode::SETNE:
+  case ISD::CondCode::SETEQ:
     ReverseResult = true;
     [[fallthrough]];
-  case ISD::CondCode::SETEQ: {
-    SDValue Sub = DAG.getNode(ISD::SUB, DL, LHS.getValueType(), LHS, RHS);
-    LHS = Sub;
-    RHS = DAG.getConstant(0x01, DL, MVT::i8);
+  case ISD::CondCode::SETNE: {
+    SDValue Or = DAG.getNode(ISD::AND, DL, LHS.getValueType(), LHS, RHS);
+    LHS = Or;
     CCode = ISD::CondCode::SETULT;
     break;
   }
@@ -313,7 +312,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue CC = DAG.getCondCode(CCode);
   SDValue Cmp = DAG.getNode(GBISD::CP, DL, MVT::Glue, CC, LHS, RHS);
 
-  // Operand is ignored
+  // Primary operand is ignored, only glue matters
   SDValue Result =
       DAG.getNode(GBISD::RLA, DL, MVT::i8, DAG.getUNDEF(MVT::i8), Cmp);
   if (ReverseResult) {

@@ -179,9 +179,10 @@ define i1 @setcc_eq(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_eq:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    sub c
-; GBI-NEXT:    dec a
+; GBI-NEXT:    and c
+; GBI-NEXT:    cp c
 ; GBI-NEXT:    rla
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp eq i8 %b, %c
   ret i1 %1
@@ -191,10 +192,9 @@ define i1 @setcc_ne(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ne:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    sub c
-; GBI-NEXT:    dec a
+; GBI-NEXT:    and c
+; GBI-NEXT:    cp c
 ; GBI-NEXT:    rla
-; GBI-NEXT:    xor $ff
 ; GBI-NEXT:    ret
   %1 = icmp ne i8 %b, %c
   ret i1 %1
@@ -228,7 +228,7 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
 ; GBI-NEXT:    rlca
-; GBI-NEXT:    xor $ff
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp sle i8 %b, %c
   ret i1 %1
@@ -240,7 +240,7 @@ define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    rlca
-; GBI-NEXT:    xor $ff
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp sge i8 %b, %c
   ret i1 %1
@@ -274,7 +274,7 @@ define i1 @setcc_ule(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cp b
 ; GBI-NEXT:    rla
-; GBI-NEXT:    xor $ff
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp ule i8 %b, %c
   ret i1 %1
@@ -286,7 +286,7 @@ define i1 @setcc_uge(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cp c
 ; GBI-NEXT:    rla
-; GBI-NEXT:    xor $ff
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp uge i8 %b, %c
   ret i1 %1

@@ -179,6 +179,7 @@ let hasSideEffects = true in {
   def DI   : GBInstrNoOperands<"di", 0xF3>;
   def EI   : GBInstrNoOperands<"ei", 0xFB>;
   def TRAP : GBInstrNoOperands<"trap", 0xD3>;
+  def DEBUG_TRAP : GBInstrNoOperands<"debugtrap", 0xE3>;
 }
 
 let mayLoad = true in {
@@ -237,8 +238,6 @@ def : Pat<(CP_NODE SETULT, A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETEQ,  A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETNE,  A, imm8:$imm8), (CPI imm8:$imm8)>;
 
-def : Pat<(CP_NODE SETULT, GPR8:$rs, 1), (DEC_r GPR8:$rs)>;
-
 // Rotates the carry into A, used as our setcc
 def SDT_GB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;
 def RLA_NODE : SDNode<"GBISD::RLA", SDT_GB1i8, [SDNPInGlue]>;
@@ -289,6 +288,8 @@ defm : ALU_Pat<sube, SBCI, SBC_r, SBC_iHL>;
 defm : ALU_Pat<and, ANDI, AND_r, AND_iHL>;
 defm : ALU_Pat<xor, XORI, XOR_r, XOR_iHL>;
 defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
+
+def : Pat<(xor A, -1), (CPL)>;
 
 // ALU 16-bit (currently inactive)
 def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
