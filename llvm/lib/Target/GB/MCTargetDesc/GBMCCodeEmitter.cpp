@@ -22,10 +22,10 @@ namespace {
 
 class GBMCCodeEmitter : public MCCodeEmitter {
   const MCInstrInfo &MCII;
-  const MCContext &Ctx;
+  MCContext &Ctx;
 
 public:
-  GBMCCodeEmitter(const MCInstrInfo &MCII, const MCContext &Ctx)
+  GBMCCodeEmitter(const MCInstrInfo &MCII, MCContext &Ctx)
       : MCII{MCII}, Ctx{Ctx} {}
   ~GBMCCodeEmitter() = default;
 
@@ -87,6 +87,10 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
     const auto &Desc = MCII.get(MI.getOpcode());
     const auto Kind = GB::FixupKindMap[Desc.TSFlags & GB::FixupTSMask];
+
+    if (Kind == MCFixupKind::FK_PCRel_1) {
+      Expr = MCBinaryExpr::createSub(Expr, MCConstantExpr::create(1, Ctx), Ctx);
+    }
 
     // Offset = 1 to skip opcode byte
     Fixups.push_back(MCFixup::create(1, Expr, (MCFixupKind)Kind, MI.getLoc()));

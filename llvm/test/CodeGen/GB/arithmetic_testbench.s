@@ -1,4 +1,6 @@
-; RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll \
+; RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll -O3 \
+; RUN:   | FileCheck %s -check-prefix=EXPECT
+; RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global _start
@@ -270,35 +272,40 @@ _shifts:
     ld b, 0x04
     ld c, 0x03
     call shl
-; EXPECT a=10
+; EXPECT: a=20
     debugtrap
 
-    ld b, 0x80
+    ld b, 0x04
+    ld c, 0x00
+    call shl
+; EXPECT: a=04
+    debugtrap
+
+    ld b, 0x04
     call shl_c
-; EXPECT a=10
+; EXPECT: a=10
     debugtrap
 
     ld b, 0x80
     ld c, 0x02
     call lshr
-; EXPECT a=20
+; EXPECT: a=20
     debugtrap
 
     ld b, 0x80
-    call ashr_c
-; EXPECT a=20
+    call lshr_c
+; EXPECT: a=20
     debugtrap
 
     ld b, 0x80
     ld c, 0x02
     call ashr
-; EXPECT a=e0
+; EXPECT: a=e0
     debugtrap
 
-    ld b, 0x80
-    ld c, 0x02
+    ld b, 0xe0
     call ashr_c
-; EXPECT a=e0
+; EXPECT: a=f8
     debugtrap
 
 

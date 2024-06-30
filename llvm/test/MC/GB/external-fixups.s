@@ -14,7 +14,7 @@ jr nz, jump_label
 LD sp, VAL16
 
 # CHECK-FIXUP: fixup A - offset: 1, value: VAL8, kind: FK_Data_1
-# CHECK-FIXUP: fixup A - offset: 1, value: jump_label, kind: FK_PCRel_1
+# CHECK-FIXUP: fixup A - offset: 1, value: jump_label-1, kind: FK_PCRel_1
 # CHECK-FIXUP: fixup A - offset: 1, value: VAL16, kind: FK_Data_2
 
 # CHECK-ENCODED: add $00
