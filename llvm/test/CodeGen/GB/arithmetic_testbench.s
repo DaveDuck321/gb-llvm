@@ -4,41 +4,6 @@
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global _start
-
-; arithmetic.ll
-.global add
-.global addi
-.global add_hl
-.global sub
-.global subi
-.global sub_hl
-.global and
-.global andi
-.global and_hl
-.global xor
-.global xori
-.global xor_hl
-.global or
-.global ori
-.global or_hl
-.global add16
-.global setcc_eq
-.global setcc_ne
-.global setcc_gt
-.global setcc_lt
-.global setcc_le
-.global setcc_ge
-.global setcc_ugt
-.global setcc_ult
-.global setcc_ule
-.global setcc_uge
-.global shl
-.global lshr
-.global ashr
-.global shl_c
-.global lshr_c
-.global ashr_c
-
 _start:
     di
     ld a, 0x00

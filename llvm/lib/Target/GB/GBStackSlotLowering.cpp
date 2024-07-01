@@ -51,24 +51,31 @@ public:
   StackAllocator(const StackAllocator &) = delete;
   StackAllocator &operator=(const StackAllocator &) = delete;
   ~StackAllocator() {
-    auto &MI = *MBBI;
-    auto &MBB = *MI.getParent();
-
     while (not ToPop.empty()) {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::POP), ToPop.back());
-      ToPop.pop_back();
+      pop(ToPop.back());
     }
   }
 
-  void allocate(MCRegister Reg) {
+  void save(MCRegister Reg, bool AlsoKill = true) {
     const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     auto &MI = *MBBI;
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::PUSH))
-        .addReg(Reg, getKillRegState(Reg != GB::AF));
+        .addReg(Reg, getKillRegState(AlsoKill));
     ToPop.push_back(Reg);
 
-    markRegAvailable(MRI.getTargetRegisterInfo()->getSubReg(Reg, 1));
-    markRegAvailable(MRI.getTargetRegisterInfo()->getSubReg(Reg, 2));
+    if (AlsoKill) {
+      markRegAvailable(MRI.getTargetRegisterInfo()->getSubReg(Reg, 1));
+      markRegAvailable(MRI.getTargetRegisterInfo()->getSubReg(Reg, 2));
+    }
+  }
+
+  void pop(MCRegister Reg) {
+    auto &MI = *MBBI;
+    auto &MBB = *MI.getParent();
+
+    assert(ToPop.back() == Reg);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::POP), ToPop.back());
+    ToPop.pop_back();
   }
 
   size_t availableCount() { return Available.size(); }
@@ -154,7 +161,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
   StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
   if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
     // ld HL, SP + 1 clobbers F
-    Stack.allocate(GB::AF);
+    Stack.save(GB::AF, /*AlsoKill=*/SrcReg != GB::A);
   }
 
   if (HLIsOperand) {
@@ -173,7 +180,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     // Ensure scratch registers are available
     if (Stack.availableCount() < RequiredScratchRegs) {
       // Couldn't find a scratch register
-      Stack.allocate(GB::BC);
+      Stack.save(GB::BC);
     }
 
     // Copy H/ L into scratch registers
@@ -219,7 +226,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     // TODO GB: optimize this in a later pass 1) remove unnecessary stack manip,
     // 2) coalesce
     if (HLLiveAfter) {
-      Stack.allocate(GB::HL);
+      Stack.save(GB::HL);
     }
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
@@ -254,14 +261,16 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
   //  HL is live after, HL is the operand
   //   - push HL, [Case 3], pop HL
 
+  size_t SPOffest = MI.getOperand(1).getImm();
+  auto SrcReg = MI.getOperand(0).getReg();
+
   StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
   if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
     // ld HL, SP + 1 clobbers F
-    Stack.allocate(GB::AF);
+    Stack.save(GB::AF);
+    assert(SrcReg != GB::AF);
   }
 
-  size_t SPOffest = MI.getOperand(1).getImm();
-  auto SrcReg = MI.getOperand(0).getReg();
   auto SrcLower = TRI.getSubReg(SrcReg, 1);
   auto SrcUpper = TRI.getSubReg(SrcReg, 2);
 
@@ -280,7 +289,7 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     // Ensure scratch registers are available
     if (Stack.availableCount() < 2) {
       // Couldn't find a scratch register
-      Stack.allocate(GB::BC);
+      Stack.save(GB::BC);
     }
 
     SrcLower = Stack.reserveReg();
@@ -327,7 +336,7 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     // TODO GB: optimize this in a later pass 1) remove unnecessary stack manip,
     // 2) coalesce
     if (HLLiveAfter) {
-      Stack.allocate(GB::HL);
+      Stack.save(GB::HL);
     }
 
     // TODO GB: maybe copy lower to 8 to save the increment
@@ -364,15 +373,10 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
   // Case 3:
   //  HL is result
   //   - Just [Case 1]
-  StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
-  if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
-    // ld HL, SP + 1 clobbers F
-    Stack.allocate(GB::AF);
-  }
-
   auto DestReg = MI.getOperand(0).getReg();
   size_t SPOffest = MI.getOperand(1).getImm();
 
+  StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
   bool ResultIsHL =
       MI.definesRegister(GB::H, &TRI) || MI.definesRegister(GB::L, &TRI);
   bool AllowedToClobberHL =
@@ -380,7 +384,19 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
 
   if (not AllowedToClobberHL) {
     // TODO GB: either use a temporary register here or optimize push patterns
-    Stack.allocate(GB::HL);
+    Stack.save(GB::HL);
+  }
+
+  bool CopyBackToA = false;
+  if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
+    // ld HL, SP + 1 clobbers F
+    Stack.save(GB::AF);
+    if (DestReg == GB::A) {
+      // :-| this will clobber A, we'll need to copy into a temporary location
+      // first
+      DestReg = GB::H;
+      CopyBackToA = true;
+    }
   }
 
   assert(SPOffest + Stack.currentOffset() <= 127 &&
@@ -389,6 +405,12 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
       .addImm(SPOffest + Stack.currentOffset());
   // TODO GB: do I need to mark HL as killed after this?
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), DestReg);
+
+  if (CopyBackToA) {
+    Stack.pop(GB::AF);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::A)
+        .addReg(DestReg, getKillRegState(true));
+  }
 }
 
 void GBStackSlotLowering::loadReg16FromStackSlot(
@@ -451,11 +473,6 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
   //    total: 44 (if registers available)
 
   StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
-  if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
-    // ld HL, SP + 1 clobbers F
-    Stack.allocate(GB::AF);
-  }
-
   size_t SPOffest = MI.getOperand(1).getImm();
   auto DestReg = MI.getOperand(0).getReg();
 
@@ -466,7 +483,13 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
 
   if (not AllowedToClobberHL) {
     // TODO GB: either use a temporary register here or optimize push patterns
-    Stack.allocate(GB::HL);
+    Stack.save(GB::HL);
+  }
+
+  if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
+    // ld HL, SP + 1 clobbers F
+    Stack.save(GB::AF);
+    assert(DestReg != GB::AF);
   }
 
   auto CopyLowerTo = TRI.getSubReg(DestReg, 1);
@@ -477,7 +500,7 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
     assert(CopyUpperTo == GB::H);
 
     if (Stack.availableCount() == 0) {
-      Stack.allocate(GB::AF);
+      Stack.save(GB::AF);
     }
 
     MCRegister ScratchReg = Stack.reserveReg();
