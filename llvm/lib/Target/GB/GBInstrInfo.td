@@ -51,10 +51,7 @@ let Size = 1 in {
   // TODO: be more specific about which flags are clobbered
   let isAdd = true in
   defm ADD : _GB_GPR8S1Sequence<"add", 0x80, (ins)>;
-
-  defm ADC : _GB_GPR8S1Sequence<"adc", 0x88, (ins)>;
   defm SUB : _GB_GPR8S1Sequence<"sub", 0x90, (ins)>;
-  defm SBC : _GB_GPR8S1Sequence<"sbc", 0x98, (ins)>;
   defm AND : _GB_GPR8S1Sequence<"and", 0xA0, (ins)>;
   defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins)>;
   defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins)>;
@@ -63,14 +60,22 @@ let Size = 1 in {
   defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins)>;
 }
 
+let Size = 1, Uses = [A, F] in {
+  defm ADC : _GB_GPR8S1Sequence<"adc", 0x88, (ins)>;
+  defm SBC : _GB_GPR8S1Sequence<"sbc", 0x98, (ins)>;
+}
+
 let Uses = [A], Defs = [A, F] in {
   def ADDI : _GB_SimpleImm8<"add $imm", 0xC6, uimm8, FixupData8>;
-  def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, uimm8, FixupData8>;
   def SUBI : _GB_SimpleImm8<"sub $imm", 0xD6, uimm8, FixupData8>;
-  def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, uimm8, FixupData8>;
   def ANDI : _GB_SimpleImm8<"and $imm", 0xE6, uimm8, FixupData8>;
   def XORI : _GB_SimpleImm8<"xor $imm", 0xEE, uimm8, FixupData8>;
   def ORI  : _GB_SimpleImm8<"or $imm",  0xF6, uimm8, FixupData8>;
+}
+
+let Uses = [A, F], Defs = [A, F] in {
+  def ADCI : _GB_SimpleImm8<"adc $imm", 0xCE, uimm8, FixupData8>;
+  def SBCI : _GB_SimpleImm8<"sbc $imm", 0xDE, uimm8, FixupData8>;
 }
 
 let Uses = [A], Defs = [F], isCompare = true in
@@ -118,14 +123,15 @@ let Defs = [F] in {
 let Defs = [F] in {
   defm RLC  : _GB_CBGPR8S1<"rlc", 0x00>;
   defm RRC  : _GB_CBGPR8S1<"rrc", 0x08>;
-  defm RL   : _GB_CBGPR8S1<"rl", 0x10>;
-  defm RR   : _GB_CBGPR8S1<"rr", 0x18>;
   defm SLA  : _GB_CBGPR8S1<"sla", 0x20>;
   defm SRA  : _GB_CBGPR8S1<"sra", 0x28>;
   defm SWAP : _GB_CBGPR8S1<"swap", 0x30>;
   defm SRL  : _GB_CBGPR8S1<"srl", 0x38>;
   defm BIT : GBCBGPR8S1Imm3<"bit", 0x40>;
 }
+
+defm RL   : GBCBGPR8S1AndFlag<"rl", 0x10>;
+defm RR   : GBCBGPR8S1AndFlag<"rr", 0x18>;
 
 defm RES : GBCBGPR8S1Imm3<"res", 0x80>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0>;
@@ -303,6 +309,7 @@ def : Pat<(brind HL), (JP_HL)>;
 
 // Memory
 def : Pat<(load HL), (LD_r_iHL)>;
+def : Pat<(extload HL), (LD_r_iHL)>;
 def : Pat<(store GPR8:$rs, HL), (LD_iHL_r GPR8:$rs)>;
 def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 

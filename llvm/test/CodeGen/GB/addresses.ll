@@ -23,10 +23,15 @@ define void @test_addresses() nounwind {
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    ld hl, sp, 0
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    ld a, h
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    ld de, .Ltmp0
@@ -156,8 +161,11 @@ define i16 @load_i16_global() nounwind {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 3
-; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
@@ -220,10 +228,15 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    ld (hl), d
 ; GBI-O0-NEXT:    add $12
 ; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    ld a, h
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 7
 ; GBI-O0-NEXT:    ld (hl), d
+; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld e, a
 ; GBI-O0-NEXT:    ld hl, sp, 0
@@ -231,8 +244,11 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 3
-; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld d, a

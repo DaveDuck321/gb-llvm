@@ -115,6 +115,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand); // -> SIGN_EXTEND
   // BITCAST
   // ADDRSPACECAST
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, MVT::i1, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, MVT::i1, Expand);
   for (const auto &MemoryOp : {ISD::LOAD, ISD::STORE}) {
     setOperationAction(MemoryOp, MVT::i8, Legal);
   }

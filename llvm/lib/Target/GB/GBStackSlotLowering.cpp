@@ -208,6 +208,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     }
 
     // Finally do the store
+    assert(SPOffest + Stack.currentOffset() < 127);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
@@ -228,6 +229,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     if (HLLiveAfter) {
       Stack.save(GB::HL);
     }
+    assert(SPOffest + Stack.currentOffset() < 127);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
@@ -308,6 +310,7 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
         .addReg(GB::L, getKillRegState(true));
 
     // Finally do the store
+    assert(SPOffest + Stack.currentOffset() < 127);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
 
@@ -340,6 +343,7 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     }
 
     // TODO GB: maybe copy lower to 8 to save the increment
+    assert(SPOffest + Stack.currentOffset() < 127);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
@@ -509,7 +513,7 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
   }
 
   // Finally do the copy:
-  assert(SPOffest + Stack.currentOffset() + 1 <= 127 &&
+  assert(SPOffest + Stack.currentOffset() < 127 &&
          "TODO GB: support larger stack offsets");
 
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))

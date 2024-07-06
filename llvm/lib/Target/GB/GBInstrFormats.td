@@ -240,6 +240,27 @@ multiclass _GB_CBGPR8S1<string mnemonic, bits<8> opcode>
   }
 }
 
+multiclass GBCBGPR8S1AndFlag<string mnemonic, bits<8> opcode>
+{
+  def _r : GBCBInstr<mnemonic, "$rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs)> {
+    bits<3> rs;
+    let Inst{10 - 8} = rs;
+
+    let Defs = [F];
+    let Uses = [F];
+    let Constraints = "$rs = $rd";
+  }
+
+  def _iHL : GBCBInstr<mnemonic, "(hl)", opcode, (outs), (ins)> {
+    let Inst{10 - 8} = 0b110;
+
+    let Defs = [F];
+    let Uses = [HL, F];
+    let mayLoad = true;
+    let mayStore = true;
+  }
+}
+
 multiclass GBCBGPR8S1Imm3<string mnemonic, bits<8> opcode>
 {
   def _r : GBCBInstr<mnemonic, "$imm, $rs", opcode, (outs GPR8:$rd), (ins GPR8:$rs, uimm3:$imm)> {
