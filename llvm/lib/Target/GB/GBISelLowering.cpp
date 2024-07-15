@@ -270,8 +270,8 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     ReverseResult = true;
     [[fallthrough]];
   case ISD::CondCode::SETNE: {
-    SDValue Or = DAG.getNode(ISD::AND, DL, LHS.getValueType(), LHS, RHS);
-    LHS = Or;
+    SDValue And = DAG.getNode(ISD::AND, DL, LHS.getValueType(), LHS, RHS);
+    LHS = And;
     CCode = ISD::CondCode::SETULT;
     break;
   }
@@ -433,6 +433,7 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
     } else {
       int Offset = VA.getLocMemOffset();
       assert(isInt<8>(Offset));
+      assert(not CLI.Outs[I].Flags.isByVal());
 
       // Generated prior to type legalization, a 16-bit store is fine here!
       SDValue Address = DAG.getNode(GBISD::LD_HL_SP, CLI.DL, MVT::i16,
@@ -520,11 +521,14 @@ SDValue GBTargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_GB);
 
-  for (auto &VA : ArgLocs) {
+  for (unsigned I = 0; I < ArgLocs.size(); I++) {
+    auto &VA = ArgLocs[I];
     EVT LocVT = VA.getLocVT();
 
     SDValue ArgIn;
     if (VA.isRegLoc()) {
+      assert(VA.getLocInfo() == CCValAssign::Full);
+
       MVT ValVT = VA.getValVT();
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
       const auto *RC = getRegClassFor(ValVT);
@@ -533,6 +537,8 @@ SDValue GBTargetLowering::LowerFormalArguments(
       ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, LocVT);
     } else {
       // Stack
+      assert(not Ins[I].Flags.isByVal());
+      assert(not Ins[I].Flags.isPreallocated());
       assert(VA.isMemLoc());
       EVT ValVT = VA.getValVT();
       EVT PtrVT =
@@ -557,11 +563,16 @@ bool GBTargetLowering::CanLowerReturn(
   assert(not IsVarArg);
   assert(CallConv == CallingConv::C);
 
-  size_t TotalSize = 0;
-  for (const auto &Arg : Outs) {
-    TotalSize += Arg.VT.getStoreSize();
+  if (Outs.size() == 0) {
+    return true;
   }
-  return TotalSize <= 2;
+
+  if (Outs.size() == 1) {
+    return Outs[0].VT.getStoreSize() <= 2;
+  }
+
+  // TODO GB: support multiple 8-bit returns
+  return false;
 }
 
 MachineBasicBlock *

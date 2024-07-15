@@ -3,7 +3,7 @@
 
 def RetCC_GB : CallingConv<[
     CCIfType<[ i8 ], CCAssignToReg<[ A ]>>,
-    CCIfType<[ i16 ], CCAssignToReg<[ HL ]>>
+    CCIfType<[ i16 ], CCAssignToReg<[ HL ]>>,
 ]>;
 
 def CC_GB : CallingConv<[

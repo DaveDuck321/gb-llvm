@@ -107,10 +107,12 @@ StreamFileSP IOHandler::GetOutputStreamFileSP() { return m_output_sp; }
 StreamFileSP IOHandler::GetErrorStreamFileSP() { return m_error_sp; }
 
 bool IOHandler::GetIsInteractive() {
+  return true;
   return GetInputFileSP() ? GetInputFileSP()->GetIsInteractive() : false;
 }
 
 bool IOHandler::GetIsRealTerminal() {
+  return true;
   return GetInputFileSP() ? GetInputFileSP()->GetIsRealTerminal() : false;
 }
 

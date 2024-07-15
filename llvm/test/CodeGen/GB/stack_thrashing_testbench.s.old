@@ -1,0 +1,60 @@
+; RUN: run-emulator-test.sh %s $GB_TEST_PATH/stack_thrashing.ll -O3 \
+; RUN:   | FileCheck %s -check-prefix=EXPECT
+; RUN: run-emulator-test.sh %s $GB_TEST_PATH/stack_thrashing.ll -O0 \
+; RUN:   | FileCheck %s -check-prefix=EXPECT
+
+.global _start
+_start:
+    di
+    ld a, 0x00
+    ld hl, 0x0000
+    ld sp, 0xcfff
+
+    add sp, -16
+    ld hl, 0x1234
+    push hl
+    ld hl, 0x5678
+    push hl
+    ld hl, 0x9abc
+    push hl
+    ld hl, 0xdef0
+    push hl
+    ld hl, 0x2468
+    push hl
+    ld hl, 0xace0
+    push hl
+    ld hl, 0x1357
+    push hl
+    ld hl, 0x9bdf
+    push hl
+
+    ld hl, sp, 16
+    call large_stack_i128_identity
+    add sp, 16
+
+    pop hl
+; EXPECT: hl=9bdf
+    debugtrap
+    pop hl
+; EXPECT: hl=1357
+    debugtrap
+    pop hl
+; EXPECT: hl=ace0
+    debugtrap
+    pop hl
+; EXPECT: hl=2468
+    debugtrap
+    pop hl
+; EXPECT: hl=def0
+    debugtrap
+    pop hl
+; EXPECT: hl=9abc
+    debugtrap
+    pop hl
+; EXPECT: hl=5678
+    debugtrap
+    pop hl
+; EXPECT: hl=1234
+    debugtrap
+_end:
+    trap

@@ -541,6 +541,7 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
 }
 
 bool GBStackSlotLowering::runOnMachineFunction(MachineFunction &MF) {
+  //return false;
   const auto &TRI = *MF.getSubtarget().getRegisterInfo();
 
   bool MadeChanges = false;
