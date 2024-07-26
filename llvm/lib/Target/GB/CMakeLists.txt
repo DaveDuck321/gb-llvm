@@ -27,14 +27,19 @@ add_llvm_target(GBCodeGen
     GBStackSlotLowering.cpp
 
     LINK_COMPONENTS
+    AsmPrinter
     CodeGen
+    CodeGenTypes
     Core
     GBAsmParser
     GBDesc
     GBInfo
     MC
+    SelectionDAG
     Support
     Target
+    TargetParser
+    TransformUtils
 
     ADD_TO_COMPONENT
     GB
