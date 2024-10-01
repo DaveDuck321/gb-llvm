@@ -1,11 +1,11 @@
 MEMORY {
   rom0 (rx)  : ORIGIN = 0x0000, LENGTH = 16K
   romN (rx)  : ORIGIN = 0x4000, LENGTH = 16K
-  vram (w)   : ORIGIN = 0x8000, LENGTH = 8K
-  xram (wx)  : ORIGIN = 0xA000, LENGTH = 8K
-  ram0 (wx)  : ORIGIN = 0xC000, LENGTH = 4K
-  ramN (wx)  : ORIGIN = 0xD000, LENGTH = 4K
-  hram (wx)  : ORIGIN = 0xFF80, LENGTH = 127
+  vram (rw)   : ORIGIN = 0x8000, LENGTH = 8K
+  xram (rwx)  : ORIGIN = 0xA000, LENGTH = 8K
+  ram0 (rwx)  : ORIGIN = 0xC000, LENGTH = 4K
+  ramN (rwx)  : ORIGIN = 0xD000, LENGTH = 4K
+  hram (rwx)  : ORIGIN = 0xFF80, LENGTH = 127
 }
 
 SECTIONS {
@@ -38,6 +38,17 @@ SECTIONS {
 
   .meta 0x0104 : { *(.meta*) } > rom0
   .text 0x0150 : { *(.text*) } > rom0
+
+  /* Data (VMA: RAM, LMA: ROM Switchable bank) */
+  . = ORIGIN(ram0);
+  __gb_data_start = .;
+  .data . : { *(.data*) } > ram0 AT> romN
+  __gb_data_end = .;
+
+  __gb_data_load_address = LOADADDR(.data);
+
+  . = ALIGN(8); /* No technical reason, just prevent ld warnings */
+  .bss . (NOLOAD) : { *(.bss*) } > ram0
 
   /* TODO: everything else */
 }
