@@ -41,14 +41,17 @@ SECTIONS {
 
   /* Data (VMA: RAM, LMA: ROM Switchable bank) */
   . = ORIGIN(ram0);
-  __gb_data_start = .;
   .data . : { *(.data*) } > ram0 AT> romN
-  __gb_data_end = .;
-
-  __gb_data_load_address = LOADADDR(.data);
 
   . = ALIGN(8); /* No technical reason, just prevent ld warnings */
   .bss . (NOLOAD) : { *(.bss*) } > ram0
 
   /* TODO: everything else */
 }
+
+__gb_data_start = ADDR(.data);
+__gb_data_end = __gb_data_start + SIZEOF(.data);
+__gb_data_load_addr = LOADADDR(.data);
+
+__gb_bss_start = ADDR(.data);
+__gb_bss_end = __gb_bss_start + SIZEOF(.bss);
