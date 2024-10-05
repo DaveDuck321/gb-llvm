@@ -47,8 +47,9 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   computeRegisterProperties(STI.getRegisterInfo());
 
   // setStackPointerRegisterToSaveRestore(GB::SP);
-  setMinFunctionAlignment(Align{1});
-  setPrefFunctionAlignment(Align{1});
+  setMinFunctionAlignment(Align{2});
+  setPrefFunctionAlignment(Align{2});
+  setMinStackArgumentAlignment(Align{1});
   setMinimumJumpTableEntries(INT_MAX); // Disable jump tables
 
   // Undefined bools allow a fast setcc implementation using the rla instruction

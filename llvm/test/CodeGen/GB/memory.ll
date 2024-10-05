@@ -149,13 +149,13 @@ define void @store_trunc(ptr %a, i8 %b) nounwind {
 define i1 @simple_stack(i1 %0) {
 ; GBI-LABEL: simple_stack:
 ; GBI:       ; %bb.0: ; %begin
-; GBI-NEXT:    add sp, -1
+; GBI-NEXT:    add sp, -2
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld hl, sp, 0
+; GBI-NEXT:    ld hl, sp, 1
 ; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add sp, 1
+; GBI-NEXT:    add sp, 2
 ; GBI-NEXT:    ret
 begin:
   %1 = alloca i1, align 1

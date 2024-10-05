@@ -9,13 +9,14 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 
 #include <cstdint>
 
 using namespace llvm;
 
 GBFrameLowering::GBFrameLowering(const GBSubtarget &STI)
-    : TargetFrameLowering(StackGrowsDown, Align(1),
+    : TargetFrameLowering(StackGrowsDown, Align(2),
                           /* LocalAreaOffset = */ -2) {}
 
 void GBFrameLowering::emitPrologue(MachineFunction &MF,
@@ -55,9 +56,12 @@ void GBFrameLowering::emitPrologue(MachineFunction &MF,
   // Let's just generate the `add sp, r8` sequence. An offset larger than 0x27b
   // is a sign of another underlying problem.
   // This is also optimal for small offsets
-  assert(isUInt<16>(StackSize));
-  for (int RemainingSize = StackSize; RemainingSize > 0; RemainingSize -= 128) {
-    int Adjust = std::min(RemainingSize, 128);
+  size_t AdjustedSize = alignTo(StackSize, getStackAlign());
+  MFI.setStackSize(AdjustedSize);
+  assert(isUInt<16>(AdjustedSize));
+  for (int RemainingAmount = AdjustedSize; RemainingAmount > 0;
+       RemainingAmount -= 128) {
+    int Adjust = std::min(RemainingAmount, 128);
     BuildMI(MBB, MBBI, DebugLoc{}, TII.get(GB::ADD_SP)).addImm(-Adjust);
   }
 }
@@ -80,6 +84,7 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
     return; // Nothing to do
   }
 
+  // StackSize has already been adjusted by the prologue inserter
   assert(isUInt<16>(StackSize));
   for (int RemainingSize = StackSize; RemainingSize > 0; RemainingSize -= 127) {
     int Adjust = std::min(RemainingSize, 127);

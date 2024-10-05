@@ -368,7 +368,7 @@ label2:
 define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-LABEL: phi:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -1
+; GBI-O0-NEXT:    add sp, -2
 ; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    cp $00
@@ -376,18 +376,18 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-NEXT:    jp .LBB11_1
 ; GBI-O0-NEXT:  .LBB11_1: ; %label1
 ; GBI-O0-NEXT:    ld a, $04
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jp .LBB11_3
 ; GBI-O0-NEXT:  .LBB11_2: ; %label2
 ; GBI-O0-NEXT:    ld a, $05
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jp .LBB11_3
 ; GBI-O0-NEXT:  .LBB11_3: ; %end
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add sp, 1
+; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: phi:

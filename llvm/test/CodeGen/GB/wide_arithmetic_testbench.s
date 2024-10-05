@@ -55,38 +55,38 @@ _start:
     ld hl, 0x1010
     push hl
     ld hl, 0x7776
-    call less_than
+    call sless_than
     and 0x01
 ; EXPECT: a=00
     debugtrap
-    pop hl
+    pop HL
 
     ld hl, 0x7776
     push hl
     ld hl, 0x1010
-    call less_than
+    call sless_than
     and 0x01
 ; EXPECT: a=01
     debugtrap
-    pop hl
+    pop HL
 
     ld hl, 0x1010
     push hl
     ld hl, 0x7776
-    call less_than_call
+    call sgreater_than
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+    pop HL
+
+    ld hl, 0x7776
+    push hl
+    ld hl, 0x1010
+    call sgreater_than
     and 0x01
 ; EXPECT: a=00
     debugtrap
-    pop hl
-
-    ld hl, 0x7776
-    push hl
-    ld hl, 0x1010
-    call less_than_call
-    and 0x01
-; EXPECT: a=01
-    debugtrap
-    pop hl
+    pop HL
 
 _end:
     trap

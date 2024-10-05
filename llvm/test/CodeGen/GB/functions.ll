@@ -227,8 +227,8 @@ define i8 @call_argument1_i16() nounwind {
 define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O0-LABEL: call_argument2_with_locals:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -3
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    add sp, -4
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), $03
@@ -238,15 +238,15 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O0-NEXT:    ld c, $01
 ; GBI-O0-NEXT:    call argument2
 ; GBI-O0-NEXT:    ; kill: def $b killed $a
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add sp, 3
+; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: call_argument2_with_locals:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -3
-; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    add sp, -4
+; GBI-O3-NEXT:    ld hl, sp, 3
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld (hl), $03
@@ -255,9 +255,9 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
 ; GBI-O3-NEXT:    call argument2
-; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld hl, sp, 3
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    add sp, 3
+; GBI-O3-NEXT:    add sp, 4
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
   ret i8 %b
@@ -296,26 +296,47 @@ define i8 @call_argument3() nounwind {
 define i32 @large_return() nounwind {
 ; GBI-O0-LABEL: large_return:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -5
+; GBI-O0-NEXT:    add sp, -6
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
 ; GBI-O0-NEXT:    ld a, c
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
 ; GBI-O0-NEXT:    ; kill: def $b killed $b killed $bc
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    add $01
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 5
+; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    ld a, h
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    pop af
+; GBI-O0-NEXT:    adc $00
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    add $02
+; GBI-O0-NEXT:    ld c, a
+; GBI-O0-NEXT:    push hl
+; GBI-O0-NEXT:    push af
+; GBI-O0-NEXT:    ld hl, sp, 6
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    ld a, h
@@ -323,45 +344,24 @@ define i32 @large_return() nounwind {
 ; GBI-O0-NEXT:    push af
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    ld hl, sp, 7
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 2
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    add $02
-; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 5
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 6
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld c, a
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 4
+; GBI-O0-NEXT:    ld hl, sp, 5
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld hl, sp, 7
 ; GBI-O0-NEXT:    ld (hl), c
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    ld (hl), $01
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, c
 ; GBI-O0-NEXT:    ld (hl), $00
-; GBI-O0-NEXT:    ld hl, sp, 3
+; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld l, (hl)
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, b
@@ -370,7 +370,7 @@ define i32 @large_return() nounwind {
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    push hl
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    ld hl, sp, 9
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    ld a, h
@@ -379,7 +379,7 @@ define i32 @large_return() nounwind {
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    ld (hl), $00
-; GBI-O0-NEXT:    add sp, 5
+; GBI-O0-NEXT:    add sp, 6
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: large_return:
@@ -780,25 +780,25 @@ define i8 @empty8(i8 %0) nounwind {
 define i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O0-LABEL: test_spill_arg8:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -1
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    add sp, -2
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    call empty8
 ; GBI-O0-NEXT:    ; kill: def $b killed $a
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    add sp, 1
+; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: test_spill_arg8:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -1
-; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    add sp, -2
+; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    call empty8
-; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    add sp, 1
+; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @empty8(i8 %0)
   ret i8 %0

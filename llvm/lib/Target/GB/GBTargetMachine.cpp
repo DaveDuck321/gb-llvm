@@ -27,7 +27,7 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
 
 // https://llvm.org/docs/LangRef.html#langref-datalayout
 const std::string GBTargetMachine::DataLayout =
-    "e-S8-p:16:16-i8:8-i16:16-m:e-n8:16";
+    "e-S16-p:16:16-i8:8-i16:16-a:16-m:e-n8:16";
 
 // TODO: CM:Large might also make sense here... Check how this works in a 16 bit
 // address space
