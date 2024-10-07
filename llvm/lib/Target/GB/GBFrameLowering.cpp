@@ -56,6 +56,8 @@ void GBFrameLowering::emitPrologue(MachineFunction &MF,
   // Let's just generate the `add sp, r8` sequence. An offset larger than 0x27b
   // is a sign of another underlying problem.
   // This is also optimal for small offsets
+  assert(getStackAlign() == 2 &&
+         "Stack alignments larger than the ABI are not currently supported");
   size_t AdjustedSize = alignTo(StackSize, getStackAlign());
   MFI.setStackSize(AdjustedSize);
   assert(isUInt<16>(AdjustedSize));
