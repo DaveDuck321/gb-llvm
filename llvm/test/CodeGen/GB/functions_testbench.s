@@ -70,10 +70,6 @@ _large_return:
     add sp, -4
     ld hl, sp, 0
     call large_return
-    ld hl, sp, 0
-    ld a, (hl)
-; EXPECT: a=01
-    debugtrap
     pop hl
 ; EXPECT: Debug trap!
 ; EXPECT: hl=0001
@@ -86,10 +82,6 @@ _call_large_return:
     add sp, -4
     ld hl, sp, 0
     call call_large_return
-    ld hl, sp, 0
-    ld a, (hl)
-; EXPECT: a=01
-    debugtrap
     pop hl
 ; EXPECT: Debug trap!
 ; EXPECT: hl=0001

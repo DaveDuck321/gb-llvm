@@ -546,10 +546,10 @@ define i32 @call_large_return() nounwind {
 ; GBI-O0-NEXT:    ld a, h
 ; GBI-O0-NEXT:    pop hl
 ; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 17
-; GBI-O0-NEXT:    ld (hl), l
-; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 15
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    pop af
 ; GBI-O0-NEXT:    adc $00
 ; GBI-O0-NEXT:    ld d, a

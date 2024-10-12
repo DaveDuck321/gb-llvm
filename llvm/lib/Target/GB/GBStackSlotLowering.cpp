@@ -156,7 +156,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
   bool HLiveAfter = not RegsImmediatelyAfter.available(MRI, GB::H);
   bool LLiveAfter = not RegsImmediatelyAfter.available(MRI, GB::L);
   bool HLIsOperand =
-      MI.readsRegister(GB::H, &TRI) || MI.readsRegister(GB::H, &TRI);
+      MI.readsRegister(GB::H, &TRI) || MI.readsRegister(GB::L, &TRI);
 
   StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
   if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
@@ -175,7 +175,7 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
 
     // For correctness, we MUST use the scratch reg for either H or L
     // Might as well use it to avoid the push/pop HL
-    size_t RequiredScratchRegs = MustSaveH && MustSaveL ? 2 : 1;
+    size_t RequiredScratchRegs = (MustSaveH && MustSaveL) ? 2 : 1;
 
     // Ensure scratch registers are available
     if (Stack.availableCount() < RequiredScratchRegs) {
@@ -211,8 +211,10 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     assert(SPOffest + Stack.currentOffset() < 127);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
         .addImm(SPOffest + Stack.currentOffset());
+
+    bool KillSrcReg = not(SrcReg == CopyIntoL || SrcReg == CopyIntoH);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-        .addReg(SrcReg, getKillRegState(true));
+        .addReg(SrcReg, getKillRegState(KillSrcReg));
 
     if (CopyIntoL.isValid()) {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::L)
