@@ -3,6 +3,14 @@
 ; RUN: run-emulator-test.sh %s $GB_TEST_PATH/functions.ll -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
+.global untyped_fn_symbol
+untyped_fn:
+    ld a, 0x99
+    ret
+
+untyped_fn_symbol:
+    .short untyped_fn
+
 .global _start
 _start:
     di
@@ -102,6 +110,10 @@ _call_large_return:
     ld b, 0x11
     call test_spill_arg8
 ; EXPECT: a=11
+    debugtrap
+
+    call call_untyped_fn
+; EXPECT: a=99
     debugtrap
 _end:
     trap

@@ -80,9 +80,11 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
     setOperationAction(ArithmeticOp, MVT::i8, Legal);
   }
   // TODO GB: setOperationAction(ISD::ADD, MVT::i16, Legal);
-  //  MUL, SDIV, UDIV, SREM, UREM
-  //  SMUL_LOHI, UMUL_LOHI
-  //  SDIVREM, UDIVREM
+  for (const auto &BinaryOp :
+       {ISD::MUL, ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM, ISD::SMUL_LOHI,
+        ISD::UMUL_LOHI, ISD::SDIVREM, ISD::UDIVREM}) {
+    setOperationAction(BinaryOp, MVT::i8, Expand);
+  }
   //  CARRY_FALSE
   //  UADDO_CARRY         // Expanded
   //  USUBO_CARRY         // Expanded
@@ -346,6 +348,17 @@ SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
   return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
 }
 
+SDValue GBTargetLowering::LowerExternalSymbol(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  ExternalSymbolSDNode *Node = dyn_cast<ExternalSymbolSDNode>(Op);
+  assert(Node);
+
+  SDLoc DL = Op;
+  SDValue TargetSymbol =
+      DAG.getTargetExternalSymbol(Node->getSymbol(), Op.getValueType());
+  return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetSymbol);
+}
+
 SDValue GBTargetLowering::LowerSignExtendInReg(SDValue Op,
                                                SelectionDAG &DAG) const {
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
@@ -457,7 +470,14 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   SDValue Callee = CLI.Callee;
-  // TODO GB: maybe generate a TargetGlobalAddress here?
+  if (auto *Node = dyn_cast<GlobalAddressSDNode>(Callee.getNode());
+      Node != nullptr) {
+    Callee = LowerGlobalAddress(Callee, DAG);
+  } else if (auto *Node = dyn_cast<ExternalSymbolSDNode>(Callee.getNode());
+             Node != nullptr) {
+    Callee = LowerExternalSymbol(Callee, DAG);
+  }
+  // else this is an Indirect function call
 
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);

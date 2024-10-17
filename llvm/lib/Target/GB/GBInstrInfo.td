@@ -162,6 +162,9 @@ let mayStore = true, isCall = true in {
 
   let Uses = [F, SP], Defs = [SP] in
   def CALL_COND : GBAbsFlagImm16<"call", 0xC4>;
+
+  let Uses = [HL, SP], Defs = [SP] in
+  def CALL_HL : GBInstrNoOperands<"call (hl)", 0xC7>;
 }
 
 let isTerminator = true, isBranch = true in {
@@ -393,6 +396,8 @@ def : Pat<(GBcallseq_start timm:$imm, timm:$out), (ADJCALLSTACKDOWN imm16:$imm, 
 def : Pat<(GBcallseq_end timm:$imm, timm:$out), (ADJCALLSTACKUP imm16:$imm, imm16:$out)>;
 def : Pat<(GBcall imm16:$imm), (CALL imm16:$imm)>;
 def : Pat<(GBcall (ADDR_WRAPPER tglobaladdr:$imm)), (CALL imm16:$imm)>;
+def : Pat<(GBcall (ADDR_WRAPPER texternalsym:$imm)), (CALL imm16:$imm)>;
+def : Pat<(GBcall HL), (CALL_HL)>;
 
 // Special instructions
 def : Pat<(trap), (TRAP)>;

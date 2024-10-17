@@ -10,7 +10,8 @@ MEMORY {
 
 SECTIONS {
   .rst 0x0000 : {
-    *(.text.rst00)
+    /* We emulate `call (HL)` with RST00 */
+    BYTE(0xE9)    /* JP (HL) */
     . = DEFINED( rst08 ) ? 0x0008 : .; *(.text.rst08)
     . = DEFINED( rst10 ) ? 0x0010 : .; *(.text.rst10)
     . = DEFINED( rst18 ) ? 0x0018 : .; *(.text.rst18)

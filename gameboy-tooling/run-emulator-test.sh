@@ -7,6 +7,8 @@ binary_out=$(mktemp)
 
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+export PATH="$script_dir/../build/bin/":$PATH
+
 cat $1 | llvm-mc --triple=gb --filetype=obj -g > $testbench
 cat $2 | llc $3 -verify-machineinstrs --mtriple=gb --filetype=obj > $to_test
 

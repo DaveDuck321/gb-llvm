@@ -397,3 +397,12 @@ define i8 @ashr_c(i8 %b) nounwind {
   %1 = ashr i8 %b, 2
   ret i8 %1
 }
+
+define i8 @mul(i8 %b, i8 %c) {
+; GBI-LABEL: mul:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    call __mulqi3
+; GBI-NEXT:    ret
+  %1 = mul i8 %b, %c
+  ret i8 %1
+}
