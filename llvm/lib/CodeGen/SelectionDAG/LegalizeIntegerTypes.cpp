@@ -3621,6 +3621,10 @@ void DAGTypeLegalizer::ExpandIntRes_BSWAP(SDNode *N,
                                           SDValue &Lo, SDValue &Hi) {
   SDLoc dl(N);
   GetExpandedInteger(N->getOperand(0), Hi, Lo);  // Note swapped operands.
+  if (N->getSimpleValueType(0) == MVT::i16) {
+    return; // Nothing to do, bytes are already swapped
+  }
+
   Lo = DAG.getNode(ISD::BSWAP, dl, Lo.getValueType(), Lo);
   Hi = DAG.getNode(ISD::BSWAP, dl, Hi.getValueType(), Hi);
 }

@@ -277,6 +277,25 @@ _shifts:
 ; EXPECT: a=f8
     debugtrap
 
+    ld hl, 0xfedc
+    call byte_swap
+; EXPECT hl=fedc
+    debugtrap
+
+    ld b, 0x79
+    call ctpop
+; EXPECT: a=05
+    debugtrap
+
+    ld b, 0x18
+    call cttz
+; EXPECT: a=03
+    debugtrap
+
+    ld b, 9
+    call ctlz
+; EXPECT: a=04
+    debugtrap
 
 _end:
     trap

@@ -64,7 +64,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FrameIndex, MVT::i16, Legal);
   // JumpTable
   // ConstantPool
-  // ExternalSymbol
+  setOperationAction(ISD::ExternalSymbol, MVT::i16, Custom);
   setOperationAction(ISD::BlockAddress, MVT::i16, Custom);
   // GLOBAL_OFFSET_TABLE
   // FRAMEADDR
@@ -82,7 +82,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // TODO GB: setOperationAction(ISD::ADD, MVT::i16, Legal);
   for (const auto &BinaryOp :
        {ISD::MUL, ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM, ISD::SMUL_LOHI,
-        ISD::UMUL_LOHI, ISD::SDIVREM, ISD::UDIVREM}) {
+        ISD::UMUL_LOHI, ISD::SDIVREM, ISD::UDIVREM, ISD::MULHU, ISD::MULHS}) {
     setOperationAction(BinaryOp, MVT::i8, Expand);
   }
   //  CARRY_FALSE
@@ -96,18 +96,16 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   //  USUBO               // Expanded
   //  SMULO               // Expanded
   //  UMULO               // Expanded
-  //  MULHU, MULHS
   for (const auto &BinaryOp : {ISD::AND, ISD::OR, ISD::XOR}) {
     setOperationAction(BinaryOp, MVT::i8, Legal);
   }
-  for (const auto &BinaryOp :
+  for (const auto &ShiftOp :
        {ISD::SHL, ISD::SRA, ISD::SRL, ISD::ROTL, ISD::ROTR}) {
-    setOperationAction(BinaryOp, MVT::i8, Legal);
+    setOperationAction(ShiftOp, MVT::i8, Legal);
   }
-  // BSWAP
-  // CTTZ, CTLZ
-  // CTPOP
-  // SETCC, SELECT, SELECT_CC
+  for (const auto &BitOp : {ISD::CTTZ, ISD::CTLZ, ISD::CTPOP}) {
+    setOperationAction(BitOp, MVT::i8, Expand);
+  }
   setOperationAction(ISD::SETCC, MVT::i8, Custom);
   setOperationAction(ISD::SELECT, MVT::i8, Expand); // -> select_cc
   setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
