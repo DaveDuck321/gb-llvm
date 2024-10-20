@@ -47,43 +47,29 @@ define void @store8(ptr %a, i8 %b) nounwind {
 define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    add sp, -2
 ; GBI-NEXT:    ld b, h
 ; GBI-NEXT:    ld c, l
-; GBI-NEXT:    ld hl, sp, 4
+; GBI-NEXT:    ld hl, sp, 2
 ; GBI-NEXT:    ld d, h
-; GBI-NEXT:    ld a, l
-; GBI-NEXT:    ld hl, sp, 0
-; GBI-NEXT:    ldi (hl), a
-; GBI-NEXT:    ld (hl), d
-; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld e, l
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ld h, b
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ld (hl), a
-; GBI-NEXT:    ld a, c
+; GBI-NEXT:    ld a, e
 ; GBI-NEXT:    add $01
-; GBI-NEXT:    ld e, a
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    ld hl, sp, 0
-; GBI-NEXT:    ld c, (hl)
-; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld b, (hl)
+; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ld d, (hl)
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    add $01
 ; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld h, d
-; GBI-NEXT:    ld l, e
-; GBI-NEXT:    ; kill: def $de
-; GBI-NEXT:    ld (hl), a
-; GBI-NEXT:    add sp, 2
+; GBI-NEXT:    ld (hl), d
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
   ret void

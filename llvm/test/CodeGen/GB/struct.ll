@@ -22,61 +22,52 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call make_range
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 8
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 1
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    add $01
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), d
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld (hl), e
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), d
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
-; GBI-O3-NEXT:    ; kill: def $bc
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ; kill: def $de
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    add sp, 12
 ; GBI-O3-NEXT:    ret
 begin:
@@ -91,26 +82,22 @@ begin:
 define %type._Z5Range @make_range() {
 ; GBI-O3-LABEL: make_range:
 ; GBI-O3:       ; %bb.0: ; %begin
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld (hl), $00
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ; kill: def $de
-; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
-; GBI-O3-NEXT:    ; kill: def $bc
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add $02
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld (hl), $0a
 ; GBI-O3-NEXT:    ret
 begin:

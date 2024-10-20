@@ -146,6 +146,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // PSEUDO_PROBE
   // STACKMAP
   // PATCHPOINT
+
+  setSchedulingPreference(Sched::Hybrid);
 }
 
 SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {

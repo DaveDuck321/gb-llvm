@@ -32,6 +32,6 @@ function get_player : (x: int, y: int) -> Player = {
             .width = 100,
             .height = 100,
         },
-        .health = 100,
+        .health = 10,
     };
 }

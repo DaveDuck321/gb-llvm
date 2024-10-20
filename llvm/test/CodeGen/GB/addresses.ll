@@ -7,51 +7,22 @@
 define i8 @test_addresses() nounwind {
 ; GBI-O3-LABEL: test_addresses:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -4
+; GBI-O3-NEXT:    ld de, .Ltmp0
 ; GBI-O3-NEXT:    ld bc, addr
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ld (hl), e
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld e, a
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld hl, .Ltmp0
-; GBI-O3-NEXT:    push bc
-; GBI-O3-NEXT:    ld c, h
-; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    pop bc
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    ; kill: def $bc
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
@@ -60,7 +31,6 @@ define i8 @test_addresses() nounwind {
 ; GBI-O3-NEXT:  .Ltmp0: ; Block address taken
 ; GBI-O3-NEXT:  .LBB0_1: ; %block
 ; GBI-O3-NEXT:    ld a, $02
-; GBI-O3-NEXT:    add sp, 4
 ; GBI-O3-NEXT:    ret
   store volatile ptr blockaddress(@test_addresses, %block), ptr @addr
   %val = load volatile ptr, ptr @addr
@@ -100,94 +70,78 @@ define i16 @load_i16_global() nounwind {
 define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -6
+; GBI-O3-NEXT:    add sp, -4
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, G
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    add $12
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 6
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld de, G
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 6
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ld c, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 6
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    add $01
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    add $12
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    add $01
+; GBI-O3-NEXT:    ld e, a
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    add sp, 6
+; GBI-O3-NEXT:    add sp, 4
 ; GBI-O3-NEXT:    ret
   %1 = load volatile i16, ptr @G
   store i16 %a, ptr @G

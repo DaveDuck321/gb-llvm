@@ -370,6 +370,7 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -2
 ; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    ; kill: def $b killed $a
 ; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    cp $00
 ; GBI-O0-NEXT:    jp z, .LBB11_2

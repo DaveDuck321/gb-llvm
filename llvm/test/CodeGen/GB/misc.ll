@@ -53,8 +53,9 @@ define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-NEXT:    ld l, b
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    ; kill: def $bc killed $hl
-; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld d, h
+; GBI-O0-NEXT:    ld e, l
+; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    add sp, 6
 ; GBI-O0-NEXT:    ret
 ;
@@ -98,10 +99,11 @@ define i8 @sext8_i1(i1 %0) {
 ; GBI-O0-LABEL: sext8_i1:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    ; kill: def $b killed $a
 ; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    ld c, a
+; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    ld a, $00
-; GBI-O0-NEXT:    sub c
+; GBI-O0-NEXT:    sub b
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: sext8_i1:
@@ -120,10 +122,11 @@ define i16 @sext16_i1(i1 %0) {
 ; GBI-O0-LABEL: sext16_i1:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    ; kill: def $b killed $a
 ; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    ld c, a
+; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    ld a, $00
-; GBI-O0-NEXT:    sub c
+; GBI-O0-NEXT:    sub b
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, a
 ; GBI-O0-NEXT:    ret
