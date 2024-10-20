@@ -289,7 +289,7 @@ bool GBInstrInfo::reverseBranchCondition(
     SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1);
   Cond[0].setImm([&] {
-    switch (Cond[0].getImm()) {
+    switch (Cond[0].getImm() & 0b11) {
     case GBFlag::C:
       return GBFlag::NC;
     case GBFlag::NC:
