@@ -15,9 +15,9 @@ typedef Player : {
 }
 
 function do_intersect : (rect1: Rect&, rect2: Rect&) -> bool = {
-    let x_collision : bool = (rect1.x + rect1.width) >= rect2.x and (rect2.x + rect2.width) >= rect1.x;
-    let y_collision : bool = (rect1.y + rect1.height) >= rect2.y and (rect2.y + rect2.height) >= rect1.y;
-    return x_collision and y_collision;
+    let x_collision : bool = ((rect1.x + rect1.width) >= rect2.x) & ((rect2.x + rect2.width) >= rect1.x);
+    let y_collision : bool = ((rect1.y + rect1.height) >= rect2.y) & ((rect2.y + rect2.height) >= rect1.y);
+    return x_collision & y_collision;
 }
 
 function do_collide : (player1: Player&, player2: Player&) -> bool = {
