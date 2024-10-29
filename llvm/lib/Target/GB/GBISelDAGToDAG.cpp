@@ -12,6 +12,8 @@
 #include <cstddef>
 #include <optional>
 #include <tuple>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #define DEBUG_TYPE "gb-isel"
@@ -203,7 +205,9 @@ bool GBDAGToDAGISel::parallelizei16Increments(std::vector<SDNode *> AllNodes) {
 }
 
 bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
-  std::map<SDValue, std::map<size_t, std::vector<SDValue>>> OffsetsFromValue;
+  using ValueOrPair = std::variant<SDValue, std::pair<SDValue, SDValue>>;
+  std::map<ValueOrPair, std::map<size_t, std::vector<SDValue>>>
+      OffsetsFromValue;
   for (auto *Node : AllNodes) {
     if (Node->getValueType(0) != MVT::i16) {
       continue;
@@ -212,7 +216,7 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
     const SDValue Input = SDValue{Node, 0};
 
     size_t Offset = 0;
-    SDValue Base = Input;
+    ValueOrPair Base = Input;
     if (Node->getOpcode() == GBISD::COMBINE) {
       SDValue ResultLSB = Node->getOperand(0);
       SDValue ResultMSB = Node->getOperand(1);
@@ -226,7 +230,13 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
             MSB->getOperand(0) == LSB->getOperand(0)) {
           Offset = Constant;
           Base = LSB->getOperand(0);
+        } else {
+          Offset = Constant;
+          Base = std::make_pair(LSB, MSB);
         }
+      } else {
+        auto Pair = std::make_pair(ResultLSB, ResultMSB);
+        OffsetsFromValue[Pair][0].push_back(Input);
       }
     }
     OffsetsFromValue[Base][Offset].push_back(Input);
@@ -234,13 +244,24 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
 
   // Make any valid substitutions
   bool MadeChanges = false;
-  for (const auto &[Base, Offsets] : OffsetsFromValue) {
+  for (const auto &[VBase, Offsets] : OffsetsFromValue) {
+    if (Offsets.size() == 1) {
+      // This node is not used in any additional i16 additions
+      continue;
+    }
+
+    SDValue Base;
+    if (std::holds_alternative<SDValue>(VBase)) {
+      Base = std::get<SDValue>(VBase);
+    } else {
+      auto [LHS, RHS] = std::get<std::pair<SDValue, SDValue>>(VBase);
+      Base = CurDAG->getNode(GBISD::COMBINE, SDLoc{LHS}, MVT::i16, LHS, RHS);
+    }
+
     size_t LastOffset = 0;
-    SDValue ValueToIncrement;
+    SDValue ValueToIncrement = Base;
     for (const auto &[Offset, ValuesToReplace] : Offsets) {
       if (Offset == 0) {
-        assert(ValuesToReplace.size() == 1 && ValuesToReplace.at(0) == Base);
-        ValueToIncrement = Base;
         continue;
       }
 
