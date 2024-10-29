@@ -393,6 +393,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::COMBINE";
   case GBISD::CP:
     return "GBISD::CP";
+  case GBISD::INC16:
+    return "GBISD::INC16";
   case GBISD::LD_HL_SP:
     return "GBISD::LD_HL_SP";
   case GBISD::LOWER:

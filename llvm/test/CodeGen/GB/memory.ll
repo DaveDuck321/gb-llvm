@@ -14,22 +14,12 @@ define i8 @load8(ptr %a) nounwind {
 define i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld b, h
-; GBI-NEXT:    ld c, l
-; GBI-NEXT:    ld a, c
-; GBI-NEXT:    add $01
-; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld d, (hl)
+; GBI-NEXT:    ld c, (hl)
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld b, (hl)
 ; GBI-NEXT:    ld h, b
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ; kill: def $bc
-; GBI-NEXT:    ld e, (hl)
-; GBI-NEXT:    ld h, d
-; GBI-NEXT:    ld l, e
-; GBI-NEXT:    ; kill: def $de
 ; GBI-NEXT:    ret
   %1 = load i16, ptr %a
   ret i16 %1
@@ -56,20 +46,16 @@ define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-NEXT:    ld h, b
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ld (hl), a
-; GBI-NEXT:    ld a, e
-; GBI-NEXT:    add $01
-; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld d, (hl)
-; GBI-NEXT:    ld a, c
-; GBI-NEXT:    add $01
-; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld (hl), d
+; GBI-NEXT:    inc bc
+; GBI-NEXT:    inc de
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
+; GBI-NEXT:    ; kill: def $de
+; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld l, c
+; GBI-NEXT:    ; kill: def $bc
+; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
   ret void

@@ -21,6 +21,7 @@ enum NodeType : unsigned {
   CALL,
   COMBINE,
   CP,
+  INC16,
   LD_HL_SP,
   LOWER,
   RET,

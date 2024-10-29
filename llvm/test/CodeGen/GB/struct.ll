@@ -21,53 +21,47 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call make_range
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 8
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), d
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld (hl), e
-; GBI-O3-NEXT:    ld hl, sp, 1
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    push af
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ; kill: def $de
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
+; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    add sp, 12
 ; GBI-O3-NEXT:    ret
 begin:
@@ -82,26 +76,40 @@ begin:
 define %type._Z5Range @make_range() {
 ; GBI-O3-LABEL: make_range:
 ; GBI-O3:       ; %bb.0: ; %begin
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $0a
 ; GBI-O3-NEXT:    ret
 begin:
   %0 = insertvalue %type._Z5Range undef, i16 0, 0
   %1 = insertvalue %type._Z5Range %0, i8 10, 1
   ret %type._Z5Range %1
+}
+
+%type.Rect = type { i8, i8, i8, i8 }
+%type.Player = type { %type.Rect, i8 }
+
+define %type.Player @get_player(i8 %0, i8 %1) {
+; GBI-O3-LABEL: get_player:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), $64
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), $64
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), $0a
+; GBI-O3-NEXT:    ret
+begin:
+  %2 = insertvalue %type.Rect undef, i8 %0, 0
+  %3 = insertvalue %type.Rect %2, i8 %1, 1
+  %4 = insertvalue %type.Rect %3, i8 100, 2
+  %5 = insertvalue %type.Rect %4, i8 100, 3
+  %6 = insertvalue %type.Player undef, %type.Rect %5, 0
+  %7 = insertvalue %type.Player %6, i8 10, 1
+  ret %type.Player %7
 }

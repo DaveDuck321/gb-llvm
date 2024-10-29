@@ -80,12 +80,7 @@ define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
 ; GBI-O3-NEXT:    ld e, $00
 ; GBI-O3-NEXT:    ld d, e
@@ -144,31 +139,12 @@ define i8 @call_argument3() nounwind {
 define i32 @large_return() nounwind {
 ; GBI-O3-LABEL: large_return:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld d, h
-; GBI-O3-NEXT:    ld e, l
 ; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
 ; GBI-O3-NEXT:    ret
   ret i32 1
@@ -177,102 +153,60 @@ define i32 @large_return() nounwind {
 define i32 @call_large_return() nounwind {
 ; GBI-O3-LABEL: call_large_return:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -14
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 8
+; GBI-O3-NEXT:    add sp, -10
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call large_return
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 7
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 3
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
-; GBI-O3-NEXT:    ; kill: def $bc
-; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    ld d, b
+; GBI-O3-NEXT:    ld e, c
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ; kill: def $de
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $02
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld b, a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    pop hl
+; GBI-O3-NEXT:    ; kill: def $bc
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, e
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 5
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 9
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    pop hl
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    add sp, 14
+; GBI-O3-NEXT:    add sp, 10
 ; GBI-O3-NEXT:    ret
   %val = call i32 @large_return()
   ret i32 %val
@@ -334,21 +268,13 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
  define i8 @call_untyped_fn() {
 ; GBI-O3-LABEL: call_untyped_fn:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld bc, untyped_fn_symbol
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    add $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld hl, untyped_fn_symbol
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    ; kill: def $bc
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ; kill: def $de
 ; GBI-O3-NEXT:    call (hl)
 ; GBI-O3-NEXT:    ret
   %1 = load ptr, ptr @untyped_fn_symbol

@@ -7,46 +7,29 @@
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-LABEL: trunc_i32:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -6
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ldi (hl), a
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 8
+; GBI-O0-NEXT:    add sp, -4
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    ld hl, sp, 6
+; GBI-O0-NEXT:    ld b, h
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 0
 ; GBI-O0-NEXT:    ldi (hl), a
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, b
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld a, c
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    add $01
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 5
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    ld a, h
-; GBI-O0-NEXT:    pop hl
-; GBI-O0-NEXT:    adc $00
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 2
+; GBI-O0-NEXT:    ld hl, sp, 0
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
 ; GBI-O0-NEXT:    ld l, b
 ; GBI-O0-NEXT:    ld c, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 4
+; GBI-O0-NEXT:    ld hl, sp, 2
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    inc hl
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -56,7 +39,7 @@ define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld e, l
 ; GBI-O0-NEXT:    ld a, e
-; GBI-O0-NEXT:    add sp, 6
+; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: trunc_i32:

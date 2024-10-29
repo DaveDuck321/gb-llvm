@@ -110,7 +110,7 @@ void GBInstrInfo::storeRegToStackSlot(
   MachineFrameInfo &MFI = MF->getFrameInfo();
   MachineMemOperand *MMO = MF->getMachineMemOperand(
       MachinePointerInfo::getFixedStack(*MF, FrameIndex),
-      MachineMemOperand::MOStore, LocationSize::beforeOrAfterPointer(),
+      MachineMemOperand::MOStore, MFI.getObjectSize(FrameIndex),
       MFI.getObjectAlign(FrameIndex));
 
   if (GB::GPR8RegClass.hasSubClassEq(RC)) {

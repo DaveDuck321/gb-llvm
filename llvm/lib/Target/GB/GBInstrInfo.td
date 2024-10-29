@@ -86,7 +86,7 @@ defm DEC : GBIncDec8<"dec", 0x05>;
 
 
 let Size = 1 in {
-  let Constraints = "$rs = $rd", Defs = [F] in {
+  let Constraints = "$rs = $rd" in {
     // TOOD GB: there's a hardware bug here... maybe find a way to model this?
     def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (outs GPR16:$rd)>;
     def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (outs GPR16:$rd)>;
@@ -255,6 +255,10 @@ def : Pat<(RLA_NODE A), (RLA)>;
 // Rotates A, useful for %i1 = sign(a)
 def RLCA_NODE : SDNode<"GBISD::RLCA", SDT_GB1i8, []>;
 def : Pat<(RLCA_NODE A), (RLCA)>;
+
+def SDT_GB1i16 : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
+def INC16_NODE : SDNode<"GBISD::INC16", SDT_GB1i16, []>;
+def : Pat<(INC16_NODE GPR16:$rd), (INC16 GPR16:$rd)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
 // TODO GB: optimize into JR in another pass

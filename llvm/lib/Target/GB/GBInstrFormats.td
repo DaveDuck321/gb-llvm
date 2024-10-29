@@ -184,7 +184,7 @@ class GBGPR8LDI16<string mnemonic, bits<8> opcode>
 }
 
 class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag outputs>
-  : GBInstr<mnemonic, "$rs", opcode, !con((outs), outputs), (ins GPR16:$rs), FixupNone>
+  : GBInstr<mnemonic, "$rs", opcode, outputs, (ins GPR16:$rs), FixupNone>
 {
   bits<2> rs;
   let Inst{5 - 4} = rs;

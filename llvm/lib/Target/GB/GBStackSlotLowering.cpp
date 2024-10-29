@@ -20,6 +20,10 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+    GBDisableStackSlotLowering("gb-disable-stack-slot-lowering", cl::Hidden,
+                               cl::desc("Disables GBStackSlotLowering"));
+
 namespace {
 
 class StackAllocator {
@@ -383,18 +387,43 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
   size_t SPOffest = MI.getOperand(1).getImm();
 
   StackAllocator Stack{RegsImmediatelyAfter, TII, MBBI};
-  bool ResultIsHL =
-      MI.definesRegister(GB::H, &TRI) || MI.definesRegister(GB::L, &TRI);
-  bool AllowedToClobberHL =
-      ResultIsHL || RegsImmediatelyAfter.available(MRI, GB::HL);
+  bool ResultIsH = MI.definesRegister(GB::H, &TRI);
+  bool ResultIsL = MI.definesRegister(GB::L, &TRI);
 
-  if (not AllowedToClobberHL) {
-    // TODO GB: either use a temporary register here or optimize push patterns
-    Stack.save(GB::HL);
-  }
+  bool HasToSaveH = (!RegsImmediatelyAfter.available(MRI, GB::H) && !ResultIsH);
+  bool HasToSaveL = (!RegsImmediatelyAfter.available(MRI, GB::L) && !ResultIsL);
 
   bool CopyBackToA = false;
-  if (not RegsImmediatelyAfter.available(MRI, GB::F)) {
+  bool FSaved = false;
+
+  Register AfterLoadRestoreFrom;
+  Register AfterLoadRestoreTo;
+
+  if (HasToSaveH || HasToSaveL) {
+    if (ResultIsH || ResultIsL) {
+      // We've got to save H or L, the other is the result
+      // Find temporary storage for H/L
+      assert(DestReg != GB::A);
+      if (Stack.availableCount() == 0) {
+        Stack.save(GB::AF);
+      }
+      AfterLoadRestoreFrom = Stack.reserveReg();
+      AfterLoadRestoreTo = HasToSaveH ? GB::H : GB::L;
+      FSaved = true;
+
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr),
+              AfterLoadRestoreFrom)
+          .addReg(AfterLoadRestoreTo, getKillRegState(true));
+    } else {
+      // We've got to save either H or L, since neither are our results we can
+      // simply push here
+      // TODO: GB use temporary register here or coalesce push/ pop
+      Stack.save(GB::HL);
+    }
+  }
+
+  // Make sure we're not clobbering the flag.
+  if (!FSaved && !RegsImmediatelyAfter.available(MRI, GB::F)) {
     // ld HL, SP + 1 clobbers F
     Stack.save(GB::AF);
     if (DestReg == GB::A) {
@@ -409,8 +438,12 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
          "TODO GB: support larger stack offsets");
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
       .addImm(SPOffest + Stack.currentOffset());
-  // TODO GB: do I need to mark HL as killed after this?
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), DestReg);
+
+  if (AfterLoadRestoreFrom.isValid() || AfterLoadRestoreTo.isValid()) {
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), AfterLoadRestoreTo)
+        .addReg(AfterLoadRestoreFrom, getKillRegState(true));
+  }
 
   if (CopyBackToA) {
     Stack.pop(GB::AF);
@@ -543,6 +576,10 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
 }
 
 bool GBStackSlotLowering::runOnMachineFunction(MachineFunction &MF) {
+  if (GBDisableStackSlotLowering) {
+    return false;
+  }
+
   const auto &TRI = *MF.getSubtarget().getRegisterInfo();
 
   bool MadeChanges = false;
