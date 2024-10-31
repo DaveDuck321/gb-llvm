@@ -94,16 +94,20 @@ class GBInstrNoOperands<string mnemonic, bits<8> opcode>
 // TODO GB: can I combine these sequences?
 multiclass _GB_GPR8S1Sequence<string mnemonic, bits<8> opcode, dag inputs> {
   def _r : GBInstr<mnemonic, "$rs", opcode, (outs), !con((ins GPR8:$rs), inputs), FixupNone> {
+    list<Register> ExtraUses = [];
+
     bits<3> rs;
     let Inst{2 - 0} = rs;
-    let Uses = [A];
+    let Uses = !listconcat([A], ExtraUses);
     let Defs = [A, F];
   }
 
   def _iHL : GBInstr<mnemonic, "(hl)", opcode, (outs), (ins), FixupNone> {
+    list<Register> ExtraUses = [];
+
     let Inst{2 - 0} = 0b110;
     let mayLoad = true;
-    let Uses = [A, HL];
+    let Uses = !listconcat([A, HL], ExtraUses);
     let Defs = [A, F];
   }
 }

@@ -266,15 +266,16 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     break;
 
   // a == b:
-  // and a, b  (res < b if a != b)
-  // cmp b
+  // sub a, b
+  // cmp 1
   // rla
-  case ISD::CondCode::SETEQ:
+  case ISD::CondCode::SETNE:
     ReverseResult = true;
     [[fallthrough]];
-  case ISD::CondCode::SETNE: {
-    SDValue And = DAG.getNode(ISD::AND, DL, LHS.getValueType(), LHS, RHS);
-    LHS = And;
+  case ISD::CondCode::SETEQ: {
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
+    LHS = Sub;
+    RHS = DAG.getConstant(1, DL, MVT::i8);
     CCode = ISD::CondCode::SETULT;
     break;
   }

@@ -56,11 +56,12 @@ let Size = 1 in {
   defm XOR : _GB_GPR8S1Sequence<"xor", 0xA8, (ins)>;
   defm OR  : _GB_GPR8S1Sequence<"or",  0xB0, (ins)>;
 
-  let Uses = [A], Defs = [F], isCompare = true in
+  // Unlike all other arithmetic ops, CP does not define A
+  let Defs = [F], isCompare = true in
   defm CP  : _GB_GPR8S1Sequence<"cp",  0xB8, (ins)>;
 }
 
-let Size = 1, Uses = [A, F] in {
+let ExtraUses = [F], Size = 1 in {
   defm ADC : _GB_GPR8S1Sequence<"adc", 0x88, (ins)>;
   defm SBC : _GB_GPR8S1Sequence<"sbc", 0x98, (ins)>;
 }

@@ -79,6 +79,30 @@ _start:
 ; EXPECT: a=01
     debugtrap
 
+    ld b, 1
+    call setcc_eq_zero
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0
+    call setcc_eq_zero
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 1
+    call setcc_ne_zero
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0
+    call setcc_ne_zero
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
     ld b, 5
     ld c, 6
     call setcc_ne
