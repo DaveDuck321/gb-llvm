@@ -5362,7 +5362,13 @@ SDValue DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
+    EVT ValueType = NewLHS.getValueType();
+    if (TLI.getBooleanContents(ValueType) ==
+        TargetLoweringBase::UndefinedBooleanContent) {
+      NewLHS = DAG.getNode(ISD::AND, SDLoc(N), ValueType, NewLHS,
+                           DAG.getConstant(1, SDLoc(N), ValueType));
+    }
+    NewRHS = DAG.getConstant(0, SDLoc(N), ValueType);
     CCCode = ISD::SETNE;
   }
 
@@ -5380,7 +5386,13 @@ SDValue DAGTypeLegalizer::ExpandIntOp_SELECT_CC(SDNode *N) {
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
+    EVT ValueType = NewLHS.getValueType();
+    if (TLI.getBooleanContents(ValueType) ==
+        TargetLoweringBase::UndefinedBooleanContent) {
+      NewLHS = DAG.getNode(ISD::AND, SDLoc(N), ValueType, NewLHS,
+                           DAG.getConstant(1, SDLoc(N), ValueType));
+    }
+    NewRHS = DAG.getConstant(0, SDLoc(N), ValueType);
     CCCode = ISD::SETNE;
   }
 
