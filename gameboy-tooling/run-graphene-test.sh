@@ -29,7 +29,7 @@ $script_dir/glang.sh -c $graphene_args -o $graphene_obj
 cat $testbench_source | llvm-mc --triple=gb --filetype=obj -g > $testbench_obj
 cat $script_dir/runtime.s | llvm-mc --triple=gb --filetype=obj -g > $runtime_obj
 
-ld.lld --script "$script_dir/gb.ld" $testbench_obj $graphene_obj $runtime_obj -o $binary_out
+ld.lld --static --nostdlib --script "$script_dir/gb.ld" $testbench_obj $graphene_obj $runtime_obj -o $binary_out
 
 if [[ -n "$is_gdb" ]]
 then

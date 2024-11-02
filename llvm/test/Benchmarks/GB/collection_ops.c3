@@ -1,5 +1,3 @@
-@require_once "std/array.c3"
-@require_once "std/iterators.c3"
 @require_once "std/arithmetic.c3"
 
 typedef Rect : {
