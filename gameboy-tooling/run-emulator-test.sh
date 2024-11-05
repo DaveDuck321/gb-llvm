@@ -16,8 +16,8 @@ ld.lld --script "$script_dir/gb.ld" $testbench $to_test -o $binary_out
 
 if [[ -z $4 ]]
 then
-    /home/tom/Programming/GameBoy/emulate.out $binary_out
+    $GAMEBOY_EMULATOR_PATH/emulate.out $binary_out
 else
     trap '' INT
-    /home/tom/Programming/GameBoy/gb_with_gdb.sh $binary_out
+    $GAMEBOY_EMULATOR_PATH/gb_with_gdb.sh $binary_out
 fi

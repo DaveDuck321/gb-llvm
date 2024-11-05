@@ -6,6 +6,10 @@ runtime_obj=$(mktemp)
 graphene_obj=$(mktemp)
 binary_out=$(mktemp)
 
+echo "testbench: $testbench_obj"
+echo "runtime: $runtime_obj"
+echo "binary: $binary_out"
+
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export PATH="$script_dir/../build/bin/:$PATH"
@@ -34,7 +38,7 @@ ld.lld --static --nostdlib --script "$script_dir/gb.ld" $testbench_obj $graphene
 if [[ -n "$is_gdb" ]]
 then
     trap '' INT
-    /home/tom/Programming/GameBoy/gb_with_gdb.sh $binary_out
+    $GAMEBOY_EMULATOR_PATH/gb_with_gdb.sh $binary_out
 else
-    /home/tom/Programming/GameBoy/emulate.out $binary_out
+    $GAMEBOY_EMULATOR_PATH/emulate.out $binary_out
 fi
