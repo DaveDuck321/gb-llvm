@@ -38,7 +38,7 @@ SECTIONS {
   } > rom0
 
   .meta 0x0104 : { *(.meta*) } > rom0
-  .text 0x0150 : { *(.text*) } > rom0
+  .text 0x0150 : { *(.rodata*), *(.text*) } > rom0
 
   /* Data (VMA: RAM, LMA: ROM Switchable bank) */
   . = ORIGIN(ram0);
