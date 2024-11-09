@@ -89,8 +89,8 @@ defm DEC : GBIncDec8<"dec", 0x05>;
 let Size = 1 in {
   let Constraints = "$rs = $rd" in {
     // TOOD GB: there's a hardware bug here... maybe find a way to model this?
-    def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (outs GPR16:$rd)>;
-    def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (outs GPR16:$rd)>;
+    def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (outs IntReg16:$rd)>;
+    def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (outs IntReg16:$rd)>;
   }
 
   let isAdd = true, Uses = [HL], Defs = [HL, F] in
@@ -259,7 +259,7 @@ def : Pat<(RLCA_NODE A), (RLCA)>;
 
 def SDT_GB1i16 : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 def INC16_NODE : SDNode<"GBISD::INC16", SDT_GB1i16, []>;
-def : Pat<(INC16_NODE GPR16:$rd), (INC16 GPR16:$rd)>;
+def : Pat<(INC16_NODE IntReg16:$rd), (INC16 IntReg16:$rd)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
 // TODO GB: optimize into JR in another pass
@@ -307,20 +307,14 @@ defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
 def : Pat<(xor A, -1), (CPL)>;
 
 // ALU 16-bit (currently inactive)
-def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
-def : Pat<(add GPR16:$rs, 1), (INC16 GPR16:$rs)>;
-def : Pat<(add GPR16:$rs, -1), (DEC16 GPR16:$rs)>;
+def : Pat<(add HL, IntReg16:$rs), (ADD_HL IntReg16:$rs)>;
+def : Pat<(add IntReg16:$rs, 1), (INC16 IntReg16:$rs)>;
+def : Pat<(add IntReg16:$rs, -1), (DEC16 IntReg16:$rs)>;
 
 // Branches
 // TODO GB: optimize into JR in another pass
 def : Pat<(br bb:$imm), (JP bb_pc_rel:$imm)>;
 def : Pat<(brind HL), (JP_HL)>;
-
-// Memory
-def : Pat<(load HL), (LD_r_iHL)>;
-def : Pat<(extload HL), (LD_r_iHL)>;
-def : Pat<(store GPR8:$rs, HL), (LD_iHL_r GPR8:$rs)>;
-def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
 // Required when passing arguments on the stack
 def SDT_GBLDHLSP : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i8>]>;
@@ -332,6 +326,21 @@ class Pseudo<string name, string args, dag outs, dag ins>
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
+
+// Memory ops: decay into either L_A_iHL or LD_A_iR16 after register allocation
+let mayLoad = true, Defs = [A] in {
+  def LD_A_iGPR16 : Pseudo<"ld", "a ($rs)", (outs), (ins GPR16:$rs)>;
+}
+
+let mayStore = true, Uses = [A] in {
+  def LD_iGPR16_A : Pseudo<"ld", "($rs) a", (outs), (ins GPR16:$rs)>;
+}
+
+def : Pat<(load GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
+def : Pat<(extload GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
+
+def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
+def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
 let mayLoad = true, Uses = [SP] in {
   def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;

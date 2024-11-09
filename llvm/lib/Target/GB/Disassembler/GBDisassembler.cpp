@@ -52,6 +52,11 @@ DecodeStatus DecodeGPR16RegisterClass(MCInst &MI, uint64_t Encoding,
   return DecodeStatus::Success;
 }
 
+DecodeStatus DecodeIntReg16RegisterClass(MCInst &MI, uint64_t Encoding,
+                                         uint64_t Addr, const void *Decoder) {
+  return DecodeGPR16RegisterClass(MI, Encoding, Addr, Decoder);
+}
+
 DecodeStatus DecodeSR16RegisterClass(MCInst &MI, uint64_t Encoding,
                                      uint64_t Addr, const void *Decoder) {
   assert((Encoding & ~0b11) == 0);

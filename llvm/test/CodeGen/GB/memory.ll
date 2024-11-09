@@ -14,9 +14,11 @@ define i8 @load8(ptr %a) nounwind {
 define i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld c, (hl)
+; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld b, (hl)
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld h, b
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ; kill: def $bc
@@ -28,7 +30,8 @@ define i16 @load16(ptr %a) nounwind {
 define void @store8(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store8:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld (hl), b
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ret
   store i8 %b, ptr %a
   ret void
@@ -40,22 +43,12 @@ define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-NEXT:    ld b, h
 ; GBI-NEXT:    ld c, l
 ; GBI-NEXT:    ld hl, sp, 2
-; GBI-NEXT:    ld d, h
-; GBI-NEXT:    ld e, l
 ; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld h, b
-; GBI-NEXT:    ld l, c
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    inc bc
-; GBI-NEXT:    inc de
-; GBI-NEXT:    ld h, d
-; GBI-NEXT:    ld l, e
-; GBI-NEXT:    ; kill: def $de
+; GBI-NEXT:    inc hl
 ; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld h, b
-; GBI-NEXT:    ld l, c
-; GBI-NEXT:    ; kill: def $bc
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
   ret void
@@ -85,10 +78,11 @@ define i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld b, $00
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, $00
-; GBI-NEXT:    sub b
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    sub c
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
   %2 = sext i1 %1 to i8

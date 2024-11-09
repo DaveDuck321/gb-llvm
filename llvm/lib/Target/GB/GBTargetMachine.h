@@ -4,7 +4,6 @@
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
-#include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -31,7 +30,17 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
-  const TargetSubtargetInfo *getSubtargetImpl(const Function &) const override;
+
+  const GBSubtarget *getGBSubtargetImpl(const Function &) const {
+    return &Subtarget;
+  }
+
+  const TargetSubtargetInfo *
+  getSubtargetImpl(const Function &F) const override {
+    return getGBSubtargetImpl(F);
+  }
+
+  TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
 };
 
 } // namespace llvm

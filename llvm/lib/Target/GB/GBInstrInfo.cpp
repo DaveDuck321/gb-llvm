@@ -1,6 +1,7 @@
 #include "GBInstrInfo.h"
 #include "GB.h"
 #include "GBRegisterInfo.h"
+#include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

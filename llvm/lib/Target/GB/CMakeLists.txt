@@ -20,11 +20,12 @@ add_llvm_target(GBCodeGen
     GBInstrInfo.cpp
     GBISelDAGToDAG.cpp
     GBISelLowering.cpp
+    GBLDLowering.cpp
     GBMCInstLower.cpp
     GBRegisterInfo.cpp
+    GBStackSlotLowering.cpp
     GBSubtarget.cpp
     GBTargetMachine.cpp
-    GBStackSlotLowering.cpp
 
     LINK_COMPONENTS
     AsmPrinter
