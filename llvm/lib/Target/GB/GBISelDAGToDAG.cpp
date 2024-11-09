@@ -21,10 +21,6 @@
 #define GET_DAGISEL_BODY GBDAGToDAGISel
 #include "GBGenDAGISel.inc"
 
-static cl::opt<bool> GBViewPreprocessedISelDAGs(
-    "view-preprocessed-isel-dags", cl::Hidden,
-    cl::desc("Pop up a window to show the input to Select()"));
-
 static cl::opt<bool> GBDisablePreprocessi16Serialize(
     "gb-disable-i16-serialize", cl::Hidden,
     cl::desc("Disables PreprocessISelDAG, serializei16Increments"));
@@ -105,13 +101,6 @@ void GBDAGToDAGISel::Select(SDNode *Node) {
 }
 
 void GBDAGToDAGISel::PreprocessISelDAG() {
-  auto _ = llvm::make_scope_exit([&] {
-    if (GBViewPreprocessedISelDAGs) {
-      CurDAG->viewGraph("preprocessed isel input for " +
-                        FuncInfo->MBB->getBasicBlock()->getName().str());
-    }
-  });
-
   auto GetCurrentNodes = [this]() {
     std::vector<SDNode *> T;
     T.reserve(CurDAG->allnodes_size());

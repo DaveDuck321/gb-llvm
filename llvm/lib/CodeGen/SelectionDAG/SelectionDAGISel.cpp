@@ -169,6 +169,9 @@ ViewDAGCombine2("view-dag-combine2-dags", cl::Hidden,
 static cl::opt<bool>
 ViewISelDAGs("view-isel-dags", cl::Hidden,
           cl::desc("Pop up a window to show isel dags as they are selected"));
+static cl::opt<bool> ViewPreprocessedISelDAGs(
+    "view-preprocessed-isel-dags", cl::Hidden,
+    cl::desc("Pop up a window to show the input to Select()"));
 static cl::opt<bool>
 ViewSchedDAGs("view-sched-dags", cl::Hidden,
           cl::desc("Pop up a window to show sched dags as they are processed"));
@@ -1124,6 +1127,15 @@ void SelectionDAGISel::DoInstructionSelection() {
                     << FuncInfo->MBB->getName() << "'\n");
 
   PreprocessISelDAG();
+
+    bool MatchFilterBB =
+        (FilterDAGBasicBlockName.empty() ||
+         FilterDAGBasicBlockName == FuncInfo->MBB->getBasicBlock()->getName());
+
+    if (MatchFilterBB && ViewPreprocessedISelDAGs) {
+      CurDAG->viewGraph("preprocessed isel input for " +
+                        FuncInfo->MBB->getBasicBlock()->getName().str());
+    }
 
   // Select target instructions for the DAG.
   {
