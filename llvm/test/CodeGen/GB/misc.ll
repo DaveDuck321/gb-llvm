@@ -136,66 +136,30 @@ define i16 @sext16_i1(i1 %0) {
 define i16 @sext16_i8(i8 %0) {
 ; GBI-O0-LABEL: sext16_i8:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld a, $07
-; GBI-O0-NEXT:    dec a
-; GBI-O0-NEXT:    inc a
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 5
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    jr z, .LBB5_2
-; GBI-O0-NEXT:    jr .LBB5_1
-; GBI-O0-NEXT:  .LBB5_1: ; =>This Inner Loop Header: Depth=1
-; GBI-O0-NEXT:    ld hl, sp, 3
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    ld hl, sp, 2
-; GBI-O0-NEXT:    ld b, (hl)
-; GBI-O0-NEXT:    sra b
-; GBI-O0-NEXT:    dec a
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 5
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    jr nz, .LBB5_1
-; GBI-O0-NEXT:    jr .LBB5_2
-; GBI-O0-NEXT:  .LBB5_2:
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld l, (hl)
-; GBI-O0-NEXT:    push hl
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld a, (hl)
-; GBI-O0-NEXT:    pop hl
+; GBI-O0-NEXT:    ld l, b
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
+; GBI-O0-NEXT:    sra a
 ; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
 ; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    add sp, 4
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: sext16_i8:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld a, $07
-; GBI-O3-NEXT:    dec a
-; GBI-O3-NEXT:    inc a
 ; GBI-O3-NEXT:    ld h, l
-; GBI-O3-NEXT:    jp z, .LBB5_3
-; GBI-O3-NEXT:  ; %bb.1:
-; GBI-O3-NEXT:    ld h, l
-; GBI-O3-NEXT:  .LBB5_2: ; =>This Inner Loop Header: Depth=1
 ; GBI-O3-NEXT:    sra h
-; GBI-O3-NEXT:    dec a
-; GBI-O3-NEXT:    jp nz, .LBB5_2
-; GBI-O3-NEXT:  .LBB5_3:
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    ret
   %res = sext i8 %0 to i16
   ret i16 %res

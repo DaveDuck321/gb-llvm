@@ -321,5 +321,77 @@ _shifts:
 ; EXPECT: a=04
     debugtrap
 
+
+    ld b, 133
+    call shl_1
+; EXPECT: a=0a
+    debugtrap
+
+    ld b, 133
+    call shl_2
+; EXPECT: a=14
+    debugtrap
+
+    ld b, 133
+    call shl_3
+; EXPECT: a=28
+    debugtrap
+
+    ld b, 133
+    call shl_4
+; EXPECT: a=50
+    debugtrap
+
+    ld b, 133
+    call shl_5
+; EXPECT: a=a0
+    debugtrap
+
+    ld b, 133
+    call shl_6
+; EXPECT: a=40
+    debugtrap
+
+    ld b, 133
+    call shl_7
+; EXPECT: a=80
+    debugtrap
+
+
+    ld b, 133
+    call lshr_1
+; EXPECT: a=42
+    debugtrap
+
+    ld b, 133
+    call lshr_2
+; EXPECT: a=21
+    debugtrap
+
+    ld b, 133
+    call lshr_3
+; EXPECT: a=10
+    debugtrap
+
+    ld b, 133
+    call lshr_4
+; EXPECT: a=08
+    debugtrap
+
+    ld b, 133
+    call lshr_5
+; EXPECT: a=04
+    debugtrap
+
+    ld b, 133
+    call lshr_6
+; EXPECT: a=02
+    debugtrap
+
+    ld b, 133
+    call lshr_7
+; EXPECT: a=01
+    debugtrap
+
 _end:
     trap

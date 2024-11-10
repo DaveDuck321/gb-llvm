@@ -30,6 +30,26 @@ main:
 ; EXPECT-CYCLE: 41
     debugtrap
 
+    ld hl, sp + 0
+    ld b, 9
+    call _Z6damageR6Playerc
+    and 1
+
+; EXPECT: Debug trap!
+; EXPECT-CYCLE: 48
+; EXPECT: a=00
+    debugtrap
+
+    ld hl, sp + 0
+    ld b, 2
+    call _Z6damageR6Playerc
+    and 1
+
+; EXPECT: Debug trap!
+; EXPECT-CYCLE: 48
+; EXPECT: a=01
+    debugtrap
+
     ld hl, sp + 5
     push hl
     ld hl, sp + 2

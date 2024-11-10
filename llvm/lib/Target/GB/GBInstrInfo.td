@@ -371,24 +371,29 @@ def : Pat<(SELECT_CC_NODE SETEQ,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBF
 def : Pat<(SELECT_CC_NODE SETNE,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NZ.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
 
 // Shifts
-// TODO GB: match constant operands
-class P_SHIFT<string name> : Pseudo<"#" # name, "$rd, $amount", (outs GPR8:$rd), (ins GPR8:$rs, GPR8:$amount)> {
-  let Constraints = "$rs = $rd";
-  let Defs = [F];
-  let usesCustomInserter = true;
+multiclass P_SHIFT<SDNode node, string name> {
+  def _r : Pseudo<"#" # name, "$rd, $amount", (outs GPR8:$rd), (ins GPR8:$rs, GPR8:$amount)> {
+    let Constraints = "$rs = $rd";
+    let Defs = [F];
+    let usesCustomInserter = true;
+
+    let Pattern = [(set GPR8:$rd, !setdagop((? GPR8:$rs, GPR8:$amount), node))];
+  }
+
+  def I : Pseudo<"#" # name, "$rd, $amount", (outs GPR8:$rd), (ins GPR8:$rs, uimm8:$amount)> {
+    let Constraints = "$rs = $rd";
+    let Defs = [F];
+    let usesCustomInserter = true;
+
+    let Pattern = [(set GPR8:$rd, !setdagop((? GPR8:$rs, imm8:$amount), node))];
+  }
 }
 
-def P_SLA : P_SHIFT<"sla">;
-def P_SRA : P_SHIFT<"sra">;
-def P_SRL : P_SHIFT<"srl">;
-def P_ROTL : P_SHIFT<"rotl">;
-def P_ROTR : P_SHIFT<"rotr">;
-
-def : Pat<(shl GPR8:$rs, GPR8:$amount),  (P_SLA GPR8:$rs, GPR8:$amount)>;
-def : Pat<(sra GPR8:$rs, GPR8:$amount),  (P_SRA GPR8:$rs, GPR8:$amount)>;
-def : Pat<(srl GPR8:$rs, GPR8:$amount),  (P_SRL GPR8:$rs, GPR8:$amount)>;
-def : Pat<(rotl GPR8:$rs, GPR8:$amount), (P_ROTL GPR8:$rs, GPR8:$amount)>;
-def : Pat<(rotr GPR8:$rs, GPR8:$amount), (P_ROTR GPR8:$rs, GPR8:$amount)>;
+defm P_SLA : P_SHIFT<shl, "sla">;
+defm P_SRA : P_SHIFT<sra, "sra">;
+defm P_SRL : P_SHIFT<srl, "srl">;
+defm P_ROTL : P_SHIFT<rotl, "rotl">;
+defm P_ROTR : P_SHIFT<rotr, "rotr">;
 
 // Calling
 def SDT_GBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;

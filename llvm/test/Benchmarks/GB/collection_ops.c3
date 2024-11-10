@@ -22,6 +22,15 @@ function do_collide : (player1: Player&, player2: Player&) -> bool = {
     return do_intersect(&player1.rect, &player2.rect);
 }
 
+function damage : (player : Player mut&, amount: int) -> bool = {
+    player.health -= amount;
+    if player.health < 0 {
+        player.health = 0;
+        return true;
+    }
+    return false;
+}
+
 function get_player : (x: int, y: int) -> Player = {
     return {
         .rect = {

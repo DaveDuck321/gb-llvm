@@ -76,8 +76,13 @@ private:
   emitSelectCCWithCustomInserter(MachineInstr &MI,
                                  MachineBasicBlock *MBB) const;
 
-  MachineBasicBlock *emitShiftWithCustomInserter(MachineInstr &MI,
-                                                 MachineBasicBlock *MBB) const;
+  MachineBasicBlock *
+  emitUnknownShiftWithCustomInserter(MachineInstr &MI,
+                                     MachineBasicBlock *MBB) const;
+
+  MachineBasicBlock *
+  emitConstantShiftWithCustomInserter(MachineInstr &MI,
+                                      MachineBasicBlock *MBB) const;
 
   MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,

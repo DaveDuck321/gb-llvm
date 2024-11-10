@@ -607,12 +607,18 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     llvm_unreachable("Instruction emitter not implemented!");
   case GB::P_SELECT_CC:
     return emitSelectCCWithCustomInserter(MI, MBB);
-  case GB::P_SLA:
-  case GB::P_SRA:
-  case GB::P_SRL:
-  case GB::P_ROTL:
-  case GB::P_ROTR:
-    return emitShiftWithCustomInserter(MI, MBB);
+  case GB::P_SLA_r:
+  case GB::P_SRA_r:
+  case GB::P_SRL_r:
+  case GB::P_ROTL_r:
+  case GB::P_ROTR_r:
+    return emitUnknownShiftWithCustomInserter(MI, MBB);
+  case GB::P_SLAI:
+  case GB::P_SRAI:
+  case GB::P_SRLI:
+  case GB::P_ROTLI:
+  case GB::P_ROTRI:
+    return emitConstantShiftWithCustomInserter(MI, MBB);
   }
 }
 
@@ -682,9 +688,119 @@ GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
   return EndMBB;
 }
 
-MachineBasicBlock *
-GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
-                                              MachineBasicBlock *MBB) const {
+MachineBasicBlock *GBTargetLowering::emitConstantShiftWithCustomInserter(
+    MachineInstr &MI, MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+  MachineFunction *MF = MBB->getParent();
+  MachineRegisterInfo &RI = MF->getRegInfo();
+  MachineBasicBlock::iterator MBBI = MI.getIterator();
+
+  Register FinalDstReg = MI.getOperand(0).getReg();
+  Register SrcReg = MI.getOperand(1).getReg();
+  unsigned ShiftAmount = MI.getOperand(2).getImm();
+
+  auto Opcode = [&] {
+    switch (MI.getOpcode()) {
+    case GB::P_SLAI:
+      return GB::SLA_r;
+    case GB::P_SRAI:
+      return GB::SRA_r;
+    case GB::P_SRLI:
+      return GB::SRL_r;
+    case GB::P_ROTLI:
+      return GB::RLC_r;
+    case GB::P_ROTRI:
+      return GB::RRC_r;
+    default:
+      llvm_unreachable("Unexpected Opcode");
+    }
+  }();
+
+  // Convert large shifts into rotate-then-masks
+  unsigned Mask = 0xff;
+  if (ShiftAmount > 3) {
+    switch (Opcode) {
+    default:
+      break;
+    case GB::SLA_r:
+      Mask = (~((1 << ShiftAmount) - 1)) & 0xff;
+      Opcode = GB::RLC_r;
+      break;
+    case GB::SRL_r:
+      Mask = (1 << (8 - ShiftAmount)) - 1;
+      Opcode = GB::RRC_r;
+      break;
+    }
+  }
+
+  // Ensure we are always rotating in the shortest direction
+  if (ShiftAmount >= 4) {
+    switch (Opcode) {
+    default:
+      break;
+    case GB::RLC_r:
+      Opcode = GB::RRC_r;
+      ShiftAmount = 8 - ShiftAmount;
+      break;
+    case GB::RRC_r:
+      Opcode = GB::RLC_r;
+      ShiftAmount = 8 - ShiftAmount;
+      break;
+    }
+  }
+
+  // Special case: nibble swaps
+  if (ShiftAmount == 4 && (Opcode == GB::RRC_r || Opcode == GB::RLC_r)) {
+    ShiftAmount = 1;
+    Opcode = GB::SWAP_r;
+  }
+
+  // Special case: nibble swap-then-rotate backwards
+  if (ShiftAmount == 3 && (Opcode == GB::RRC_r || Opcode == GB::RLC_r)) {
+    ShiftAmount = 1;
+    Opcode = Opcode == GB::RRC_r ? GB::RLC_r : GB::RRC_r;
+
+    Register DstReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::SWAP_r), DstReg)
+        .addReg(SrcReg);
+    SrcReg = DstReg;
+  }
+
+  // All logical ops should be normalized
+  // TODO: maybe optimize the arithmetic shift for large constants. Not much to
+  // be gained here tho
+  assert(ShiftAmount <= 4 || Opcode == GB::SRA_r);
+
+  // Small shifts/ rotates are trivial
+  // - Cost: 2 * ShiftAmount cycles/ imem.
+  // Note: there is an additional optimization here for rotates when
+  // SrcReg = DstReg = GB::A. This can be matched after register allocation.
+  Register ToShift = SrcReg;
+  Register DstReg;
+  for (unsigned I = 0; I < ShiftAmount; I += 1) {
+    DstReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(Opcode), DstReg)
+        .addReg(ToShift);
+    ToShift = DstReg;
+  }
+
+  if (Mask == 0xff) {
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::COPY), FinalDstReg)
+        .addReg(DstReg);
+  } else {
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::COPY), GB::A)
+        .addReg(DstReg);
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::ANDI)).addImm(Mask);
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::COPY), FinalDstReg)
+        .addReg(GB::A);
+  }
+
+  MI.removeFromParent();
+  return MBB;
+}
+
+MachineBasicBlock *GBTargetLowering::emitUnknownShiftWithCustomInserter(
+    MachineInstr &MI, MachineBasicBlock *MBB) const {
   const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
   MachineFunction *MF = MBB->getParent();
   MachineRegisterInfo &RI = MF->getRegInfo();
@@ -694,17 +810,17 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
   const auto MISrc = MI.getOperand(1).getReg();
   const auto MIAmount = MI.getOperand(2).getReg();
 
-  const auto OpCode = [&] {
+  const auto Opcode = [&] {
     switch (MI.getOpcode()) {
-    case GB::P_SLA:
+    case GB::P_SLA_r:
       return GB::SLA_r;
-    case GB::P_SRA:
+    case GB::P_SRA_r:
       return GB::SRA_r;
-    case GB::P_SRL:
+    case GB::P_SRL_r:
       return GB::SRL_r;
-    case GB::P_ROTL:
+    case GB::P_ROTL_r:
       return GB::RLC_r;
-    case GB::P_ROTR:
+    case GB::P_ROTR_r:
       return GB::RRC_r;
     default:
       llvm_unreachable("Unexpected Opcode");
@@ -788,7 +904,7 @@ GBTargetLowering::emitShiftWithCustomInserter(MachineInstr &MI,
       .addReg(LoopDecReg)
       .addMBB(LoopMBB);
 
-  BuildMI(LoopMBB, DL, TII.get(OpCode), LoopShiftReg).addReg(ToShiftReg);
+  BuildMI(LoopMBB, DL, TII.get(Opcode), LoopShiftReg).addReg(ToShiftReg);
   BuildMI(LoopMBB, DL, TII.get(GB::DEC_r), LoopDecReg).addReg(ToDecReg);
 
   BuildMI(LoopMBB, DL, TII.get(GB::JR_COND)).addImm(GBFlag::NZ).addMBB(LoopMBB);
