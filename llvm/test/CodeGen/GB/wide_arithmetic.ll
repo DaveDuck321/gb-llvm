@@ -41,10 +41,13 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 define i16 @andi(i16 %b) nounwind {
 ; GBI-O3-LABEL: andi:
 ; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, $00
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ; kill: def $bc
 ; GBI-O3-NEXT:    ret
   %1 = and i16 %b, 1
   ret i16 %1
@@ -184,12 +187,12 @@ define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, a
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    cp d
 ; GBI-O3-NEXT:    rla
 ; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld a, b
@@ -216,10 +219,10 @@ define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    cp c
 ; GBI-O3-NEXT:    rla
 ; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    sub b

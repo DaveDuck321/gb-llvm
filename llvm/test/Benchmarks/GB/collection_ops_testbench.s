@@ -39,7 +39,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 221
+; EXPECT-CYCLE: 295
 ; EXPECT: a=01
     debugtrap
 

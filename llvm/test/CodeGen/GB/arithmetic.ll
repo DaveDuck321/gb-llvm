@@ -459,28 +459,30 @@ define i8 @ctpop(i8 %b) {
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    jp nz, .LBB36_2
 ; GBI-NEXT:  .LBB36_3:
+; GBI-NEXT:    ld d, $02
 ; GBI-NEXT:    and $55
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
+; GBI-NEXT:    dec d
+; GBI-NEXT:    inc d
 ; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld c, $02
-; GBI-NEXT:    dec c
-; GBI-NEXT:    inc c
 ; GBI-NEXT:    jp z, .LBB36_6
 ; GBI-NEXT:  ; %bb.4:
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:  .LBB36_5: ; =>This Inner Loop Header: Depth=1
-; GBI-NEXT:    srl a
-; GBI-NEXT:    dec c
+; GBI-NEXT:    srl b
+; GBI-NEXT:    dec d
 ; GBI-NEXT:    jp nz, .LBB36_5
 ; GBI-NEXT:  .LBB36_6:
+; GBI-NEXT:    ld d, $04
 ; GBI-NEXT:    and $33
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld d, $04
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $33
-; GBI-NEXT:    add c
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    add b
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    inc d
 ; GBI-NEXT:    ld b, a
@@ -507,13 +509,13 @@ define i8 @cttz(i8 %b) {
 ; GBI-NEXT:    cp $00
 ; GBI-NEXT:    jp z, .LBB37_1
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
+; GBI-NEXT:    ld d, $01
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cpl
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add $ff
 ; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld d, $01
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    and b
 ; GBI-NEXT:    ld b, a
@@ -528,29 +530,31 @@ define i8 @cttz(i8 %b) {
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    jp nz, .LBB37_4
 ; GBI-NEXT:  .LBB37_5: ; %cond.false
+; GBI-NEXT:    ld d, $02
 ; GBI-NEXT:    and $55
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld d, $02
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    inc d
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    jp z, .LBB37_8
 ; GBI-NEXT:  ; %bb.6:
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:  .LBB37_7: ; %cond.false
 ; GBI-NEXT:    ; =>This Inner Loop Header: Depth=1
-; GBI-NEXT:    srl a
+; GBI-NEXT:    srl b
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    jp nz, .LBB37_7
 ; GBI-NEXT:  .LBB37_8: ; %cond.false
+; GBI-NEXT:    ld d, $04
 ; GBI-NEXT:    and $33
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld d, $04
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $33
-; GBI-NEXT:    add c
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    add b
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    inc d
 ; GBI-NEXT:    ld b, a
@@ -583,35 +587,35 @@ define i8 @ctlz(i8 %b) {
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
 ; GBI-NEXT:    ld c, $01
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    ld b, c
-; GBI-NEXT:    inc b
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld d, c
+; GBI-NEXT:    inc d
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    jp z, .LBB38_5
 ; GBI-NEXT:  ; %bb.3:
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:  .LBB38_4: ; %cond.false
 ; GBI-NEXT:    ; =>This Inner Loop Header: Depth=1
-; GBI-NEXT:    srl d
-; GBI-NEXT:    dec b
+; GBI-NEXT:    srl b
+; GBI-NEXT:    dec d
 ; GBI-NEXT:    jp nz, .LBB38_4
 ; GBI-NEXT:  .LBB38_5: ; %cond.false
-; GBI-NEXT:    or d
 ; GBI-NEXT:    ld e, $02
+; GBI-NEXT:    or b
 ; GBI-NEXT:    dec e
-; GBI-NEXT:    ld b, e
-; GBI-NEXT:    inc b
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld d, e
+; GBI-NEXT:    inc d
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    jp z, .LBB38_8
 ; GBI-NEXT:  ; %bb.6:
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:  .LBB38_7: ; %cond.false
 ; GBI-NEXT:    ; =>This Inner Loop Header: Depth=1
-; GBI-NEXT:    srl d
-; GBI-NEXT:    dec b
+; GBI-NEXT:    srl b
+; GBI-NEXT:    dec d
 ; GBI-NEXT:    jp nz, .LBB38_7
 ; GBI-NEXT:  .LBB38_8: ; %cond.false
-; GBI-NEXT:    or d
 ; GBI-NEXT:    ld d, $04
+; GBI-NEXT:    or b
 ; GBI-NEXT:    dec d
 ; GBI-NEXT:    ld b, d
 ; GBI-NEXT:    inc b
@@ -642,14 +646,14 @@ define i8 @ctlz(i8 %b) {
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    inc e
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    jp z, .LBB38_17
 ; GBI-NEXT:  ; %bb.15:
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:  .LBB38_16: ; %cond.false
 ; GBI-NEXT:    ; =>This Inner Loop Header: Depth=1
-; GBI-NEXT:    srl a
+; GBI-NEXT:    srl b
 ; GBI-NEXT:    dec e
 ; GBI-NEXT:    jp nz, .LBB38_16
 ; GBI-NEXT:  .LBB38_17: ; %cond.false
@@ -657,7 +661,9 @@ define i8 @ctlz(i8 %b) {
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $33
-; GBI-NEXT:    add c
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    add b
 ; GBI-NEXT:    inc d
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    jp z, .LBB38_20

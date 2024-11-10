@@ -78,19 +78,11 @@ define i8 @call_argument1_i16() nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld (hl), $01
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld e, $00
-; GBI-O3-NEXT:    ld d, e
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
-; GBI-O3-NEXT:    ; kill: def $bc
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ; kill: def $de
+; GBI-O3-NEXT:    ld l, $00
+; GBI-O3-NEXT:    ld h, l
 ; GBI-O3-NEXT:    call argument1_i16
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret

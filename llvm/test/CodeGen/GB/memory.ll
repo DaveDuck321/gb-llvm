@@ -77,8 +77,8 @@ define i1 @load1(ptr %a) nounwind {
 define i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ld b, $00
+; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, b

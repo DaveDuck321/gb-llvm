@@ -9,22 +9,28 @@ define i8 @trunc_i32(i32 %0) {
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -2
 ; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld a, c
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld a, l
+; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ldi (hl), a
+; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld b, h
 ; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    inc bc
+; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ldi a, (hl)
+; GBI-O0-NEXT:    ld h, (hl)
+; GBI-O0-NEXT:    ld l, a
+; GBI-O0-NEXT:    ld d, b
+; GBI-O0-NEXT:    ld e, c
+; GBI-O0-NEXT:    inc de
 ; GBI-O0-NEXT:    ld a, (bc)
-; GBI-O0-NEXT:    ld d, a
-; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    ld hl, sp, 1
-; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    ld a, (de)
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, d
+; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    ld d, h
+; GBI-O0-NEXT:    ld e, l
+; GBI-O0-NEXT:    ld a, e
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
@@ -67,21 +73,28 @@ define i1 @trunc_i1(i8 %0) {
 define i8 @sext8_i1(i1 %0) {
 ; GBI-O0-LABEL: sext8_i1:
 ; GBI-O0:       ; %bb.0:
+; GBI-O0-NEXT:    add sp, -2
 ; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    ; kill: def $b killed $a
+; GBI-O0-NEXT:    ld b, $00
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    ld b, a
-; GBI-O0-NEXT:    ld a, $00
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    sub b
+; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: sext8_i1:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
 ; GBI-O3-NEXT:    ret
   %res = sext i1 %0 to i8
   ret i8 %res
@@ -90,23 +103,29 @@ define i8 @sext8_i1(i1 %0) {
 define i16 @sext16_i1(i1 %0) {
 ; GBI-O0-LABEL: sext16_i1:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ld a, b
-; GBI-O0-NEXT:    ; kill: def $b killed $a
-; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    ld b, a
+; GBI-O0-NEXT:    add sp, -2
 ; GBI-O0-NEXT:    ld a, $00
-; GBI-O0-NEXT:    sub b
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld a, b
+; GBI-O0-NEXT:    and $01
+; GBI-O0-NEXT:    ld c, a
+; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld a, (hl)
+; GBI-O0-NEXT:    sub c
 ; GBI-O0-NEXT:    ld l, a
 ; GBI-O0-NEXT:    ld h, a
+; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: sext16_i1:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, l
 ; GBI-O3-NEXT:    ret
