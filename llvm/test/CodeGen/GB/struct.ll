@@ -27,11 +27,7 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ; kill: def $hl
+; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi a, (hl)
@@ -87,11 +83,9 @@ define %type.Player @get_player(i8 %0, i8 %1) {
 ; GBI-O3-LABEL: get_player:
 ; GBI-O3:       ; %bb.0: ; %begin
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), $64
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $64

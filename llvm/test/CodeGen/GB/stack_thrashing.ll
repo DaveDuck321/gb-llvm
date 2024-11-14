@@ -8,18 +8,15 @@ define i32 @large_stack_i32_identity(i32 %0) {
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    ret

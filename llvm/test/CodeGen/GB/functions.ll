@@ -187,14 +187,11 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    add sp, 10

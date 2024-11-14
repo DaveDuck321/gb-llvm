@@ -18,7 +18,7 @@ main:
     call _Z10get_playercc
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 41
+; EXPECT-CYCLE: 37
     debugtrap
 
     ld b, 30
@@ -27,7 +27,7 @@ main:
     call _Z10get_playercc
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 41
+; EXPECT-CYCLE: 37
     debugtrap
 
     ld hl, sp + 0
@@ -36,7 +36,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 48
+; EXPECT-CYCLE: 47
 ; EXPECT: a=00
     debugtrap
 
@@ -46,7 +46,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 48
+; EXPECT-CYCLE: 47
 ; EXPECT: a=01
     debugtrap
 
@@ -59,7 +59,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 267
+; EXPECT-CYCLE: 265
 ; EXPECT: a=01
     debugtrap
 

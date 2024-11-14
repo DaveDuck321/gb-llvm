@@ -61,11 +61,10 @@ void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       IsSimpleCombinedGPR16(SrcReg, SrcA, SrcB) &&
       IsSimpleCombinedGPR16(DestReg, DestA, DestB)) {
 
-    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestA).addReg(SrcA);
-    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestB).addReg(SrcB);
-    if (KillSrc) {
-      BuildMI(MBB, MBBI, DL, get(TargetOpcode::KILL), SrcReg);
-    }
+    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestA)
+        .addReg(SrcA, getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(GB::LD_rr), DestB)
+        .addReg(SrcB, getKillRegState(KillSrc));
     return;
   }
 

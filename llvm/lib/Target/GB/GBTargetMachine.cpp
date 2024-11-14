@@ -76,6 +76,13 @@ bool GBPassConfig::addInstSelector() {
 
 void GBPassConfig::addPreSched2() {
   addPass(createGBLDLowering(getGBTargetMachine(), getOptLevel()));
+
+  // Relaxation may reduce register pressure before stack slot lowering
+  addPass(createGBInstructionRelaxation(getGBTargetMachine(), getOptLevel()));
+
   addPass(createGBStackSlotLowering(getGBTargetMachine(), getOptLevel()));
   addPass(createGBPushPopCombine(getGBTargetMachine(), getOptLevel()));
+
+  // Relax again to catch anything generated in previous passes
+  addPass(createGBInstructionRelaxation(getGBTargetMachine(), getOptLevel()));
 }

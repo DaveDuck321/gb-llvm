@@ -29,8 +29,7 @@ define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
 ; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    ld d, h
-; GBI-O0-NEXT:    ld e, l
-; GBI-O0-NEXT:    ld a, e
+; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;

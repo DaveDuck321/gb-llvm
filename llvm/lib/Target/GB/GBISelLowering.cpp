@@ -771,17 +771,41 @@ MachineBasicBlock *GBTargetLowering::emitConstantShiftWithCustomInserter(
   // be gained here tho
   assert(ShiftAmount <= 4 || Opcode == GB::SRA_r);
 
+  bool RotateThroughA = false;
+  if (Mask != 0xff) {
+    if (Opcode == GB::RRC_r) {
+      RotateThroughA = true;
+      Opcode = GB::RRCA;
+    }
+    if (Opcode == GB::RLC_r) {
+      RotateThroughA = true;
+      Opcode = GB::RLCA;
+    }
+  }
+
   // Small shifts/ rotates are trivial
   // - Cost: 2 * ShiftAmount cycles/ imem.
-  // Note: there is an additional optimization here for rotates when
-  // SrcReg = DstReg = GB::A. This can be matched after register allocation.
-  Register ToShift = SrcReg;
   Register DstReg;
-  for (unsigned I = 0; I < ShiftAmount; I += 1) {
+  if (RotateThroughA) {
+    // Special case: if we've got to mask anyway, we might as well use the
+    // faster rotates using GB::A. We do this here to help the register
+    // allocator.
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::COPY), GB::A)
+        .addReg(SrcReg);
+    for (unsigned I = 0; I < ShiftAmount; I += 1) {
+      BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(Opcode));
+    }
     DstReg = RI.createVirtualRegister(&GB::GPR8RegClass);
-    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(Opcode), DstReg)
-        .addReg(ToShift);
-    ToShift = DstReg;
+    BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(GB::COPY), DstReg)
+        .addReg(GB::A);
+  } else {
+    Register ToShift = SrcReg;
+    for (unsigned I = 0; I < ShiftAmount; I += 1) {
+      DstReg = RI.createVirtualRegister(&GB::GPR8RegClass);
+      BuildMI(*MBB, MBBI, MI.getDebugLoc(), TII.get(Opcode), DstReg)
+          .addReg(ToShift);
+      ToShift = DstReg;
+    }
   }
 
   if (Mask == 0xff) {

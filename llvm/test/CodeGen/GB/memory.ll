@@ -14,14 +14,10 @@ define i8 @load8(ptr %a) nounwind {
 define i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    inc hl
+; GBI-NEXT:    ldi a, (hl)
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld h, (hl)
 ; GBI-NEXT:    ld l, c
-; GBI-NEXT:    ; kill: def $bc
 ; GBI-NEXT:    ret
   %1 = load i16, ptr %a
   ret i16 %1
@@ -43,10 +39,9 @@ define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-NEXT:    ld b, h
 ; GBI-NEXT:    ld c, l
 ; GBI-NEXT:    ld hl, sp, 2
-; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ldi a, (hl)
 ; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    inc bc
-; GBI-NEXT:    inc hl
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret

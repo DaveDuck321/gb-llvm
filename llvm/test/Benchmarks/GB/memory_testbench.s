@@ -22,7 +22,7 @@ main:
     ld hl, sp + 16 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 2202
+; EXPECT-CYCLE: 2200
 ; EXPECT: a=ee
     debugtrap
 
@@ -37,7 +37,7 @@ main:
     ld hl, sp + 88 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 2202
+; EXPECT-CYCLE: 2200
 ; EXPECT: a=01
     debugtrap
 
@@ -53,7 +53,7 @@ main:
     ld hl, sp + 73 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 2515
+; EXPECT-CYCLE: 2311
 ; EXPECT: a=ee
     debugtrap
 

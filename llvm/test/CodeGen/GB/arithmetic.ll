@@ -165,10 +165,8 @@ define i16 @add16(i16 %a) nounwind {
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ld l, c
-; GBI-NEXT:    ; kill: def $bc
 ; GBI-NEXT:    ret
   %1 = add i16 %a, 20
   ret i16 %1
@@ -413,10 +411,8 @@ define i16 @byte_swap(i16 %hl) {
 ; GBI-LABEL: byte_swap:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld c, h
-; GBI-NEXT:    ld b, l
-; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld h, l
 ; GBI-NEXT:    ld l, c
-; GBI-NEXT:    ; kill: def $bc
 ; GBI-NEXT:    ret
   %1 = call i16 @llvm.bswap.i16(i16 %hl)
   ret i16 %1
@@ -604,7 +600,7 @@ define i8 @shl_5(i8 %b) nounwind {
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
-; GBI-NEXT:    rlc a
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    and $e0
 ; GBI-NEXT:    ret
   %1 = shl i8 %b, 5
@@ -615,8 +611,8 @@ define i8 @shl_6(i8 %b) nounwind {
 ; GBI-LABEL: shl_6:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    rrc a
-; GBI-NEXT:    rrc a
+; GBI-NEXT:    rrca
+; GBI-NEXT:    rrca
 ; GBI-NEXT:    and $c0
 ; GBI-NEXT:    ret
   %1 = shl i8 %b, 6
@@ -627,7 +623,7 @@ define i8 @shl_7(i8 %b) nounwind {
 ; GBI-LABEL: shl_7:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    rrc a
+; GBI-NEXT:    rrca
 ; GBI-NEXT:    and $80
 ; GBI-NEXT:    ret
   %1 = shl i8 %b, 7
@@ -683,7 +679,7 @@ define i8 @lshr_5(i8 %b) nounwind {
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
-; GBI-NEXT:    rrc a
+; GBI-NEXT:    rrca
 ; GBI-NEXT:    and $07
 ; GBI-NEXT:    ret
   %1 = lshr i8 %b, 5
@@ -694,8 +690,8 @@ define i8 @lshr_6(i8 %b) nounwind {
 ; GBI-LABEL: lshr_6:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    rlc a
-; GBI-NEXT:    rlc a
+; GBI-NEXT:    rlca
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    and $03
 ; GBI-NEXT:    ret
   %1 = lshr i8 %b, 6
@@ -706,7 +702,7 @@ define i8 @lshr_7(i8 %b) nounwind {
 ; GBI-LABEL: lshr_7:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    rlc a
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
   %1 = lshr i8 %b, 7
