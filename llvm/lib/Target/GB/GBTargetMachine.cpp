@@ -77,4 +77,5 @@ bool GBPassConfig::addInstSelector() {
 void GBPassConfig::addPreSched2() {
   addPass(createGBLDLowering(getGBTargetMachine(), getOptLevel()));
   addPass(createGBStackSlotLowering(getGBTargetMachine(), getOptLevel()));
+  addPass(createGBPushPopCombine(getGBTargetMachine(), getOptLevel()));
 }

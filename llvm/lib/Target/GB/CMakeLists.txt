@@ -22,6 +22,7 @@ add_llvm_target(GBCodeGen
     GBISelLowering.cpp
     GBLDLowering.cpp
     GBMCInstLower.cpp
+    GBPushPopCombine.cpp
     GBRegisterInfo.cpp
     GBStackSlotLowering.cpp
     GBSubtarget.cpp
