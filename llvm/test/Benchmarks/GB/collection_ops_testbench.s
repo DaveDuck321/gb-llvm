@@ -51,15 +51,14 @@ main:
     debugtrap
 
     ld hl, sp + 5
-    push hl
-    ld hl, sp + 2
+    ld b, h
+    ld c, l
+    ld hl, sp + 0
     call _Z10do_collideRK6PlayerRK6Player
-    pop hl
-
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 265
+; EXPECT-CYCLE: 243
 ; EXPECT: a=01
     debugtrap
 

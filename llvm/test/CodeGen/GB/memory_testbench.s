@@ -16,8 +16,7 @@ _start:
     ld hl, 0xc0fe
     call store8
 
-    ld hl, 0x1234
-    push hl
+    ld bc, 0x1234
     ld hl, 0xc0ff
     call store16
 

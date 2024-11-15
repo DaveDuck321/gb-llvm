@@ -14,15 +14,12 @@ _start:
     add sp, -4
 
     ; Pass first argument for function
-    ld hl, 0x1234
-    push hl
-    ld hl, 0x5678
-    push hl
+    ld de, 0x1234
+    ld bc, 0x5678
 
     ; Point to the function return address
-    ld hl, sp, 4
+    ld hl, sp, 0
     call large_stack_i32_identity
-    add sp, 4
 
     ; Check the next 4-bytes
     pop hl

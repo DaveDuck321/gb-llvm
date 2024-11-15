@@ -36,14 +36,13 @@ define void @store8(ptr %a, i8 %b) nounwind {
 define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld b, h
-; GBI-NEXT:    ld c, l
-; GBI-NEXT:    ld hl, sp, 2
-; GBI-NEXT:    ldi a, (hl)
-; GBI-NEXT:    ld (bc), a
-; GBI-NEXT:    inc bc
-; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld (bc), a
+; GBI-NEXT:    ld d, h
+; GBI-NEXT:    ld e, l
+; GBI-NEXT:    inc de
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld (de), a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
   ret void

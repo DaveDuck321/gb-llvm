@@ -21,41 +21,41 @@ _start:
     debugtrap
 
     ld b, 0x01
-    ld c, 0x02
-    ld de, 0x0403
-    push de
-
     call argument0
 ; EXPECT: a=01
     debugtrap
 
+    ld c, 0x02
     call argument1
 ; EXPECT: a=02
     debugtrap
 
+    ld d, 0x03
     call argument2
 ; EXPECT: a=03
     debugtrap
 
+    ld e, 0x04
     call argument3
 ; EXPECT: a=04
     debugtrap
 
+    ld de, 0x05
+    push de
+    call argument4
+; EXPECT: a=05
+    debugtrap
     pop de
 
     ld hl, 0x1234
-    ld bc, 0x5678
-    push bc
     call argument0_i16
 ; EXPECT: a=34
     debugtrap
 
-    ld hl, 0x1234
+    ld bc, 0x5678
     call argument1_i16
 ; EXPECT: a=78
     debugtrap
-
-    pop bc
 
     call call_argument2
 ; EXPECT: a=02

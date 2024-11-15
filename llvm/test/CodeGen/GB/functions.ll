@@ -22,8 +22,7 @@ define i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument2:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
   ret i8 %2
 }
@@ -40,8 +39,7 @@ define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument1_i16:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %1 to i8
   ret i8 %res
@@ -50,24 +48,29 @@ define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 define i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument3:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld hl, sp, 3
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    ret
   ret i8 %3
+}
+
+
+define i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
+; GBI-O3-LABEL: argument4:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ret
+  ret i8 %4
 }
 
 define i8 @call_argument2() nounwind {
 ; GBI-O3-LABEL: call_argument2:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), $03
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), $02
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
+; GBI-O3-NEXT:    ld d, $02
+; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument2
-; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
   ret i8 %val
@@ -76,15 +79,11 @@ define i8 @call_argument2() nounwind {
 define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-LABEL: call_argument1_i16:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    ld l, $00
-; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:    ld b, $00
+; GBI-O3-NEXT:    ld c, $01
+; GBI-O3-NEXT:    ld l, b
+; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call argument1_i16
-; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument1_i16(i16 0, i16 1)
   ret i8 %val
@@ -93,19 +92,17 @@ define i8 @call_argument1_i16() nounwind {
 define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3-LABEL: call_argument2_with_locals:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -4
-; GBI-O3-NEXT:    ld hl, sp, 3
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), $03
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), $02
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
+; GBI-O3-NEXT:    ld d, $02
+; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument2
-; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
   ret i8 %b
@@ -114,15 +111,11 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 define i8 @call_argument3() nounwind {
 ; GBI-O3-LABEL: call_argument3:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), $03
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), $02
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
+; GBI-O3-NEXT:    ld d, $02
+; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument3
-; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument3(i8 0, i8 1, i8 2, i8 3)
   ret i8 %val

@@ -7,30 +7,8 @@
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-LABEL: trunc_i32:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    ld hl, sp, 0
-; GBI-O0-NEXT:    ldi (hl), a
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ld hl, sp, 0
-; GBI-O0-NEXT:    ldi a, (hl)
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    ld d, b
-; GBI-O0-NEXT:    ld e, c
-; GBI-O0-NEXT:    inc de
-; GBI-O0-NEXT:    ld a, (bc)
-; GBI-O0-NEXT:    ld c, a
-; GBI-O0-NEXT:    ld a, (de)
-; GBI-O0-NEXT:    ; kill: def $c killed $c def $bc
-; GBI-O0-NEXT:    ld b, a
 ; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    add sp, 2
 ; GBI-O0-NEXT:    ret
 ;
 ; GBI-O3-LABEL: trunc_i32:

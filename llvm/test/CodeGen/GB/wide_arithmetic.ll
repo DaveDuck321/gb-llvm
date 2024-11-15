@@ -5,29 +5,13 @@
 define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: and:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld d, h
-; GBI-O3-NEXT:    ld e, l
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    and (hl)
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    and (hl)
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    and b
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    and c
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ret
   %1 = and i16 %b, %c
   ret i16 %1
@@ -49,29 +33,13 @@ define i16 @andi(i16 %b) nounwind {
 define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: xor:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld d, h
-; GBI-O3-NEXT:    ld e, l
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    xor (hl)
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    xor (hl)
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    xor b
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    xor c
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ret
   %1 = xor i16 %b, %c
   ret i16 %1
@@ -91,29 +59,13 @@ define i16 @xori(i16 %b) nounwind {
 define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: or:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld d, h
-; GBI-O3-NEXT:    ld e, l
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    or (hl)
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    or (hl)
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    or b
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    or c
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ld h, d
 ; GBI-O3-NEXT:    ret
   %1 = or i16 %b, %c
   ret i16 %1
@@ -164,23 +116,16 @@ define i16 @sub16(i16 %a, i8 %b) nounwind {
 define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sless_than:
 ; GBI-O3:       ; %bb.0: ; %begin
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    cp d
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    cp c
 ; GBI-O3-NEXT:    rla
 ; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub h
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    rlca
 ; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    cp h
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp z, .LBB7_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %begin
 ; GBI-O3-NEXT:    ld d, e
@@ -195,20 +140,16 @@ begin:
 define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sgreater_than:
 ; GBI-O3:       ; %bb.0: ; %begin
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    cp c
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    cp l
 ; GBI-O3-NEXT:    rla
 ; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub h
 ; GBI-O3-NEXT:    rlca
 ; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    cp h
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp z, .LBB8_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %begin
 ; GBI-O3-NEXT:    ld d, e
