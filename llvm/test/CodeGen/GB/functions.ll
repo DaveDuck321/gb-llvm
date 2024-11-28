@@ -261,3 +261,47 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
   %2 = call noundef i8 %1()
   ret i8 %2
 }
+
+define i1 @tail_caller(ptr %0) {
+; GBI-O3-LABEL: tail_caller:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    call tail_callee
+; GBI-O3-NEXT:    ret
+  %3 = tail call i1 @tail_callee(ptr %0)
+  ret i1 %3
+}
+
+define i1 @tail_callee(ptr %0) {
+; GBI-O3-LABEL: tail_callee:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    add $f9
+; GBI-O3-NEXT:    cp $01
+; GBI-O3-NEXT:    rla
+; GBI-O3-NEXT:    ret
+  %3 = load i8, ptr %0
+  %4 = icmp eq i8 %3, 7
+  ret i1 %4
+}
+
+define ptr @call_with_save(ptr %0) {
+; GBI-O3-LABEL: call_with_save:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    add sp, -2
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    call tail_callee
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ret
+  %2 = tail call i1 @tail_callee(ptr %0)
+  ret ptr %0
+}

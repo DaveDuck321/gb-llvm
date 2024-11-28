@@ -110,7 +110,10 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SELECT, MVT::i8, Expand); // -> select_cc
   setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
   // SETCCCARRY         // Expanded
-  // SHL_PARTS, SRA_PARTS, SRL_PARTS
+  for (const auto &ShiftOp : {ISD::SHL_PARTS, ISD::SRA_PARTS, ISD::SRL_PARTS}) {
+    setOperationAction(ShiftOp, MVT::i8, Expand);
+  }
+
   setOperationAction(ISD::TRUNCATE, MVT::i8, Legal); // i16 to i8
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand); // -> SIGN_EXTEND
@@ -254,7 +257,6 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       dyn_cast<CondCodeSDNode>(Op.getOperand(2).getNode())->get();
   SDLoc DL = Op;
 
-  // TODO GB: can I move this entire table into the pattern matching?
   bool ReverseResult = false;
   switch (CCode) {
   default:
@@ -419,6 +421,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
 SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                     SmallVectorImpl<SDValue> &InVals) const {
   assert(not CLI.IsVarArg);
+
+  CLI.IsTailCall = false; // TODO: detect when this is legal
 
   SelectionDAG &DAG = CLI.DAG;
   MachineFunction &MF = DAG.getMachineFunction();

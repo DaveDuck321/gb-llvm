@@ -115,5 +115,37 @@ _call_large_return:
     call call_untyped_fn
 ; EXPECT: a=99
     debugtrap
+
+    ld hl, sp-2
+    push hl
+    call call_with_save
+    pop bc
+    ld a, b
+    sub h
+; EXPECT: a=00
+    debugtrap
+
+    ld a, c
+    sub l
+; EXPECT: a=00
+    debugtrap
+
+    ld hl, 7
+    push hl
+    ld hl, sp+0
+    call tail_caller
+    and 1
+; EXPECT: a=01
+    debugtrap
+    pop hl
+
+    ld hl, 6
+    push hl
+    ld hl, sp+0
+    call tail_caller
+    and 1
+; EXPECT: a=00
+    debugtrap
+    pop hl
 _end:
     trap
