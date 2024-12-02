@@ -26,6 +26,17 @@ static cl::opt<bool>
 
 namespace {
 
+void loadHLWithStackOffset(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MBBI, DebugLoc DL,
+                           const TargetInstrInfo &TII, size_t TargetOffset) {
+  if (TargetOffset > 127) {
+    BuildMI(MBB, MBBI, DL, TII.get(GB::LDI16), GB::HL).addImm(TargetOffset);
+    BuildMI(MBB, MBBI, DL, TII.get(GB::ADD_HL)).addReg(GB::SP);
+  } else {
+    BuildMI(MBB, MBBI, DL, TII.get(GB::LD_HL_SP)).addImm(TargetOffset);
+  }
+}
+
 class StackAllocator {
   MachineBasicBlock &MBB;
   const TargetInstrInfo &TII;
@@ -212,9 +223,8 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     }
 
     // Finally do the store
-    assert(SPOffest + Stack.currentOffset() < 127);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-        .addImm(SPOffest + Stack.currentOffset());
+    loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                          SPOffest + Stack.currentOffset());
 
     bool KillSrcReg = not(SrcReg == CopyIntoL || SrcReg == CopyIntoH);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
@@ -235,9 +245,10 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
     if (HLLiveAfter) {
       Stack.save(GB::HL);
     }
-    assert(SPOffest + Stack.currentOffset() < 127);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-        .addImm(SPOffest + Stack.currentOffset());
+
+    loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                          SPOffest + Stack.currentOffset());
+
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
         .addReg(SrcReg,
                 getKillRegState(not RegsImmediatelyAfter.contains(SrcReg)));
@@ -316,9 +327,8 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
         .addReg(GB::L, getKillRegState(true));
 
     // Finally do the store
-    assert(SPOffest + Stack.currentOffset() < 127);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-        .addImm(SPOffest + Stack.currentOffset());
+    loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                          SPOffest + Stack.currentOffset());
 
     if (SrcLower == GB::A) {
       // Might as well use the free increment of HL if we've been assigned A
@@ -349,9 +359,9 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     }
 
     // TODO GB: maybe copy lower to 8 to save the increment
-    assert(SPOffest + Stack.currentOffset() < 127);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-        .addImm(SPOffest + Stack.currentOffset());
+    loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                          SPOffest + Stack.currentOffset());
+
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
         .addReg(SrcLower,
                 getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
@@ -434,10 +444,8 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
     }
   }
 
-  assert(SPOffest + Stack.currentOffset() <= 127 &&
-         "TODO GB: support larger stack offsets");
-  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-      .addImm(SPOffest + Stack.currentOffset());
+  loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                        SPOffest + Stack.currentOffset());
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), DestReg);
 
   if (AfterLoadRestoreFrom.isValid() || AfterLoadRestoreTo.isValid()) {
@@ -548,11 +556,8 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
   }
 
   // Finally do the copy:
-  assert(SPOffest + Stack.currentOffset() < 127 &&
-         "TODO GB: support larger stack offsets");
-
-  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_HL_SP))
-      .addImm(SPOffest + Stack.currentOffset());
+  loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
+                        SPOffest + Stack.currentOffset());
 
   // TODO GB: can this be a generic pattern so we get the benefit everywhere?
   // TODO GB: always scavenge GB::A (saves 4 cycles if its available)

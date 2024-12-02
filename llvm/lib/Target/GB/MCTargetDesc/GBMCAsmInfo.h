@@ -11,7 +11,6 @@ class GBMCAsmInfo : public MCAsmInfoELF {
 public:
   GBMCAsmInfo() {
     CodePointerSize = 2;
-    // TODO GB: maybe this should be '1' since we support unaligned access
     CalleeSaveStackSlotSize = 2;
     AlignmentIsInBytes = false;
     UseMotorolaIntegers = true;

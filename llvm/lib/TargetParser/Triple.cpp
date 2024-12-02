@@ -941,9 +941,6 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::ve:
   case Triple::xcore:
   case Triple::xtensa:
-    return Triple::ELF;
-
-  // TODO GB: is elf appropriate here?
   case Triple::gb:
     return Triple::ELF;
 
