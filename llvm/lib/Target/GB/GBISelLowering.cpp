@@ -83,7 +83,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   for (const auto &BinaryOp :
        {ISD::MUL, ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM, ISD::SMUL_LOHI,
         ISD::UMUL_LOHI, ISD::SDIVREM, ISD::UDIVREM, ISD::MULHU, ISD::MULHS}) {
-    setOperationAction(BinaryOp, MVT::i8, Expand);
+    setOperationAction(BinaryOp, MVT::i8, LibCall);
+    setOperationAction(BinaryOp, MVT::i16, LibCall);
   }
   //  CARRY_FALSE
   //  UADDO_CARRY         // Expanded
@@ -112,6 +113,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // SETCCCARRY         // Expanded
   for (const auto &ShiftOp : {ISD::SHL_PARTS, ISD::SRA_PARTS, ISD::SRL_PARTS}) {
     setOperationAction(ShiftOp, MVT::i8, Expand);
+    setOperationAction(ShiftOp, MVT::i16, Expand);
   }
 
   setOperationAction(ISD::TRUNCATE, MVT::i8, Legal); // i16 to i8
@@ -1002,6 +1004,10 @@ EVT GBTargetLowering::getSetCCResultType(const DataLayout &DL,
 }
 
 bool GBTargetLowering::convertSetCCLogicToBitwiseLogic(EVT VT) const {
+  return true;
+}
+
+bool GBTargetLowering::useSoftFloat() const {
   return true;
 }
 

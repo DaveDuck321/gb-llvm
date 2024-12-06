@@ -87,6 +87,11 @@ private:
   MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
+
+  // TODO: try setting when benchmarks are more meaningful
+  // bool shouldAvoidTransformToShift(EVT VT, unsigned Amount) const override
+  bool useSoftFloat() const override;
+
   bool isSelectSupported(SelectSupportKind) const override;
   bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,

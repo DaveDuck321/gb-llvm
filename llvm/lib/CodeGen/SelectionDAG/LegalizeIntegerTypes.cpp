@@ -23,12 +23,14 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <optional>
 using namespace llvm;
 
 #define DEBUG_TYPE "legalize-types"
@@ -3810,17 +3812,30 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_XINT(SDNode *N, SDValue &Lo,
     Op = fpExtendHelper(Op, Chain, IsStrict, MVT::f32, dl, DAG);
   }
 
+  std::optional<EVT> NeedsTruncateTo = std::nullopt;
+  if (VT == MVT::i16) {
+    // There is no soft float support for float->i16.
+    // We'll have to truncate from an i32 instead.
+    NeedsTruncateTo = VT;
+    VT = MVT::i32;
+  }
+
   RTLIB::Libcall LC = IsSigned ? RTLIB::getFPTOSINT(Op.getValueType(), VT)
                                : RTLIB::getFPTOUINT(Op.getValueType(), VT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-xint conversion!");
   TargetLowering::MakeLibCallOptions CallOptions;
   CallOptions.setSExt(true);
-  std::pair<SDValue, SDValue> Tmp = TLI.makeLibCall(DAG, LC, VT, Op,
-                                                    CallOptions, dl, Chain);
-  SplitInteger(Tmp.first, Lo, Hi);
+  auto [Result, ChainOut] =
+      TLI.makeLibCall(DAG, LC, VT, Op, CallOptions, dl, Chain);
+
+  if (NeedsTruncateTo.has_value()) {
+    Result = DAG.getExtOrTrunc(IsSigned, Result, Result, *NeedsTruncateTo);
+  }
+
+  SplitInteger(Result, Lo, Hi);
 
   if (IsStrict)
-    ReplaceValueWith(SDValue(N, 1), Tmp.second);
+    ReplaceValueWith(SDValue(N, 1), ChainOut);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_FP_TO_XINT_SAT(SDNode *N, SDValue &Lo,

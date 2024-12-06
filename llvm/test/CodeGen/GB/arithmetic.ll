@@ -318,12 +318,12 @@ define i8 @shl(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB28_3
-; GBI-NEXT:  .LBB28_2: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB28_2
+; GBI-NEXT:  .LBB28_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB28_2
-; GBI-NEXT:  .LBB28_3:
+; GBI-NEXT:    jp nz, .LBB28_1
+; GBI-NEXT:  .LBB28_2:
 ; GBI-NEXT:    ret
   %1 = shl i8 %b, %c
   ret i8 %1
@@ -335,12 +335,12 @@ define i8 @lshr(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB29_3
-; GBI-NEXT:  .LBB29_2: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB29_2
+; GBI-NEXT:  .LBB29_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB29_2
-; GBI-NEXT:  .LBB29_3:
+; GBI-NEXT:    jp nz, .LBB29_1
+; GBI-NEXT:  .LBB29_2:
 ; GBI-NEXT:    ret
   %1 = lshr i8 %b, %c
   ret i8 %1
@@ -352,12 +352,12 @@ define i8 @ashr(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB30_3
-; GBI-NEXT:  .LBB30_2: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB30_2
+; GBI-NEXT:  .LBB30_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sra a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB30_2
-; GBI-NEXT:  .LBB30_3:
+; GBI-NEXT:    jp nz, .LBB30_1
+; GBI-NEXT:  .LBB30_2:
 ; GBI-NEXT:    ret
   %1 = ashr i8 %b, %c
   ret i8 %1

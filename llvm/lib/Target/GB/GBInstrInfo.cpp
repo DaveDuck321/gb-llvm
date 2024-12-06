@@ -235,7 +235,7 @@ unsigned GBInstrInfo::removeBranch(MachineBasicBlock &MBB,
   }
 
   MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
-  while (I != MBB.begin()) {
+  while (not MBB.empty()) {
     if (not I->isBranch() || I->isIndirectBranch()) {
       break;
     }
