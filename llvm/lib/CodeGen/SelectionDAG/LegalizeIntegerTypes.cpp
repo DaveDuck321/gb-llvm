@@ -3267,13 +3267,13 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::UADDO, dl, VTList, LoOps);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.computeKnownBits(HiOps[2]).isZero()
+      Hi = DAG.computeKnownBits(HiOps[2]).isBoolFalse()
                ? DAG.getNode(ISD::UADDO, dl, VTList, ArrayRef(HiOps, 2))
                : DAG.getNode(ISD::UADDO_CARRY, dl, VTList, HiOps);
     } else {
       Lo = DAG.getNode(ISD::USUBO, dl, VTList, LoOps);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.computeKnownBits(HiOps[2]).isZero()
+      Hi = DAG.computeKnownBits(HiOps[2]).isBoolFalse()
                ? DAG.getNode(ISD::USUBO, dl, VTList, ArrayRef(HiOps, 2))
                : DAG.getNode(ISD::USUBO_CARRY, dl, VTList, HiOps);
     }

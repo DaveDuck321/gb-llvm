@@ -3984,9 +3984,14 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                              Tmp2, Tmp3,
                              cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
     } else {
-      Tmp1 = DAG.getSelectCC(dl, Tmp1,
-                             DAG.getConstant(0, dl, Tmp1.getValueType()),
-                             Tmp2, Tmp3, ISD::SETNE);
+      if (TLI.getBooleanContents(Tmp1.getValueType()) ==
+          TargetLoweringBase::UndefinedBooleanContent) {
+        Tmp1 = DAG.getNode(ISD::AND, dl, Tmp1.getValueType(), Tmp1,
+                           DAG.getConstant(1, dl, Tmp1.getValueType()));
+      }
+      Tmp1 =
+          DAG.getSelectCC(dl, Tmp1, DAG.getConstant(0, dl, Tmp1.getValueType()),
+                          Tmp2, Tmp3, ISD::SETNE);
     }
     Tmp1->setFlags(Node->getFlags());
     Results.push_back(Tmp1);

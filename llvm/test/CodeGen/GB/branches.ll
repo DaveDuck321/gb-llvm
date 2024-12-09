@@ -426,6 +426,7 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:    ld b, $04
 ; GBI-O0-NEXT:    ld hl, sp, 2
 ; GBI-O0-NEXT:    ld (hl), b
+; GBI-O0-NEXT:    and $01
 ; GBI-O0-NEXT:    cp $00
 ; GBI-O0-NEXT:    push af
 ; GBI-O0-NEXT:    ld hl, sp, 4

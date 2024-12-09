@@ -79,6 +79,18 @@ public:
     return Zero.isAllOnes();
   }
 
+  /// Returns true if value is interpreted as bool true
+  bool isBoolTrue() const {
+    assert(!hasConflict() && "KnownBits conflict!");
+    return extractBits(1, 0).isAllOnes();
+  }
+
+  /// Returns true if value is interpreted as bool false
+  bool isBoolFalse() const {
+    assert(!hasConflict() && "KnownBits conflict!");
+    return extractBits(1, 0).isZero();
+  }
+
   /// Returns true if value is all one bits.
   bool isAllOnes() const {
     assert(!hasConflict() && "KnownBits conflict!");

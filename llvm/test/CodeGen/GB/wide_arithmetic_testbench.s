@@ -74,5 +74,22 @@ _start:
 ; EXPECT: a=00
     debugtrap
 
+    ; Allocate space for return
+    add sp - 4
+
+    ; Result = this + 3214
+    ld bc, 6540
+    ld de, 0
+    ld hl, sp + 0 ; Point to return memory
+    call add32
+
+    pop hl
+; EXPECT: hl=261a
+    debugtrap
+
+    pop hl
+; EXPECT: hl=0000
+    debugtrap
+
 _end:
     trap
