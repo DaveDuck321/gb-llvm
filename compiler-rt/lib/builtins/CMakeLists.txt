@@ -639,6 +639,13 @@ set(avr_SOURCES
   ${GENERIC_SOURCES}
 )
 
+set(gb_SOURCES
+  ${GENERIC_SOURCES}
+  gb/mulqi.c
+  gb/mulhi.c
+  gb/mulsi.c
+)
+
 # hexagon arch
 set(hexagon_SOURCES
   hexagon/common_entry_exit_abi1.S
