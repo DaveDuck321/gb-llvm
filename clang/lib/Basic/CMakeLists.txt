@@ -99,20 +99,21 @@ add_clang_library(clangBasic
   Targets/BPF.cpp
   Targets/CSKY.cpp
   Targets/DirectX.cpp
+  Targets/GB.cpp
   Targets/Hexagon.cpp
   Targets/Lanai.cpp
   Targets/Le64.cpp
   Targets/LoongArch.cpp
   Targets/M68k.cpp
-  Targets/MSP430.cpp
   Targets/Mips.cpp
+  Targets/MSP430.cpp
   Targets/NVPTX.cpp
   Targets/OSTargets.cpp
   Targets/PNaCl.cpp
   Targets/PPC.cpp
   Targets/RISCV.cpp
-  Targets/SPIR.cpp
   Targets/Sparc.cpp
+  Targets/SPIR.cpp
   Targets/SystemZ.cpp
   Targets/TCE.cpp
   Targets/VE.cpp

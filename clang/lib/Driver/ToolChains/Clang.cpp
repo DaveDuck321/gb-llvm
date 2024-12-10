@@ -61,6 +61,7 @@
 #include "llvm/TargetParser/LoongArchTargetParser.h"
 #include "llvm/TargetParser/RISCVISAInfo.h"
 #include "llvm/TargetParser/RISCVTargetParser.h"
+#include "llvm/TargetParser/Triple.h"
 #include <cctype>
 
 using namespace clang::driver;
@@ -1330,6 +1331,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::riscv64:
   case llvm::Triple::systemz:
   case llvm::Triple::xcore:
+  case llvm::Triple::gb:
     return false;
   }
 }
