@@ -1,7 +1,6 @@
 #include "GB.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -14,10 +13,6 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DebugLoc.h"
-#include "llvm/MC/MCRegister.h"
-
-#include <algorithm>
-#include <cstddef>
 
 using namespace llvm;
 

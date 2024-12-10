@@ -194,11 +194,13 @@ let hasSideEffects = true in {
 
 let mayLoad = true in {
   def POP  : GBPushPop16<"pop", 0xC1, (outs SR16:$reg), (ins)>;
-  def RST : GBRSTInstr<"rst", 0xC7>;
 }
 
 let mayStore = true in {
   def PUSH : GBPushPop16<"push", 0xC5, (outs), (ins SR16:$reg)>;
+
+  let isCall = true in
+  def RST : GBRSTInstr<"rst", 0xC7>;
 }
 
 // Immediate types
