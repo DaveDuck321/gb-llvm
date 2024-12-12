@@ -951,6 +951,12 @@ MachineBasicBlock *GBTargetLowering::emitUnknownShiftWithCustomInserter(
   return EndMBB;
 }
 
+EVT GBTargetLowering::getTypeForExtReturn(LLVMContext &Context, EVT VT,
+                                          ISD::NodeType ExtendKind) const {
+  EVT MinVT = getRegisterType(MVT::i8);
+  return VT.bitsLT(MinVT) ? MinVT : VT;
+}
+
 SDValue
 GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               bool IsVarArg,
@@ -1007,9 +1013,7 @@ bool GBTargetLowering::convertSetCCLogicToBitwiseLogic(EVT VT) const {
   return true;
 }
 
-bool GBTargetLowering::useSoftFloat() const {
-  return true;
-}
+bool GBTargetLowering::useSoftFloat() const { return true; }
 
 bool GBTargetLowering::isSelectSupported(SelectSupportKind) const {
   // We don't have a select instruction: inform the optimizer

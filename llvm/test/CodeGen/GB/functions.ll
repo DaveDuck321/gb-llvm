@@ -305,3 +305,11 @@ define ptr @call_with_save(ptr %0) {
   %2 = tail call i1 @tail_callee(ptr %0)
   ret ptr %0
 }
+
+define linkonce_odr dso_local noundef zeroext i8 @clang_fn(i8 noundef zeroext %lhs, i8 noundef zeroext %rhs) local_unnamed_addr {
+; GBI-O3-LABEL: clang_fn:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    ld a, $02
+; GBI-O3-NEXT:    ret
+  ret i8 2
+}
