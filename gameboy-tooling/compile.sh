@@ -23,6 +23,8 @@ ninja -C build
 mkdir build-compiler-rt
 cmake -S compiler-rt -B build-compiler-rt -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCOMPILER_RT_BUILD_CRT=ON \
+    -DCOMPILER_RT_DEBUG=OFF \
     -DCOMPILER_RT_DEFAULT_TARGET_ARCH=gb \
     -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON \
     -DCMAKE_C_COMPILER_WORKS=ON \

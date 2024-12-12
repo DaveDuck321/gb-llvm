@@ -306,6 +306,41 @@ define ptr @call_with_save(ptr %0) {
   ret ptr %0
 }
 
+define internal fastcc i1 @fastcc_callee(ptr %0) {
+; GBI-O3-LABEL: fastcc_callee:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    add $f9
+; GBI-O3-NEXT:    cp $01
+; GBI-O3-NEXT:    rla
+; GBI-O3-NEXT:    ret
+  %3 = load i8, ptr %0
+  %4 = icmp eq i8 %3, 7
+  ret i1 %4
+}
+
+define ptr @call_fastcc(ptr %0) {
+; GBI-O3-LABEL: call_fastcc:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    add sp, -2
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    call fastcc_callee
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ret
+  %2 = tail call fastcc i1 @fastcc_callee(ptr %0)
+  ret ptr %0
+}
+
 define linkonce_odr dso_local noundef zeroext i8 @clang_fn(i8 noundef zeroext %lhs, i8 noundef zeroext %rhs) local_unnamed_addr {
 ; GBI-O3-LABEL: clang_fn:
 ; GBI-O3:       ; %bb.0:

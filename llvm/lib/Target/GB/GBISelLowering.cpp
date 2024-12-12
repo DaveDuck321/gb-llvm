@@ -3,6 +3,7 @@
 #include "GBRegisterInfo.h"
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -21,6 +22,7 @@
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
@@ -535,7 +537,8 @@ SDValue GBTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
-  if (CallConv != CallingConv::C) {
+  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
+                       CallConv)) {
     report_fatal_error("Unsupported calling convention");
   }
   if (IsVarArg) {
@@ -591,7 +594,8 @@ bool GBTargetLowering::CanLowerReturn(
     CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
     const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
   assert(not IsVarArg);
-  assert(CallConv == CallingConv::C);
+  assert(is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
+                      CallConv));
 
   if (Outs.size() == 0) {
     return true;
@@ -963,7 +967,8 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<SDValue> &OutsVals,
                               const SDLoc &DL, SelectionDAG &DAG) const {
-  if (CallConv != CallingConv::C) {
+  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
+                       CallConv)) {
     report_fatal_error("Unsupported calling convention");
   }
   if (IsVarArg) {

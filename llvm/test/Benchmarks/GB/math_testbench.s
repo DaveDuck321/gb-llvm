@@ -25,13 +25,13 @@ main:
 ; EXPECT: a=c8
     debugtrap
 
+; Note: for some reason the operands are flipped here
     ld a, 0
-    ld b, 7
-    ld c, 30
+    ld b, 30
+    ld c, 7
     call builtin_multiply
-; TODO: why is this so slow?
-; EXPECT-CYCLE-O3: 548
-; EXPECT-CYCLE-Oz: 548
+; EXPECT-CYCLE-O3: 119
+; EXPECT-CYCLE-Oz: 119
 ; EXPECT: a=d2
     debugtrap
 
