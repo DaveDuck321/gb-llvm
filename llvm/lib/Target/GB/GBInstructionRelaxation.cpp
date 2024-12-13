@@ -40,6 +40,7 @@ public:
                                       MachineBasicBlock &MBB);
   bool foldRedundantCopies(MachineFunction &MF);
   bool relaxRotatesThroughA(MachineFunction &MF);
+  bool simplifyCp00(MachineFunction &MF);
 };
 
 auto definesTargetReg(const MachineInstr &MI, Register Reg,
@@ -232,6 +233,28 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
   return MadeChanges;
 }
 
+bool GBInstructionRelaxation::simplifyCp00(MachineFunction &MF) {
+  // TODO: look for the (CP (AND ...)) pattern while we've still got a DAG
+  // Even better (CP (AND (1 << N))) can be (BIT N) to reduce register pressure.
+  const auto &TII = *MF.getSubtarget().getInstrInfo();
+
+  bool MadeChanges = false;
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBB)) {
+      // CP 00 also sets the subtract flag.
+      // This is REALLY hard to observe. We'll certainly never generate code
+      // that relies on this.
+      if (MI.getOpcode() == GB::CPI && MI.getOperand(0).getImm() == 0) {
+        BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::OR_r)).addReg(GB::A);
+        MI.removeFromParent();
+
+        MadeChanges = true;
+      }
+    }
+  }
+  return MadeChanges;
+}
+
 bool GBInstructionRelaxation::runOnMachineFunction(MachineFunction &MF) {
   if (GBDisableInstructionRelaxation) {
     return false;
@@ -240,6 +263,7 @@ bool GBInstructionRelaxation::runOnMachineFunction(MachineFunction &MF) {
   bool MadeChanges = false;
   MadeChanges |= mergeLoadStoreIncrementIntoLDI(MF);
   MadeChanges |= relaxRotatesThroughA(MF);
+  MadeChanges |= simplifyCp00(MF);
   while (foldRedundantCopies(MF)) {
     MadeChanges = true;
   }

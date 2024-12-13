@@ -455,7 +455,7 @@ define i8 @cttz(i8 %b) {
 ; GBI-LABEL: cttz:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    cp $00
+; GBI-NEXT:    or a
 ; GBI-NEXT:    jp z, .LBB37_1
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
 ; GBI-NEXT:    ld a, b
@@ -502,7 +502,7 @@ define i8 @ctlz(i8 %b) {
 ; GBI-LABEL: ctlz:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    cp $00
+; GBI-NEXT:    or a
 ; GBI-NEXT:    jp z, .LBB38_1
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
 ; GBI-NEXT:    ld b, a

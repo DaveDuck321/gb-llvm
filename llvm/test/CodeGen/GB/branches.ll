@@ -372,7 +372,7 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-NEXT:    ld a, b
 ; GBI-O0-NEXT:    ; kill: def $b killed $a
 ; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    cp $00
+; GBI-O0-NEXT:    or a
 ; GBI-O0-NEXT:    jp z, .LBB11_2
 ; GBI-O0-NEXT:    jp .LBB11_1
 ; GBI-O0-NEXT:  .LBB11_1: ; %label1
@@ -395,7 +395,7 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    cp $00
+; GBI-O3-NEXT:    or a
 ; GBI-O3-NEXT:    jp z, .LBB11_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
@@ -427,7 +427,7 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:    ld hl, sp, 2
 ; GBI-O0-NEXT:    ld (hl), b
 ; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    cp $00
+; GBI-O0-NEXT:    or a
 ; GBI-O0-NEXT:    push af
 ; GBI-O0-NEXT:    ld hl, sp, 4
 ; GBI-O0-NEXT:    ld h, (hl)
@@ -457,7 +457,7 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    cp $00
+; GBI-O3-NEXT:    or a
 ; GBI-O3-NEXT:    jp z, .LBB12_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
