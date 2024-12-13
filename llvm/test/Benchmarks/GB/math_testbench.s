@@ -1,8 +1,8 @@
-; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp -O3 \
+; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp $GB_TEST_PATH/noopt.cpp -O3 \
 ; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-O3
-; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp -Oz \
+; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp $GB_TEST_PATH/noopt.cpp -Oz \
 ; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-Oz
-; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp -O0 \
+; RUN: run-clang-test.sh %s $GB_TEST_PATH/math.cpp $GB_TEST_PATH/noopt.cpp -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global main
@@ -50,6 +50,21 @@ main:
 ; EXPECT-CYCLE-O3: 2136
 ; EXPECT-CYCLE-Oz: 1658
 ; EXPECT: hl=7080
+    debugtrap
+
+    ld hl, 3600
+    call floating_point_add
+; EXPECT-CYCLE-O3: 5021
+; EXPECT-CYCLE-Oz: 5021
+; EXPECT: hl=0e59
+    debugtrap
+
+
+    ld hl, 50
+    call floating_point_mul
+; EXPECT-CYCLE-O3: 26023
+; EXPECT-CYCLE-Oz: 26023
+; EXPECT: hl=02fe
     debugtrap
 
     ret
