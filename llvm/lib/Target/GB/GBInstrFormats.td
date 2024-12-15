@@ -286,6 +286,28 @@ multiclass GBCBGPR8S1Imm3<string mnemonic, bits<8> opcode>
   }
 }
 
+multiclass GBCBGPR8S1Imm3F<string mnemonic, bits<8> opcode>
+{
+  def _r : GBCBInstr<mnemonic, "$imm, $rs", opcode, (outs), (ins GPR8:$rs, uimm3:$imm)> {
+    bits<3> rs;
+    bits<3> imm;
+    let Inst{13 - 11} = imm;
+    let Inst{10 - 8} = rs;
+    let Defs = [F];
+  }
+
+  def _iHL : GBCBInstr<mnemonic, "$imm, (hl)", opcode, (outs), (ins uimm3:$imm)> {
+    bits<3> imm;
+    let Inst{13 - 11} = imm;
+    let Inst{10 - 8} = 0b110;
+
+    let Defs = [F];
+    let Uses = [HL];
+    let mayLoad = true;
+    let mayStore = true;
+  }
+}
+
 class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs, FixupKind fixup>
   : GBInstr<mnemonic, "$flag" # arg2, opcode, (outs), !con((ins flag:$flag), inputs), fixup>
 {

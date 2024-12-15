@@ -128,7 +128,6 @@ let Defs = [F] in {
   defm SRA  : _GB_CBGPR8S1<"sra", 0x28>;
   defm SWAP : _GB_CBGPR8S1<"swap", 0x30>;
   defm SRL  : _GB_CBGPR8S1<"srl", 0x38>;
-  defm BIT : GBCBGPR8S1Imm3<"bit", 0x40>;
 }
 
 defm RL   : GBCBGPR8S1AndFlag<"rl", 0x10>;
@@ -136,6 +135,7 @@ defm RR   : GBCBGPR8S1AndFlag<"rr", 0x18>;
 
 defm RES : GBCBGPR8S1Imm3<"res", 0x80>;
 defm SET : GBCBGPR8S1Imm3<"set", 0xC0>;
+defm BIT : GBCBGPR8S1Imm3F<"bit", 0x40>;
 
 let isTerminator = true, isBranch = true in {
   let isBarrier = true in
@@ -249,6 +249,12 @@ def : Pat<(CP_NODE SETUGE, A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETULT, A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETEQ,  A, imm8:$imm8), (CPI imm8:$imm8)>;
 def : Pat<(CP_NODE SETNE,  A, imm8:$imm8), (CPI imm8:$imm8)>;
+
+foreach shift = [0, 1, 2, 3, 4, 5, 6, 7] in {
+  defvar imm = !shl(1, shift);
+  def : Pat<(CP_NODE SETNE, (and GPR8:$rs, imm), 0), (BIT_r GPR8:$rs, shift)>;
+  def : Pat<(CP_NODE SETEQ, (and GPR8:$rs, imm), 0), (BIT_r GPR8:$rs, shift)>;
+}
 
 // Rotates the carry into A, used as our setcc
 def SDT_GB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;

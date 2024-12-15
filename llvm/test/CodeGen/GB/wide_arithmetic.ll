@@ -201,9 +201,7 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:  .LBB9_2:
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    bit 0, e
 ; GBI-O3-NEXT:    jp nz, .LBB9_3
 ; GBI-O3-NEXT:  ; %bb.4:
 ; GBI-O3-NEXT:    ld a, $00

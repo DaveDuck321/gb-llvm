@@ -369,10 +369,8 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O0-LABEL: phi:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -2
-; GBI-O0-NEXT:    ld a, b
-; GBI-O0-NEXT:    ; kill: def $b killed $a
-; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    or a
+; GBI-O0-NEXT:    ; kill: def $a killed $b
+; GBI-O0-NEXT:    bit 0, b
 ; GBI-O0-NEXT:    jp z, .LBB11_2
 ; GBI-O0-NEXT:    jp .LBB11_1
 ; GBI-O0-NEXT:  .LBB11_1: ; %label1
@@ -393,9 +391,7 @@ define i8 @phi(i1 %b) nounwind {
 ;
 ; GBI-O3-LABEL: phi:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    bit 0, b
 ; GBI-O3-NEXT:    jp z, .LBB11_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
@@ -417,22 +413,13 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-LABEL: select:
 ; GBI-O0:       ; %bb.0:
 ; GBI-O0-NEXT:    add sp, -4
-; GBI-O0-NEXT:    ld a, b
-; GBI-O0-NEXT:    ld hl, sp, 0
-; GBI-O0-NEXT:    ld (hl), a
-; GBI-O0-NEXT:    ld b, $05
 ; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    ld b, $04
+; GBI-O0-NEXT:    ld a, $05
 ; GBI-O0-NEXT:    ld hl, sp, 2
-; GBI-O0-NEXT:    ld (hl), b
-; GBI-O0-NEXT:    and $01
-; GBI-O0-NEXT:    or a
-; GBI-O0-NEXT:    push af
-; GBI-O0-NEXT:    ld hl, sp, 4
-; GBI-O0-NEXT:    ld h, (hl)
-; GBI-O0-NEXT:    pop af
-; GBI-O0-NEXT:    ld a, h
+; GBI-O0-NEXT:    ld (hl), a
+; GBI-O0-NEXT:    ld a, $04
+; GBI-O0-NEXT:    bit 0, b
 ; GBI-O0-NEXT:    push af
 ; GBI-O0-NEXT:    ld hl, sp, 5
 ; GBI-O0-NEXT:    ld (hl), a
@@ -440,13 +427,13 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O0-NEXT:    jr nz, .LBB12_2
 ; GBI-O0-NEXT:    jr .LBB12_1
 ; GBI-O0-NEXT:  .LBB12_1:
-; GBI-O0-NEXT:    ld hl, sp, 1
+; GBI-O0-NEXT:    ld hl, sp, 2
 ; GBI-O0-NEXT:    ld a, (hl)
 ; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld (hl), a
 ; GBI-O0-NEXT:    jr .LBB12_2
 ; GBI-O0-NEXT:  .LBB12_2:
-; GBI-O0-NEXT:    ld hl, sp, 0
+; GBI-O0-NEXT:    ld hl, sp, 1
 ; GBI-O0-NEXT:    ld b, (hl)
 ; GBI-O0-NEXT:    ld hl, sp, 3
 ; GBI-O0-NEXT:    ld a, (hl)
@@ -455,9 +442,7 @@ define i8 @select(i1 %b) nounwind {
 ;
 ; GBI-O3-LABEL: select:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    bit 0, b
 ; GBI-O3-NEXT:    jp z, .LBB12_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
