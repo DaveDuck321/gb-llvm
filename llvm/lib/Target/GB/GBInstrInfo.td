@@ -294,19 +294,29 @@ def to_tframeindex : SDNodeXForm<frameindex, [{
 def : Pat<(frameindex:$imm), (LD_HL_SP (to_tframeindex $imm))>;
 
 // ALU 8-bit
-multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, GBInstr indInstr> {
+multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, GBInstr indInstr, bit alreadyHasOutputGlue=0> {
   def : Pat<!setdagop((? A, imm8:$imm), node), !setdagop((? imm8:$imm), immInstr)>;
   def : Pat<!setdagop((? A, GPR8:$rs),  node), !setdagop((? GPR8:$rs),  regInstr)>;
   def : Pat<!setdagop((? A, (load HL)), node), !setdagop((?),           indInstr)>;
+
+  // ALU ops set the zero flag, CP 0 is redundant in these cases
+  // Unfortunately only one glued output is permitted so we can't make this optimization if we need the carry flag
+  if !not(alreadyHasOutputGlue) then {
+    foreach flag = [SETNE, SETEQ] in {
+      def : Pat<(CP_NODE flag, !setdagop((? A, imm8:$imm), node), 0), !setdagop((? imm8:$imm), immInstr)>;
+      def : Pat<(CP_NODE flag, !setdagop((? A, GPR8:$rs),  node), 0), !setdagop((? GPR8:$rs),  regInstr)>;
+      def : Pat<(CP_NODE flag, !setdagop((? A, (load HL)), node), 0), !setdagop((?),           indInstr)>;
+    }
+  }
 }
 
 defm : ALU_Pat<add,  ADDI, ADD_r, ADD_iHL>;
-defm : ALU_Pat<addc, ADDI, ADD_r, ADD_iHL>;
-defm : ALU_Pat<adde, ADCI, ADC_r, ADC_iHL>;
+defm : ALU_Pat<addc, ADDI, ADD_r, ADD_iHL, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<adde, ADCI, ADC_r, ADC_iHL, /*alreadyHasOutputGlue=*/ 1>;
 
 defm : ALU_Pat<sub,  SUBI, SUB_r, SUB_iHL>;
-defm : ALU_Pat<subc, SUBI, SUB_r, SUB_iHL>;
-defm : ALU_Pat<sube, SBCI, SBC_r, SBC_iHL>;
+defm : ALU_Pat<subc, SUBI, SUB_r, SUB_iHL, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<sube, SBCI, SBC_r, SBC_iHL, /*alreadyHasOutputGlue=*/ 1>;
 
 defm : ALU_Pat<and, ANDI, AND_r, AND_iHL>;
 defm : ALU_Pat<xor, XORI, XOR_r, XOR_iHL>;
