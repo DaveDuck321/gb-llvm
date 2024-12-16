@@ -35,4 +35,14 @@ uint16_t floating_point_add(uint16_t lhs) {
 uint16_t floating_point_mul(uint16_t lhs) {
   return lhs * noopt(15.333f);
 }
+
+uint16_t lshr_i16(uint16_t val, uint8_t amt) {
+  return val >> amt;
+}
+int16_t ashr_i16(int16_t val, uint8_t amt) {
+  return val >> amt;
+}
+int16_t shl_i16(uint16_t val, uint8_t amt) {
+  return val << amt;
+}
 }

@@ -3,6 +3,18 @@
 ; RUN: run-emulator-test.sh %s $GB_TEST_PATH/wide_arithmetic.ll -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
+.global __ashlhi3
+__ashlhi3:
+    ret
+
+.global __lshrhi3
+__lshrhi3:
+    ret
+
+.global __ashrhi3
+__ashrhi3:
+    ret
+
 .global _start
 _start:
     di
@@ -89,6 +101,36 @@ _start:
 
     pop hl
 ; EXPECT: hl=0000
+    debugtrap
+
+    ld hl, 0x8066
+    call shl16_c2
+; EXPECT: hl=0198
+    debugtrap
+
+    ld hl, 0x8066
+    call shl16_c9
+; EXPECT: hl=cc00
+    debugtrap
+
+    ld hl, 0x8066
+    call asr16_c2
+; EXPECT: hl=e019
+    debugtrap
+
+    ld hl, 0x8066
+    call asr16_c9
+; EXPECT: hl=ffc0
+    debugtrap
+
+    ld hl, 0x8066
+    call lsr16_c2
+; EXPECT: hl=2019
+    debugtrap
+
+    ld hl, 0x8066
+    call lsr16_c9
+; EXPECT: hl=0040
     debugtrap
 
 _end:

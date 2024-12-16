@@ -105,6 +105,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   for (const auto &ShiftOp :
        {ISD::SHL, ISD::SRA, ISD::SRL, ISD::ROTL, ISD::ROTR}) {
     setOperationAction(ShiftOp, MVT::i8, Legal);
+    setOperationAction(ShiftOp, MVT::i16, LibCall);
   }
   for (const auto &BitOp : {ISD::CTTZ, ISD::CTLZ, ISD::CTPOP}) {
     setOperationAction(BitOp, MVT::i8, Expand);
@@ -392,6 +393,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     break;
   case GBISD::ADDR_WRAPPER:
     return "GBISD::ADDR_WRAPPER";
+  case GBISD::ASHR:
+    return "GBISD::ASHR";
   case GBISD::BR_CC:
     return "GBISD::BR_CC";
   case GBISD::CALL:
@@ -406,14 +409,22 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::LD_HL_SP";
   case GBISD::LOWER:
     return "GBISD::LOWER";
+  case GBISD::LSHR:
+    return "GBISD::LSHR";
   case GBISD::RET:
     return "GBISD::RET";
+  case GBISD::RL:
+    return "GBISD::RL";
   case GBISD::RLA:
     return "GBISD::RLA";
   case GBISD::RLCA:
     return "GBISD::RLCA";
+  case GBISD::RR:
+    return "GBISD::RR";
   case GBISD::SELECT_CC:
     return "GBISD::SELECT_CC";
+  case GBISD::SHL:
+    return "GBISD::SHL";
   case GBISD::UPPER:
     return "GBISD::UPPER";
   }
@@ -1003,6 +1014,69 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   }
 
   return DAG.getNode(GBISD::RET, DL, MVT::Other, RetOps);
+}
+
+bool GBTargetLowering::expandShiftByConstant(SelectionDAG &DAG, SDNode *N,
+                                             const APInt &Amt, SDValue &Lo,
+                                             SDValue &Hi) const {
+  EVT NVT = Lo.getValueType();
+  unsigned VTBits = N->getValueType(0).getSizeInBits();
+  unsigned NVTBits = NVT.getSizeInBits();
+  if (Amt.uge(VTBits) || Amt.uge(NVTBits)) {
+    // LLVM does a good job here. No need for anything custom.
+    return false;
+  }
+
+  if (NVT != MVT::i8) {
+    // Only i16 -> i8 conversion is supported
+    return false;
+  }
+
+  assert(NVTBits == 8 && Amt.ult(8));
+
+  // If we let llvm do its thing Lo will take 4 instructions, Hi will take 9
+  // instructions
+
+  unsigned ShiftAmount = Amt.getZExtValue();
+  bool IsRightShift = false;
+  unsigned Op = 0;
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("Unrecognised op");
+  case ISD::SHL:
+    Op = GBISD::SHL;
+    break;
+  case ISD::SRA:
+    Op = GBISD::ASHR;
+    IsRightShift = true;
+    break;
+  case ISD::SRL:
+    Op = GBISD::LSHR;
+    IsRightShift = true;
+    break;
+  }
+
+  SDLoc Loc = Lo;
+  if (IsRightShift) {
+    for (unsigned I = 0; I < ShiftAmount; I += 1) {
+      Hi = DAG.getNode(Op, Loc, {NVT, MVT::Glue}, Hi);
+      SDValue Glue = Hi.getValue(1);
+      Lo = DAG.getNode(GBISD::RR, Loc, NVT, Lo, Glue);
+    }
+  } else {
+    for (unsigned I = 0; I < ShiftAmount; I += 1) {
+      Lo = DAG.getNode(Op, Loc, {NVT, MVT::Glue}, Lo);
+      SDValue Glue = Lo.getValue(1);
+      Hi = DAG.getNode(GBISD::RL, Loc, NVT, Hi, Glue);
+    }
+  }
+  return true;
+}
+
+GBTargetLowering::ShiftLegalizationStrategy
+GBTargetLowering::preferredShiftLegalizationStrategy(
+    SelectionDAG &DAG, SDNode *N, unsigned ExpansionFactor) const {
+  return ShiftLegalizationStrategy::LowerToLibcall;
 }
 
 MVT GBTargetLowering::getScalarShiftAmountTy(const DataLayout &, EVT) const {

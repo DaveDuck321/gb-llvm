@@ -247,3 +247,122 @@ define i32 @add32(i32 %in) nounwind {
   %1 = add i32 %in, 3214
   ret i32 %1
 }
+
+
+define i16 @shl16(i16 %bc, i16 %de) nounwind {
+; GBI-O3-LABEL: shl16:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    ld b, $00
+; GBI-O3-NEXT:    call __ashlhi3
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = shl i16 %bc, %de
+  ret i16 %1
+}
+
+define i16 @lsr16(i16 %bc, i16 %de) nounwind {
+; GBI-O3-LABEL: lsr16:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    ld b, $00
+; GBI-O3-NEXT:    call __lshrhi3
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = lshr i16 %bc, %de
+  ret i16 %1
+}
+
+define i16 @asr16(i16 %bc, i16 %de) nounwind {
+; GBI-O3-LABEL: asr16:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    ld b, $00
+; GBI-O3-NEXT:    call __ashrhi3
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = ashr i16 %bc, %de
+  ret i16 %1
+}
+
+define i16 @shl16_c2(i16 %bc) nounwind {
+; GBI-O3-LABEL: shl16_c2:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    sla l
+; GBI-O3-NEXT:    rl h
+; GBI-O3-NEXT:    sla l
+; GBI-O3-NEXT:    rl h
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = shl i16 %bc, 2
+  ret i16 %1
+}
+
+define i16 @shl16_c9(i16 %bc) nounwind {
+; GBI-O3-LABEL: shl16_c9:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    sla l
+; GBI-O3-NEXT:    ld c, $00
+; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = shl i16 %bc, 9
+  ret i16 %1
+}
+
+define i16 @asr16_c2(i16 %bc) nounwind {
+; GBI-O3-LABEL: asr16_c2:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    rr l
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    rr l
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = ashr i16 %bc, 2
+  ret i16 %1
+}
+
+define i16 @asr16_c9(i16 %bc) nounwind {
+; GBI-O3-LABEL: asr16_c9:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra b
+; GBI-O3-NEXT:    sra h
+; GBI-O3-NEXT:    ld l, h
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = ashr i16 %bc, 9
+  ret i16 %1
+}
+
+define i16 @lsr16_c2(i16 %bc) nounwind {
+; GBI-O3-LABEL: lsr16_c2:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    srl h
+; GBI-O3-NEXT:    rr l
+; GBI-O3-NEXT:    srl h
+; GBI-O3-NEXT:    rr l
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = lshr i16 %bc, 2
+  ret i16 %1
+}
+
+define i16 @lsr16_c9(i16 %bc) nounwind {
+; GBI-O3-LABEL: lsr16_c9:
+; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    srl h
+; GBI-O3-NEXT:    ld b, $00
+; GBI-O3-NEXT:    ld l, h
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ret
+begin:
+  %1 = lshr i16 %bc, 9
+  ret i16 %1
+}

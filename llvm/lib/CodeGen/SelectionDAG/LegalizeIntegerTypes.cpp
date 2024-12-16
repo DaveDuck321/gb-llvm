@@ -2864,9 +2864,14 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
 
   // Though Amt shouldn't usually be 0, it's possible. E.g. when legalization
   // splitted a vector shift, like this: <op1, op2> SHL <0, 2>.
+  Lo = InL;
+  Hi = InH;
   if (!Amt) {
-    Lo = InL;
-    Hi = InH;
+    return;
+  }
+
+  // Target may produce a chained shift-then-rotate
+  if (TLI.expandShiftByConstant(DAG, N, Amt, Lo, Hi)) {
     return;
   }
 

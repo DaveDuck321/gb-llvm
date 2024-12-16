@@ -4286,6 +4286,14 @@ public:
   ///
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+  // Expand shift by constant Amt into two sets of nodes producing Lo and Hi
+  // Returns true on success
+  virtual bool expandShiftByConstant(SelectionDAG &DAG, SDNode *N,
+                                     const APInt &Amt, SDValue &Lo,
+                                     SDValue &Hi) const {
+    return false;
+  }
+
   /// Return true if it is profitable to move this shift by a constant amount
   /// through its operand, adjusting any immediate operands as necessary to
   /// preserve semantics. This transformation may not be desirable if it

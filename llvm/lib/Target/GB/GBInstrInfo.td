@@ -265,6 +265,20 @@ def : Pat<(RLA_NODE A), (RLA)>;
 def RLCA_NODE : SDNode<"GBISD::RLCA", SDT_GB1i8, []>;
 def : Pat<(RLCA_NODE A), (RLCA)>;
 
+def SDT_GBi8i8 : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<0, i8>]>;
+def RR_NODE : SDNode<"GBISD::RR", SDT_GB1i8, [SDNPInGlue, SDNPOutGlue]>;
+def RL_NODE : SDNode<"GBISD::RL", SDT_GB1i8, [SDNPInGlue, SDNPOutGlue]>;
+def SHL_NODE : SDNode<"GBISD::SHL", SDT_GB1i8, [SDNPOutGlue]>;
+def ASHR_NODE : SDNode<"GBISD::ASHR", SDT_GB1i8, [SDNPOutGlue]>;
+def LSHR_NODE : SDNode<"GBISD::LSHR", SDT_GB1i8, [SDNPOutGlue]>;
+
+def : Pat<(RR_NODE GPR8:$rs), (RR_r GPR8:$rs)>;
+def : Pat<(RL_NODE GPR8:$rs), (RL_r GPR8:$rs)>;
+def : Pat<(SHL_NODE GPR8:$rs), (SLA_r GPR8:$rs)>;
+def : Pat<(ASHR_NODE GPR8:$rs), (SRA_r GPR8:$rs)>;
+def : Pat<(LSHR_NODE GPR8:$rs), (SRL_r GPR8:$rs)>;
+
+
 def SDT_GB1i16 : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 def INC16_NODE : SDNode<"GBISD::INC16", SDT_GB1i16, []>;
 def : Pat<(INC16_NODE IntReg16:$rd), (INC16 IntReg16:$rd)>;

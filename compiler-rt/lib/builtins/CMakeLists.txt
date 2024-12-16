@@ -644,6 +644,12 @@ set(gb_SOURCES
   gb/mulqi.c
   gb/mulhi.c
   gb/mulsi.c
+  gb/ashrsi.S
+  gb/lshrsi.S
+  gb/ashrhi.S
+  gb/lshrhi.S
+  gb/ashlsi.S
+  gb/ashlhi.S
 )
 
 # hexagon arch

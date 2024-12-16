@@ -17,6 +17,7 @@ namespace GBISD {
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   ADDR_WRAPPER,
+  ASHR,
   BR_CC,
   CALL,
   COMBINE,
@@ -24,10 +25,14 @@ enum NodeType : unsigned {
   INC16,
   LD_HL_SP,
   LOWER,
+  LSHR,
   RET,
+  RL,
   RLA,
   RLCA,
+  RR,
   SELECT_CC,
+  SHL,
   UPPER,
 };
 } // namespace GBISD
@@ -86,6 +91,11 @@ private:
   emitConstantShiftWithCustomInserter(MachineInstr &MI,
                                       MachineBasicBlock *MBB) const;
 
+  bool expandShiftByConstant(SelectionDAG &DAG, SDNode *N, const APInt &Amt,
+                             SDValue &Lo, SDValue &Hi) const override;
+  ShiftLegalizationStrategy
+  preferredShiftLegalizationStrategy(SelectionDAG &DAG, SDNode *N,
+                                     unsigned ExpansionFactor) const override;
   MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
