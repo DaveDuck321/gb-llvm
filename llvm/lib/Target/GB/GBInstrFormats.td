@@ -158,7 +158,7 @@ multiclass GBGPR8LD<string mnemonic, bits<8> opcode> {
 }
 
 multiclass GBGPR8LDI8<string mnemonic, bits<8> opcode> {
-  let Size = 2, isMoveImm = true in {
+  let Size = 2, isMoveImm = true, isReMaterializable = true in {
     def _r : GBInstr<mnemonic, "$rd, $imm", opcode, (outs GPR8:$rd), (ins uimm8:$imm), FixupData8> {
       bits<3> rd;
       bits<8> imm;
@@ -185,6 +185,7 @@ class GBGPR8LDI16<string mnemonic, bits<8> opcode>
   let Inst{5 - 4} = rd;
   let Size = 3;
   let isMoveImm = true;
+  let isReMaterializable = true;
 }
 
 class _GB_GPR16S16Sequence<string mnemonic, bits<8> opcode, dag outputs>

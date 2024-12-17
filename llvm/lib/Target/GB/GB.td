@@ -15,4 +15,5 @@ def GB : Target {
   let InstructionSet = GBInstrInfo;
   let AssemblyParsers = [GBAsmParser];
   let AssemblyParserVariants = [GBAsmParserVariant];
+  let AllowRegisterRenaming = 1;
 }

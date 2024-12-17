@@ -54,37 +54,24 @@ define i16 @load_i16_global() nounwind {
 define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    add sp, -4
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld de, G
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld b, d
-; GBI-O3-NEXT:    ld c, e
+; GBI-O3-NEXT:    add sp, -2
+; GBI-O3-NEXT:    ld bc, G
+; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld e, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    push bc
-; GBI-O3-NEXT:    ld c, h
-; GBI-O3-NEXT:    ld b, l
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld (hl), e
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), c
-; GBI-O3-NEXT:    pop bc
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (bc), a
+; GBI-O3-NEXT:    ld de, G
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    add $12
 ; GBI-O3-NEXT:    ld c, a
@@ -103,11 +90,11 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %1 = load volatile i16, ptr @G
   store i16 %a, ptr @G

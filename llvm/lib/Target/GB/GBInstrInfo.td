@@ -40,7 +40,7 @@ let isMoveReg = true in {
   let Uses = [HL], Defs = [SP] in
   def LD_SP_HL : GBInstrNoOperands<"ld sp, hl", 0xF9>;
 
-  let Uses = [SP], Defs = [HL, F] in
+  let Uses = [SP], Defs = [HL, F], isReMaterializable = true in
   def LD_HL_SP : _GB_SimpleImm8<"ld hl, sp, $imm", 0xF8, simm8, FixupData8>;
 }
 
@@ -215,16 +215,16 @@ def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTC
 def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
 
 def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
-          (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
+          (REG_SEQUENCE IntReg16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
 
 def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
 def LOWER_NODE : SDNode<"GBISD::LOWER", SDT_GBSPLIT, []>;
 def UPPER_NODE : SDNode<"GBISD::UPPER", SDT_GBSPLIT, []>;
 
-def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
-def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
+def : Pat<(LOWER_NODE IntReg16:$rs), (EXTRACT_SUBREG IntReg16:$rs, LowerSubReg)>;
+def : Pat<(UPPER_NODE IntReg16:$rs), (EXTRACT_SUBREG IntReg16:$rs, UpperSubReg)>;
 
-def : Pat<(trunc GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
+def : Pat<(trunc IntReg16:$rs), (EXTRACT_SUBREG IntReg16:$rs, LowerSubReg)>;
 
 // GB-Specific DAG nodes
 def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
@@ -339,9 +339,7 @@ defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
 def : Pat<(xor A, -1), (CPL)>;
 
 // ALU 16-bit (currently inactive)
-def : Pat<(add HL, IntReg16:$rs), (ADD_HL IntReg16:$rs)>;
-def : Pat<(add IntReg16:$rs, 1), (INC16 IntReg16:$rs)>;
-def : Pat<(add IntReg16:$rs, -1), (DEC16 IntReg16:$rs)>;
+def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
 
 // Branches
 // TODO GB: optimize into JR in another pass
@@ -361,11 +359,11 @@ class Pseudo<string name, string args, dag outs, dag ins>
 
 // Memory ops: decay into either L_A_iHL or LD_A_iR16 after register allocation
 let mayLoad = true, Defs = [A] in {
-  def LD_A_iGPR16 : Pseudo<"ld", "a ($rs)", (outs), (ins GPR16:$rs)>;
+  def LD_A_iGPR16 : Pseudo<"ld", "a ($rs)", (outs), (ins IntReg16:$rs)>;
 }
 
 let mayStore = true, Uses = [A] in {
-  def LD_iGPR16_A : Pseudo<"ld", "($rs) a", (outs), (ins GPR16:$rs)>;
+  def LD_iGPR16_A : Pseudo<"ld", "($rs) a", (outs), (ins IntReg16:$rs)>;
 }
 
 def : Pat<(load GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
@@ -375,12 +373,12 @@ def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
 def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
 let mayLoad = true, Uses = [SP] in {
-  def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs GPR16:$r), (ins simm8:$i)>;
+  def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs IntReg16:$r), (ins simm8:$i)>;
   def Load8FromFrameIndex : Pseudo<"#load8", "$i to $r", (outs GPR8:$r), (ins simm8:$i)>;
 }
 
 let mayStore = true, Uses = [SP] in {
-  def Save16ToFrameIndex : Pseudo<"#save16 ", "$r to $i", (outs), (ins GPR16:$r, simm8:$i)>;
+  def Save16ToFrameIndex : Pseudo<"#save16 ", "$r to $i", (outs), (ins IntReg16:$r, simm8:$i)>;
   def Save8ToFrameIndex : Pseudo<"#save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
 }
 
@@ -390,6 +388,7 @@ def P_SELECT_CC
         (outs GPR8:$rd),
         (ins flag:$flag, GPR8:$ifTrue, GPR8:$ifFalse)> {
   let usesCustomInserter = true;
+  let isSelect = true;
   let Uses = [F];
 }
 

@@ -7,7 +7,6 @@
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O0-LABEL: trunc_i32:
 ; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ld d, h
 ; GBI-O0-NEXT:    ld a, l
 ; GBI-O0-NEXT:    ret
 ;

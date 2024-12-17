@@ -121,7 +121,7 @@ void GBInstrInfo::storeRegToStackSlot(
     return;
   }
 
-  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+  if (GB::IntReg16RegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, MI, DL, get(GB::Save16ToFrameIndex))
         .addReg(SrcReg, getKillRegState(IsKill))
         .addFrameIndex(FrameIndex)
@@ -152,7 +152,7 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
         .addMemOperand(MMO);
     return;
   }
-  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
+  if (GB::IntReg16RegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex), DestReg)
         .addFrameIndex(FrameIndex)
         .addMemOperand(MMO);

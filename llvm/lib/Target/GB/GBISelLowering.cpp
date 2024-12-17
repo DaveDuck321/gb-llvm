@@ -45,7 +45,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
                                    const GBSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
   addRegisterClass(MVT::i8, &GB::GPR8RegClass);
-  addRegisterClass(MVT::i16, &GB::GPR16RegClass);
+  addRegisterClass(MVT::i16, &GB::IntReg16RegClass);
   computeRegisterProperties(STI.getRegisterInfo());
 
   // setStackPointerRegisterToSaveRestore(GB::SP);
