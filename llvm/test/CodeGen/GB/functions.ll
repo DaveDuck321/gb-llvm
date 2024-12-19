@@ -79,10 +79,8 @@ define i8 @call_argument2() nounwind {
 define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-LABEL: call_argument1_i16:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld b, $00
-; GBI-O3-NEXT:    ld c, $01
-; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ld bc, $0001
 ; GBI-O3-NEXT:    call argument1_i16
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument1_i16(i16 0, i16 1)
@@ -196,8 +194,7 @@ define i32 @call_large_return() nounwind {
 define i16 @empty16() nounwind {
 ; GBI-O3-LABEL: empty16:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld h, $00
-; GBI-O3-NEXT:    ld l, $01
+; GBI-O3-NEXT:    ld hl, $0001
 ; GBI-O3-NEXT:    ret
   ret i16 1
 }

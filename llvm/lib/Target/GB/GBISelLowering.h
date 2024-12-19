@@ -47,6 +47,8 @@ public:
   const char *getTargetNodeName(unsigned Opcode) const override;
 
 private:
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+
   SDValue LowerCMP_CC(SDValue LHS, SDValue RHS, ISD::CondCode &CCode,
                       SelectionDAG &DAG, SDLoc DL) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;

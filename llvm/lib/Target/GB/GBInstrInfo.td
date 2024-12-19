@@ -338,9 +338,6 @@ defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
 
 def : Pat<(xor A, -1), (CPL)>;
 
-// ALU 16-bit (currently inactive)
-def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
-
 // Branches
 // TODO GB: optimize into JR in another pass
 def : Pat<(br bb:$imm), (JP bb_pc_rel:$imm)>;

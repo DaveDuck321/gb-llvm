@@ -177,6 +177,36 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 }
 
+SDValue GBTargetLowering::PerformDAGCombine(SDNode *N,
+                                            DAGCombinerInfo &DCI) const {
+  switch (N->getOpcode()) {
+  default:
+    break;
+  case GBISD::COMBINE: {
+    if (not DCI.isAfterLegalizeDAG()) {
+      break;
+    }
+
+    // We're forming a 16-bit immediate by combining 8-bit immediates.
+    // This can only happen when we require the full 16-bit immediate for
+    // something... Let's reform it... but only after the type legalizer (to
+    // avoid the infinite loop).
+    assert(N->getNumOperands() == 2);
+    if (N->getOperand(0)->getOpcode() == ISD::Constant &&
+        N->getOperand(1)->getOpcode() == ISD::Constant) {
+      assert(N->getOperand(0).getSimpleValueType() == MVT::i8);
+      assert(N->getOperand(1).getSimpleValueType() == MVT::i8);
+
+      size_t CombinedValue =
+          N->getConstantOperandVal(0) + (N->getConstantOperandVal(1) << 8);
+      return DCI.DAG.getConstant(CombinedValue, SDLoc(N), MVT::i16);
+    }
+    break;
+  }
+  }
+  return {};
+}
+
 SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
                                       ISD::CondCode &CCode, SelectionDAG &DAG,
                                       SDLoc DL) const {
