@@ -330,15 +330,11 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                           SPOffest + Stack.currentOffset());
 
-    if (SrcLower == GB::A) {
-      // Might as well use the free increment of HL if we've been assigned A
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI_iHL_A));
-    } else {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-          .addReg(SrcLower);
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-          .addReg(GB::HL);
-    }
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+        .addReg(SrcLower);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+        .addReg(GB::HL);
+
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
         .addReg(SrcUpper);
 
@@ -358,13 +354,23 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
       Stack.save(GB::HL);
     }
 
-    // TODO GB: maybe copy lower to 8 to save the increment
     loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                           SPOffest + Stack.currentOffset());
 
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-        .addReg(SrcLower,
-                getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
+    // If A is available we can blindly copy into it and eliminate the
+    // increment.
+    bool CanClobberA = RegsImmediatelyAfter.available(MRI, GB::A);
+    if (CanClobberA) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::A)
+          .addReg(SrcLower,
+                  getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+          .addReg(GB::A, getKillRegState(true));
+    } else {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+          .addReg(SrcLower,
+                  getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
+    }
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
         .addReg(GB::HL);
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
@@ -559,16 +565,10 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
   loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                         SPOffest + Stack.currentOffset());
 
-  // TODO GB: can this be a generic pattern so we get the benefit everywhere?
   // TODO GB: always scavenge GB::A (saves 4 cycles if its available)
-  if (CopyLowerTo == GB::A) {
-    // Might as well use the free increment of HL if we've been assigned A
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI_A_iHL));
-  } else {
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), CopyLowerTo);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-        .addReg(GB::HL);
-  }
+  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), CopyLowerTo);
+  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+      .addReg(GB::HL);
 
   // TODO GB: do I need to mark HL as killed after this?
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), CopyUpperTo);

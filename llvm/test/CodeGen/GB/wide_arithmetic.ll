@@ -168,8 +168,8 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    add sp, -6
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 6
-; GBI-O3-NEXT:    ld (hl), e
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), d
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld a, c

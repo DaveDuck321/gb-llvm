@@ -38,8 +38,8 @@ main:
     ld hl, 51
     ld bc, 63
     call multiply_i16
-; EXPECT-CYCLE-O3: 786
-; EXPECT-CYCLE-Oz: 528
+; EXPECT-CYCLE-O3: 767
+; EXPECT-CYCLE-Oz: 521
 ; EXPECT: hl=0c8d
     debugtrap
 
@@ -47,23 +47,23 @@ main:
     ld hl, 3600
     ld bc, 8
     call multiply_i16
-; EXPECT-CYCLE-O3: 1522
-; EXPECT-CYCLE-Oz: 984
+; EXPECT-CYCLE-O3: 1485
+; EXPECT-CYCLE-Oz: 971
 ; EXPECT: hl=7080
     debugtrap
 
     ld hl, 3600
     call floating_point_add
-; EXPECT-CYCLE-O3: 4362
-; EXPECT-CYCLE-Oz: 4362
+; EXPECT-CYCLE-O3: 4310
+; EXPECT-CYCLE-Oz: 4310
 ; EXPECT: hl=0e59
     debugtrap
 
 
     ld hl, 50
     call floating_point_mul
-; EXPECT-CYCLE-O3: 20211
-; EXPECT-CYCLE-Oz: 20211
+; EXPECT-CYCLE-O3: 19809
+; EXPECT-CYCLE-Oz: 19809
 ; FIXME: 02fe
 ; EXPECT-FAILING: hl=0302
     debugtrap

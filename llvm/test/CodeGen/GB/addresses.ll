@@ -65,8 +65,8 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    ld d, a
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld (hl), e
-; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), d
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld a, h
