@@ -57,7 +57,7 @@ main:
     ld hl, sp, 0
     call _Z8g_strlenKPA_h
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 1530
+; EXPECT-CYCLE: 1124
 ; EXPECT: hl=0063
     debugtrap
 

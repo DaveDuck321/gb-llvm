@@ -1,7 +1,10 @@
 #include "GBTargetMachine.h"
 #include "GB.h"
+#include "GBSubtarget.h"
+#include "GBTargetTransformInfo.h"
 #include "TargetInfo/GBTargetInfo.h"
 
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
@@ -29,8 +32,6 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
 const std::string GBTargetMachine::DataLayout =
     "e-S16-p:16:16-i8:8-i16:16-a:16-m:e-n8:16";
 
-// TODO: CM:Large might also make sense here... Check how this works in a 16 bit
-// address space
 GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
                                  StringRef CPU, StringRef FS,
                                  const TargetOptions &Options,
@@ -45,9 +46,9 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
   initAsmInfo();
 }
 
-const TargetSubtargetInfo *
-GBTargetMachine::getSubtargetImpl(const Function &) const {
-  return &Subtarget;
+TargetTransformInfo
+GBTargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo(GBTTIImpl(this, F));
 }
 
 namespace {
