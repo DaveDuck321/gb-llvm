@@ -210,6 +210,11 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
       SDValue ResultLSB = Node->getOperand(0);
       SDValue ResultMSB = Node->getOperand(1);
       if (is16BitConstantAddition(ResultLSB, ResultMSB)) {
+        if (!Node->getOperand(0).hasOneUse() ||
+            !Node->getOperand(1).hasOneUse()) {
+          continue;
+        }
+
         auto [LSB, MSB, Constant] =
             decompose16BitConstantAddition(ResultLSB, ResultMSB);
 
