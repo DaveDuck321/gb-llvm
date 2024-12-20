@@ -27,8 +27,8 @@ static cl::opt<bool> GBDisablePreprocessi16Serialize(
 
 namespace {
 
-std::optional<std::tuple<SDValue, SDValue, size_t>>
-identify16BitConstantAddition(SDValue LSB, SDValue MSB) {
+std::optional<std::tuple<SDValue, SDValue, long>>
+identify16BitConstantAddSub(SDValue LSB, SDValue MSB) {
   if (LSB.getOpcode() == ISD::ADDC && MSB->getOpcode() == ISD::ADDE &&
       MSB->getGluedNode() == LSB.getNode()) {
     auto LSBConstant = LSB->getOperand(1);
@@ -38,24 +38,33 @@ identify16BitConstantAddition(SDValue LSB, SDValue MSB) {
     auto MSBValue = MSB->getOperand(0);
 
     if (LSBConstant->getOpcode() == ISD::Constant &&
-        MSBConstant->getOpcode() == ISD::Constant &&
-        MSBConstant->getAsZExtVal() == 0) {
-      size_t Offset = LSBConstant->getAsZExtVal();
-      assert((Offset & 0x80) == 0);
-      return std::make_tuple(LSBValue, MSBValue, Offset);
+        MSBConstant->getOpcode() == ISD::Constant) {
+      // Addition
+      if (MSBConstant->getAsZExtVal() == 0) {
+        size_t Offset = LSBConstant->getAsZExtVal();
+        assert(Offset > 0);
+        return std::make_tuple(LSBValue, MSBValue, Offset);
+      }
+
+      // Subtraction
+      if (MSBConstant->getAsZExtVal() == 0xff) {
+        long Offset = (signed char)MSBConstant->getAsZExtVal();
+        assert(Offset < 0);
+        return std::make_tuple(LSBValue, MSBValue, Offset);
+      }
     }
   }
   return std::nullopt;
 }
 
 bool is16BitConstantAddition(SDValue ResultLSB, SDValue ResultMSB) {
-  return identify16BitConstantAddition(ResultLSB, ResultMSB).has_value();
+  return identify16BitConstantAddSub(ResultLSB, ResultMSB).has_value();
 }
 
-std::tuple<SDValue, SDValue, size_t>
+std::tuple<SDValue, SDValue, long>
 decompose16BitConstantAddition(SDValue ResultLSB, SDValue ResultMSB) {
   assert(is16BitConstantAddition(ResultLSB, ResultMSB));
-  return *identify16BitConstantAddition(ResultLSB, ResultMSB);
+  return *identify16BitConstantAddSub(ResultLSB, ResultMSB);
 }
 
 } // namespace
@@ -132,13 +141,14 @@ void GBDAGToDAGISel::PreprocessISelDAG() {
     // LLVM gives us an inconsistent mix of parallel and serial addition chains.
     // Try to recognize and parallelize additions first to make the
     // serialization pattern match simpler.
-    while (parallelizei16Increments(GetCurrentNodes())) {
+    while (parallelizei16IncDec(GetCurrentNodes())) {
     }
-    serializei16Increments(GetCurrentNodes());
+    serializei16IncDec(GetCurrentNodes(), true);
+    serializei16IncDec(GetCurrentNodes(), false);
   }
 }
 
-bool GBDAGToDAGISel::parallelizei16Increments(std::vector<SDNode *> AllNodes) {
+bool GBDAGToDAGISel::parallelizei16IncDec(std::vector<SDNode *> AllNodes) {
   bool MadeChanges = false;
 
   for (auto *Node : AllNodes) {
@@ -160,8 +170,8 @@ bool GBDAGToDAGISel::parallelizei16Increments(std::vector<SDNode *> AllNodes) {
         if (is16BitConstantAddition(OurInputLSB, OurInputMSB)) {
           auto [ParentInputLSB, ParentInputMSB, ParentOffset] =
               decompose16BitConstantAddition(OurInputLSB, OurInputMSB);
-          size_t CombinedOffset = OurOffset + ParentOffset;
-          if (CombinedOffset > 127) {
+          auto CombinedOffset = OurOffset + ParentOffset;
+          if (CombinedOffset < -128 or CombinedOffset > 127) {
             continue;
           }
 
@@ -174,7 +184,9 @@ bool GBDAGToDAGISel::parallelizei16Increments(std::vector<SDNode *> AllNodes) {
 
           SDValue ResMSB = CurDAG->getNode(
               ISD::ADDE, NodeLoc, CurDAG->getVTList(MVT::i8, MVT::Glue),
-              ParentInputMSB, CurDAG->getConstant(0, NodeLoc, MVT::i8),
+              ParentInputMSB,
+              CurDAG->getConstant(CombinedOffset < 0 ? 0xFF : 0, NodeLoc,
+                                  MVT::i8),
               ResLSBGlue);
 
           SDValue NewCombined = CurDAG->getNode(GBISD::COMBINE, NodeLoc,
@@ -193,10 +205,13 @@ bool GBDAGToDAGISel::parallelizei16Increments(std::vector<SDNode *> AllNodes) {
   return MadeChanges;
 }
 
-bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
+bool GBDAGToDAGISel::serializei16IncDec(std::vector<SDNode *> AllNodes,
+                                        bool DoIncrements) {
   using ValueOrPair = std::variant<SDValue, std::pair<SDValue, SDValue>>;
   std::map<ValueOrPair, std::map<size_t, std::vector<SDValue>>>
-      OffsetsFromValue;
+      PositiveOffsetsFromValue;
+  std::map<ValueOrPair, std::map<size_t, std::vector<SDValue>>>
+      NegativeOffsetsFromValue;
   for (auto *Node : AllNodes) {
     if (Node->getValueType(0) != MVT::i16) {
       continue;
@@ -204,17 +219,12 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
 
     const SDValue Input = SDValue{Node, 0};
 
-    size_t Offset = 0;
+    long Offset = 0;
     ValueOrPair Base = Input;
     if (Node->getOpcode() == GBISD::COMBINE) {
       SDValue ResultLSB = Node->getOperand(0);
       SDValue ResultMSB = Node->getOperand(1);
       if (is16BitConstantAddition(ResultLSB, ResultMSB)) {
-        if (!Node->getOperand(0).hasOneUse() ||
-            !Node->getOperand(1).hasOneUse()) {
-          continue;
-        }
-
         auto [LSB, MSB, Constant] =
             decompose16BitConstantAddition(ResultLSB, ResultMSB);
 
@@ -230,53 +240,84 @@ bool GBDAGToDAGISel::serializei16Increments(std::vector<SDNode *> AllNodes) {
         }
       } else {
         auto Pair = std::make_pair(ResultLSB, ResultMSB);
-        OffsetsFromValue[Pair][0].push_back(Input);
+        PositiveOffsetsFromValue[Pair][0].push_back(Input);
+        NegativeOffsetsFromValue[Pair][0].push_back(Input);
       }
     }
-    OffsetsFromValue[Base][Offset].push_back(Input);
+    if (Offset >= 0) {
+      PositiveOffsetsFromValue[Base][Offset].push_back(Input);
+    }
+
+    if (Offset <= 0) {
+      NegativeOffsetsFromValue[Base][-Offset].push_back(Input);
+    }
   }
 
   // Make any valid substitutions
   bool MadeChanges = false;
-  for (const auto &[VBase, Offsets] : OffsetsFromValue) {
-    if (Offsets.size() == 1) {
-      // This node is not used in any additional i16 additions
-      continue;
-    }
 
-    SDValue Base;
-    if (std::holds_alternative<SDValue>(VBase)) {
-      Base = std::get<SDValue>(VBase);
-    } else {
-      auto [LHS, RHS] = std::get<std::pair<SDValue, SDValue>>(VBase);
-      Base = CurDAG->getNode(GBISD::COMBINE, SDLoc{LHS}, MVT::i16, LHS, RHS);
-    }
+  auto ProduceIncDecChain =
+      [&](unsigned Op,
+          const std::map<ValueOrPair, std::map<size_t, std::vector<SDValue>>>
+              &OffsetsFromValue) {
+        for (const auto &[VBase, Offsets] : OffsetsFromValue) {
+          if (Offsets.size() == 1) {
+            // This node is not used in any additional i16 additions
+            continue;
+          }
 
-    size_t LastOffset = 0;
-    SDValue ValueToIncrement = Base;
-    for (const auto &[Offset, ValuesToReplace] : Offsets) {
-      if (Offset == 0) {
-        continue;
-      }
+          SDValue Base;
+          if (std::holds_alternative<SDValue>(VBase)) {
+            Base = std::get<SDValue>(VBase);
+          } else {
+            auto [LHS, RHS] = std::get<std::pair<SDValue, SDValue>>(VBase);
+            Base =
+                CurDAG->getNode(GBISD::COMBINE, SDLoc{LHS}, MVT::i16, LHS, RHS);
+          }
 
-      if (Offset - LastOffset > 3) {
-        // Large gap...
-        // Its likely faster to just codegen the addition
-        break;
-      }
+          size_t LastOffset = 0;
+          SDValue ValueToIncrement = Base;
+          for (const auto &[Offset, ValuesToReplace] : Offsets) {
+            if (Offset == 0) {
+              continue;
+            }
 
-      do {
-        assert(ValueToIncrement.getSimpleValueType() == MVT::i16);
-        ValueToIncrement = CurDAG->getNode(GBISD::INC16, ValuesToReplace.at(0),
-                                           MVT::i16, ValueToIncrement);
-      } while (Offset != ++LastOffset);
+            if (Offset - LastOffset > 3) {
+              // Large gap...
+              // Its likely faster to just codegen the addition
+              break;
+            }
 
-      // Replace any additions with the chained increment
-      for (const auto &Value : ValuesToReplace) {
-        CurDAG->ReplaceAllUsesOfValueWith(Value, ValueToIncrement);
-        MadeChanges = true;
-      }
-    }
+            do {
+              assert(ValueToIncrement.getSimpleValueType() == MVT::i16);
+              ValueToIncrement = CurDAG->getNode(Op, ValuesToReplace.at(0),
+                                                 MVT::i16, ValueToIncrement);
+            } while (Offset != ++LastOffset);
+
+            // Replace any additions with the chained increment
+            for (const auto &Value : ValuesToReplace) {
+              if (Value->getOpcode() == GBISD::COMBINE) {
+                // Also replace values using the intermediate results
+                auto NewLower = CurDAG->getNode(GBISD::LOWER, Value, MVT::i8,
+                                                ValueToIncrement);
+                auto NewUpper = CurDAG->getNode(GBISD::UPPER, Value, MVT::i8,
+                                                ValueToIncrement);
+                CurDAG->ReplaceAllUsesOfValueWith(Value->getOperand(0),
+                                                  NewLower);
+                CurDAG->ReplaceAllUsesOfValueWith(Value->getOperand(1),
+                                                  NewUpper);
+              }
+              CurDAG->ReplaceAllUsesOfValueWith(Value, ValueToIncrement);
+              MadeChanges = true;
+            }
+          }
+        }
+      };
+
+  if (DoIncrements) {
+    ProduceIncDecChain(GBISD::INC16, PositiveOffsetsFromValue);
+  } else {
+    ProduceIncDecChain(GBISD::DEC16, NegativeOffsetsFromValue);
   }
 
   if (MadeChanges) {

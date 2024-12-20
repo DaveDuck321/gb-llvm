@@ -20,8 +20,8 @@ public:
   void PreprocessISelDAG() override;
 
 private:
-  bool parallelizei16Increments(std::vector<SDNode *> AllNodes);
-  bool serializei16Increments(std::vector<SDNode *> AllNodes);
+  bool parallelizei16IncDec(std::vector<SDNode *> AllNodes);
+  bool serializei16IncDec(std::vector<SDNode *> AllNodes, bool DoIncrements);
 
 #define GET_DAGISEL_DECL
 #include "GBGenDAGISel.inc"

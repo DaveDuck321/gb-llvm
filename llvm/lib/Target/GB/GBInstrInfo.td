@@ -281,7 +281,9 @@ def : Pat<(LSHR_NODE GPR8:$rs), (SRL_r GPR8:$rs)>;
 
 def SDT_GB1i16 : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
 def INC16_NODE : SDNode<"GBISD::INC16", SDT_GB1i16, []>;
+def DEC16_NODE : SDNode<"GBISD::DEC16", SDT_GB1i16, []>;
 def : Pat<(INC16_NODE IntReg16:$rd), (INC16 IntReg16:$rd)>;
+def : Pat<(DEC16_NODE IntReg16:$rd), (DEC16 IntReg16:$rd)>;
 
 //   BR_CC operands: 0) condition code, 1) basic block addr
 // TODO GB: optimize into JR in another pass
