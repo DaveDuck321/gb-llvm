@@ -256,14 +256,10 @@ foreach shift = [0, 1, 2, 3, 4, 5, 6, 7] in {
   def : Pat<(CP_NODE SETEQ, (and GPR8:$rs, imm), 0), (BIT_r GPR8:$rs, shift)>;
 }
 
-// Rotates the carry into A, used as our setcc
+// Rotates, useful for %i1 = sign(a)
 def SDT_GB1i8 : SDTypeProfile<0, 1, [SDTCisVT<0, i8>]>;
-def RLA_NODE : SDNode<"GBISD::RLA", SDT_GB1i8, [SDNPInGlue]>;
-def : Pat<(RLA_NODE A), (RLA)>;
-
-// Rotates A, useful for %i1 = sign(a)
-def RLCA_NODE : SDNode<"GBISD::RLCA", SDT_GB1i8, []>;
-def : Pat<(RLCA_NODE A), (RLCA)>;
+def RLC_NODE : SDNode<"GBISD::RLC", SDT_GB1i8, []>;
+def : Pat<(RLC_NODE GPR8:$rs), (RLC_r GPR8:$rs)>;
 
 def SDT_GBi8i8 : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<0, i8>]>;
 def RR_NODE : SDNode<"GBISD::RR", SDT_GB1i8, [SDNPInGlue, SDNPOutGlue]>;

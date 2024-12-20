@@ -221,8 +221,24 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
         continue;
       }
 
+      if (MI.getOpcode() == GB::RR_r && MI.getOperand(0).getReg() == GB::A) {
+        BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RRA));
+        MI.removeFromParent();
+
+        MadeChanges = true;
+        continue;
+      }
+
       if (MI.getOpcode() == GB::RLC_r && MI.getOperand(0).getReg() == GB::A) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLCA));
+        MI.removeFromParent();
+
+        MadeChanges = true;
+        continue;
+      }
+
+      if (MI.getOpcode() == GB::RL_r && MI.getOperand(0).getReg() == GB::A) {
+        BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLA));
         MI.removeFromParent();
 
         MadeChanges = true;

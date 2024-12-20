@@ -336,7 +336,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CondCode::SETLT: {
     // Subtract and move the sign bit directly into the accumulator
     SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue Result = DAG.getNode(GBISD::RLCA, DL, MVT::i8, Sub);
+    SDValue Result = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
     return Result;
   }
 
@@ -348,7 +348,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CondCode::SETGE:
     // Subtract, move the sign bit directly into the accumulator and reverse
     SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue Result = DAG.getNode(GBISD::RLCA, DL, MVT::i8, Sub);
+    SDValue Result = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
     return DAG.getNOT(DL, Result, MVT::i8);
   }
 
@@ -357,7 +357,7 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // Primary operand is ignored, only glue matters
   SDValue Result =
-      DAG.getNode(GBISD::RLA, DL, MVT::i8, DAG.getUNDEF(MVT::i8), Cmp);
+      DAG.getNode(GBISD::RL, DL, MVT::i8, DAG.getUNDEF(MVT::i8), Cmp);
   if (ReverseResult) {
     Result = DAG.getNOT(DL, Result, MVT::i8);
   }
@@ -447,10 +447,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::RET";
   case GBISD::RL:
     return "GBISD::RL";
-  case GBISD::RLA:
-    return "GBISD::RLA";
-  case GBISD::RLCA:
-    return "GBISD::RLCA";
+  case GBISD::RLC:
+    return "GBISD::RLC";
   case GBISD::RR:
     return "GBISD::RR";
   case GBISD::SELECT_CC:

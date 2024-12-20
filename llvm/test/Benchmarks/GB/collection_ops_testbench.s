@@ -58,7 +58,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 239
+; EXPECT-CYCLE: 212
 ; EXPECT: a=01
     debugtrap
 
