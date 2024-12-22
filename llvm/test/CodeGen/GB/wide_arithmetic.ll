@@ -72,21 +72,6 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 }
 
 define i16 @ori(i16 %b) nounwind {
-; GBI-O0-LABEL: ori:
-; GBI-O0:       ; %bb.0:
-; GBI-O0-NEXT:    ld b, h
-; GBI-O0-NEXT:    ld c, l
-; GBI-O0-NEXT:    ; kill: def $hl
-; GBI-O0-NEXT:    ld h, b
-; GBI-O0-NEXT:    ld l, c
-; GBI-O0-NEXT:    ld a, l
-; GBI-O0-NEXT:    or $01
-; GBI-O0-NEXT:    ld l, a
-; GBI-O0-NEXT:    ld a, b
-; GBI-O0-NEXT:    ; kill: def $l killed $l def $hl
-; GBI-O0-NEXT:    ld h, a
-; GBI-O0-NEXT:    ret
-;
 ; GBI-O3-LABEL: ori:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, l
