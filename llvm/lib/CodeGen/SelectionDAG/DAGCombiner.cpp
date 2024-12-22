@@ -14234,11 +14234,14 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
     }
 
     // aext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
-    if (SDValue SCC = SimplifySelectCC(
-            DL, N0.getOperand(0), N0.getOperand(1), DAG.getConstant(1, DL, VT),
-            DAG.getConstant(0, DL, VT),
-            cast<CondCodeSDNode>(N0.getOperand(2))->get(), true))
-      return SCC;
+    if (TLI.getBooleanContents(VT) ==
+        TargetLoweringBase::ZeroOrOneBooleanContent) {
+      if (SDValue SCC = SimplifySelectCC(
+              DL, N0.getOperand(0), N0.getOperand(1),
+              DAG.getConstant(1, DL, VT), DAG.getConstant(0, DL, VT),
+              cast<CondCodeSDNode>(N0.getOperand(2))->get(), true))
+        return SCC;
+    }
   }
 
   if (SDValue NewCtPop = widenCtPop(N, DAG))

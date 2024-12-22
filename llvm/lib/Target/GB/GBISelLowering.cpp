@@ -196,10 +196,18 @@ SDValue GBTargetLowering::PerformDAGCombine(SDNode *N,
         N->getOperand(1)->getOpcode() == ISD::Constant) {
       assert(N->getOperand(0).getSimpleValueType() == MVT::i8);
       assert(N->getOperand(1).getSimpleValueType() == MVT::i8);
+      assert(isUInt<8>(N->getConstantOperandVal(0)));
+      assert(isUInt<8>(N->getConstantOperandVal(1)));
 
       size_t CombinedValue =
           N->getConstantOperandVal(0) + (N->getConstantOperandVal(1) << 8);
       return DCI.DAG.getConstant(CombinedValue, SDLoc(N), MVT::i16);
+    }
+
+    // Neaten up the DAG
+    if (N->getOperand(0).getOpcode() == ISD::UNDEF &&
+        N->getOperand(1)->getOpcode() == ISD::UNDEF) {
+      return DCI.DAG.getUNDEF(MVT::i16);
     }
     break;
   }
