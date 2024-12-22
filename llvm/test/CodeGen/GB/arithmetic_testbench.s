@@ -139,6 +139,37 @@ _setcc_gt:
 ; EXPECT: a=01
     debugtrap
 
+    ld b, 0x7f
+    ld c, 0xff
+    call setcc_gt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+
+    ld b, 0x7f
+    ld c, 0xfe
+    call setcc_gt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x7f
+    call setcc_gt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+
+    ld b, 0xfe
+    ld c, 0x7f
+    call setcc_gt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+
     ld b, 0xff
     ld c, 0x01
     call setcc_gt
@@ -189,6 +220,36 @@ _setcc_lt:
 ; EXPECT: a=00
     debugtrap
 
+    ld b, 0x7f
+    ld c, 0xff
+    call setcc_lt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+
+    ld b, 0x7f
+    ld c, 0xfe
+    call setcc_lt
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x7f
+    call setcc_lt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+
+    ld b, 0xfe
+    ld c, 0x7f
+    call setcc_lt
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
 _setcc_le:
     ld b, 0xff
     ld c, 0xfe
@@ -225,12 +286,56 @@ _setcc_le:
 ; EXPECT: a=01
     debugtrap
 
+    ld b, 0x7f
+    ld c, 0xff
+    call setcc_le
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+
+    ld b, 0x7f
+    ld c, 0xfe
+    call setcc_le
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x7f
+    call setcc_le
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+
+    ld b, 0xfe
+    ld c, 0x7f
+    call setcc_le
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
 _setcc_ge:
     ld b, 0xff
     ld c, 0xfe
     call setcc_ge
     and 0x01
 ; EXPECT: a=01
+    debugtrap
+
+    ld b, 50
+    ld c, 30
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 30
+    ld c, 50
+    call setcc_ge
+    and 0x01
+; EXPECT: a=00
     debugtrap
 
     ld b, 0xfe
@@ -259,6 +364,36 @@ _setcc_ge:
     call setcc_ge
     and 0x01
 ; EXPECT: a=01
+    debugtrap
+
+    ld b, 0x7f
+    ld c, 0xff
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+
+    ld b, 0x7f
+    ld c, 0xfe
+    call setcc_ge
+    and 0x01
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    ld c, 0x7f
+    call setcc_ge
+    and 0x01
+; EXPECT: a=00
+    debugtrap
+
+
+    ld b, 0xfe
+    ld c, 0x7f
+    call setcc_ge
+    and 0x01
+; EXPECT: a=00
     debugtrap
 
 _shifts:

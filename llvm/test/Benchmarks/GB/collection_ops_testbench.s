@@ -36,7 +36,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 47
+; EXPECT-CYCLE: 66
 ; EXPECT: a=00
     debugtrap
 
@@ -46,7 +46,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 47
+; EXPECT-CYCLE: 67
 ; EXPECT: a=01
     debugtrap
 
@@ -58,7 +58,7 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 212
+; EXPECT-CYCLE: 318
 ; EXPECT: a=01
     debugtrap
 

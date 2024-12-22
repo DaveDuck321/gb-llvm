@@ -101,20 +101,49 @@ define i16 @sub16(i16 %a, i8 %b) nounwind {
 define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sless_than:
 ; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    cp c
-; GBI-O3-NEXT:    rl d
+; GBI-O3-NEXT:    rla
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    and $80
 ; GBI-O3-NEXT:    ld e, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    and $80
+; GBI-O3-NEXT:    ld d, a
 ; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    and $80
+; GBI-O3-NEXT:    cp d
 ; GBI-O3-NEXT:    jp z, .LBB7_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %begin
-; GBI-O3-NEXT:    rlc e
-; GBI-O3-NEXT:    ld d, e
+; GBI-O3-NEXT:    ld e, a
 ; GBI-O3-NEXT:  .LBB7_2: ; %begin
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    jp nz, .LBB7_3
+; GBI-O3-NEXT:  ; %bb.4: ; %begin
+; GBI-O3-NEXT:    ld d, $00
+; GBI-O3-NEXT:    jp .LBB7_5
+; GBI-O3-NEXT:  .LBB7_3:
+; GBI-O3-NEXT:    ld d, $01
+; GBI-O3-NEXT:  .LBB7_5: ; %begin
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    push af
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    jp z, .LBB7_7
+; GBI-O3-NEXT:  ; %bb.6: ; %begin
 ; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:  .LBB7_7: ; %begin
+; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
 begin:
   %10 = icmp slt i16 %0, %1
@@ -124,20 +153,49 @@ begin:
 define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sgreater_than:
 ; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    cp l
-; GBI-O3-NEXT:    rl d
+; GBI-O3-NEXT:    rla
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    sub h
+; GBI-O3-NEXT:    and $80
 ; GBI-O3-NEXT:    ld e, a
 ; GBI-O3-NEXT:    ld a, h
-; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    and $80
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    and $80
+; GBI-O3-NEXT:    cp d
 ; GBI-O3-NEXT:    jp z, .LBB8_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %begin
-; GBI-O3-NEXT:    rlc e
-; GBI-O3-NEXT:    ld d, e
+; GBI-O3-NEXT:    ld e, a
 ; GBI-O3-NEXT:  .LBB8_2: ; %begin
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    jp nz, .LBB8_3
+; GBI-O3-NEXT:  ; %bb.4: ; %begin
+; GBI-O3-NEXT:    ld d, $00
+; GBI-O3-NEXT:    jp .LBB8_5
+; GBI-O3-NEXT:  .LBB8_3:
+; GBI-O3-NEXT:    ld d, $01
+; GBI-O3-NEXT:  .LBB8_5: ; %begin
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    push af
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld h, (hl)
+; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    jp z, .LBB8_7
+; GBI-O3-NEXT:  ; %bb.6: ; %begin
 ; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:  .LBB8_7: ; %begin
+; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
 begin:
   %10 = icmp sgt i16 %0, %1

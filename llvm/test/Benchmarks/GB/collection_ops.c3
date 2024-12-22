@@ -36,8 +36,8 @@ function get_player : (x: int, y: int) -> Player = {
         .rect = {
             .x = x,
             .y = y,
-            .width = 100,
-            .height = 100,
+            .width = 50,
+            .height = 50,
         },
         .health = 10,
     };

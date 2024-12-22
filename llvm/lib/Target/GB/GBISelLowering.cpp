@@ -219,11 +219,27 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
                                       ISD::CondCode &CCode, SelectionDAG &DAG,
                                       SDLoc DL) const {
   assert(LHS.getValueType() == MVT::i8 && RHS.getValueType() == MVT::i8);
-  auto ConvertToSubCp = [&](ISD::CondCode UCond, unsigned Val) {
+  auto ConvertToSubCp = [&](ISD::CondCode EqCode) {
+    // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
+    // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
+    SDValue SignBitLHS =
+        DAG.getNode(ISD::AND, DL, MVT::i8, LHS,
+                    DAG.getConstant(0x80, DL, LHS.getValueType()));
+    SDValue SignBitRHS =
+        DAG.getNode(ISD::AND, DL, MVT::i8, RHS,
+                    DAG.getConstant(0x80, DL, RHS.getValueType()));
+
     SDValue Sub = DAG.getNode(ISD::SUB, DL, LHS.getValueType(), LHS, RHS);
-    LHS = Sub;
-    RHS = DAG.getConstant(Val, DL, MVT::i8);
-    CCode = UCond;
+    SDValue SignBitSub =
+        DAG.getNode(ISD::AND, DL, LHS.getValueType(), Sub,
+                    DAG.getConstant(0x80, DL, Sub.getValueType()));
+
+    SDValue Result = DAG.getSelectCC(DL, SignBitLHS, SignBitRHS, SignBitSub,
+                                     SignBitLHS, ISD::CondCode::SETEQ);
+
+    CCode = EqCode;
+    LHS = Result;
+    RHS = DAG.getConstant(0, DL, Result.getValueType());
   };
 
   switch (CCode) {
@@ -245,7 +261,7 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
     std::swap(LHS, RHS);
     [[fallthrough]];
   case ISD::CondCode::SETLT:
-    ConvertToSubCp(ISD::CondCode::SETUGE, 0x80);
+    ConvertToSubCp(ISD::CondCode::SETNE);
     break;
 
   case ISD::CondCode::SETLE:
@@ -254,9 +270,9 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
   case ISD::CondCode::SETGE:
     // Use ULT and 0x80 here rather than ULE and 0x7f so we can emit CPI rather
     // than an intermediate register copy
-    // TODO GB: we could improve codegen by inversing the jump condition and
+    // TODO GB: we could improve codegen by inverting the jump condition and
     // using an rla... But... I want this to work in the general case
-    ConvertToSubCp(ISD::CondCode::SETULT, 0x80);
+    ConvertToSubCp(ISD::CondCode::SETEQ);
     break;
   }
 
@@ -338,26 +354,14 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // (signed) a > (signed) b
   // sign(b - a)
-  case ISD::CondCode::SETGT:
-    std::swap(LHS, RHS);
-    [[fallthrough]];
-  case ISD::CondCode::SETLT: {
-    // Subtract and move the sign bit directly into the accumulator
-    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue Result = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
-    return Result;
-  }
-
-  // (signed) a >= (signed) b
-  // !sign(a - b)
-  case ISD::CondCode::SETLE:
-    std::swap(LHS, RHS);
-    [[fallthrough]];
   case ISD::CondCode::SETGE:
-    // Subtract, move the sign bit directly into the accumulator and reverse
-    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue Result = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
-    return DAG.getNOT(DL, Result, MVT::i8);
+  case ISD::CondCode::SETGT:
+  case ISD::CondCode::SETLE:
+  case ISD::CondCode::SETLT:
+    // TODO: we can do (much) better here
+    return DAG.getSelectCC(DL, LHS, RHS,
+                           DAG.getConstant(1, DL, LHS.getValueType()),
+                           DAG.getConstant(0, DL, LHS.getValueType()), CCode);
   }
 
   SDValue CC = DAG.getCondCode(CCode);
