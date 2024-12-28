@@ -222,24 +222,22 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
   auto ConvertToSubCp = [&](ISD::CondCode EqCode) {
     // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
     // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
-    SDValue SignBitLHS =
-        DAG.getNode(ISD::AND, DL, MVT::i8, LHS,
-                    DAG.getConstant(0x80, DL, LHS.getValueType()));
-    SDValue SignBitRHS =
-        DAG.getNode(ISD::AND, DL, MVT::i8, RHS,
-                    DAG.getConstant(0x80, DL, RHS.getValueType()));
+    SDValue SignBitLHS = DAG.getNode(GBISD::RLC, DL, MVT::i8, LHS);
 
-    SDValue Sub = DAG.getNode(ISD::SUB, DL, LHS.getValueType(), LHS, RHS);
-    SDValue SignBitSub =
-        DAG.getNode(ISD::AND, DL, LHS.getValueType(), Sub,
-                    DAG.getConstant(0x80, DL, Sub.getValueType()));
+    SDValue XOR = DAG.getNode(ISD::XOR, DL, MVT::i8, LHS, RHS);
+    SDValue SignBitXOR = DAG.getNode(GBISD::RLC, DL, MVT::i8, XOR);
 
-    SDValue Result = DAG.getSelectCC(DL, SignBitLHS, SignBitRHS, SignBitSub,
-                                     SignBitLHS, ISD::CondCode::SETEQ);
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
+    SDValue SignBitSub = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
+
+    SDValue Result =
+        DAG.getSelect(DL, MVT::i8, SignBitXOR, SignBitLHS, SignBitSub);
+    Result = DAG.getNode(ISD::AND, DL, MVT::i8, Result,
+                         DAG.getConstant(1, DL, MVT::i8));
 
     CCode = EqCode;
     LHS = Result;
-    RHS = DAG.getConstant(0, DL, Result.getValueType());
+    RHS = DAG.getConstant(0, DL, MVT::i8);
   };
 
   switch (CCode) {
@@ -316,6 +314,25 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       dyn_cast<CondCodeSDNode>(Op.getOperand(2).getNode())->get();
   SDLoc DL = Op;
 
+  auto ConvertToBitManip = [&](bool SwapResult) {
+    // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
+    // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
+    SDValue SignBitLHS = DAG.getNode(GBISD::RLC, DL, MVT::i8, LHS);
+
+    SDValue XOR = DAG.getNode(ISD::XOR, DL, MVT::i8, LHS, RHS);
+    SDValue SignBitXOR = DAG.getNode(GBISD::RLC, DL, MVT::i8, XOR);
+
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
+    SDValue SignBitSub = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
+
+    SDValue Result =
+        DAG.getSelect(DL, MVT::i8, SignBitXOR, SignBitLHS, SignBitSub);
+    if (SwapResult) {
+      Result = DAG.getNOT(DL, Result, MVT::i8);
+    }
+    return Result;
+  };
+
   bool ReverseResult = false;
   switch (CCode) {
   default:
@@ -354,14 +371,21 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // (signed) a > (signed) b
   // sign(b - a)
-  case ISD::CondCode::SETGE:
   case ISD::CondCode::SETGT:
-  case ISD::CondCode::SETLE:
+    std::swap(LHS, RHS);
+    [[fallthrough]];
   case ISD::CondCode::SETLT:
-    // TODO: we can do (much) better here
-    return DAG.getSelectCC(DL, LHS, RHS,
-                           DAG.getConstant(1, DL, LHS.getValueType()),
-                           DAG.getConstant(0, DL, LHS.getValueType()), CCode);
+    return ConvertToBitManip(false);
+
+  case ISD::CondCode::SETLE:
+    std::swap(LHS, RHS);
+    [[fallthrough]];
+  case ISD::CondCode::SETGE:
+    // Use ULT and 0x80 here rather than ULE and 0x7f so we can emit CPI rather
+    // than an intermediate register copy
+    // TODO GB: we could improve codegen by inverting the jump condition and
+    // using an rla... But... I want this to work in the general case
+    return ConvertToBitManip(true);
   }
 
   SDValue CC = DAG.getCondCode(CCode);

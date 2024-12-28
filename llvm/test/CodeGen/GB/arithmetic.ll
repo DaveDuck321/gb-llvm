@@ -223,29 +223,20 @@ define i1 @setcc_ne(i8 %b, i8 %c) nounwind {
 define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_gt:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld d, b
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    xor b
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    ld a, c
-; GBI-NEXT:    and $80
-; GBI-NEXT:    cp d
-; GBI-NEXT:    jp z, .LBB20_2
-; GBI-NEXT:  ; %bb.1:
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:  .LBB20_2:
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    or a
-; GBI-NEXT:    jp nz, .LBB20_3
-; GBI-NEXT:  ; %bb.4:
-; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    jp nz, .LBB20_1
+; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB20_3:
-; GBI-NEXT:    ld a, $01
+; GBI-NEXT:  .LBB20_1:
+; GBI-NEXT:    rlc c
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    ret
   %1 = icmp sgt i8 %b, %c
   ret i1 %1
@@ -254,29 +245,20 @@ define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_lt:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld d, b
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    xor c
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, c
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    and $80
-; GBI-NEXT:    cp c
-; GBI-NEXT:    jp z, .LBB21_2
-; GBI-NEXT:  ; %bb.1:
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:  .LBB21_2:
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    or a
-; GBI-NEXT:    jp nz, .LBB21_3
-; GBI-NEXT:  ; %bb.4:
-; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    jp nz, .LBB21_1
+; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB21_3:
-; GBI-NEXT:    ld a, $01
+; GBI-NEXT:  .LBB21_1:
+; GBI-NEXT:    rlc b
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ret
   %1 = icmp slt i8 %b, %c
   ret i1 %1
@@ -285,29 +267,24 @@ define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_le:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld d, b
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    xor b
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    jp nz, .LBB22_1
+; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:    rlca
+; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld a, c
-; GBI-NEXT:    and $80
-; GBI-NEXT:    cp d
-; GBI-NEXT:    jp z, .LBB22_2
-; GBI-NEXT:  ; %bb.1:
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:  .LBB22_2:
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    or a
-; GBI-NEXT:    jp z, .LBB22_3
-; GBI-NEXT:  ; %bb.4:
-; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB22_3:
-; GBI-NEXT:    ld a, $01
+; GBI-NEXT:  .LBB22_1:
+; GBI-NEXT:    rlc c
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp sle i8 %b, %c
   ret i1 %1
@@ -316,29 +293,24 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ge:
 ; GBI:       ; %bb.0:
-; GBI-NEXT:    ld d, b
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    xor c
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    and $80
+; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    jp nz, .LBB23_1
+; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:    rlca
 ; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, c
-; GBI-NEXT:    and $80
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    and $80
-; GBI-NEXT:    cp c
-; GBI-NEXT:    jp z, .LBB23_2
-; GBI-NEXT:  ; %bb.1:
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:  .LBB23_2:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    or a
-; GBI-NEXT:    jp z, .LBB23_3
-; GBI-NEXT:  ; %bb.4:
-; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB23_3:
-; GBI-NEXT:    ld a, $01
+; GBI-NEXT:  .LBB23_1:
+; GBI-NEXT:    rlc b
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = icmp sge i8 %b, %c
   ret i1 %1
