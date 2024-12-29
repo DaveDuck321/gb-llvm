@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallingConv.h"
@@ -726,6 +727,8 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
     MachineInstr &MI, MachineBasicBlock *MBB) const {
   const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+  const TargetRegisterInfo &TRI =
+      *MBB->getParent()->getSubtarget().getRegisterInfo();
 
   enum class SBRCC {
     gt = 0,
@@ -749,26 +752,6 @@ MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
     return MICC == SBRCC::lt || MICC == SBRCC::le;
   }();
 
-  // We have:
-  // jp sgt .target
-  // jp .fallthrough
-
-  // We want the following codegen:
-  //    ld a, lhs
-  //    xor rhs
-  //    bit 7, a
-  //    jp z, .same_sign
-  //    jp either target or fallthrough
-  // .same_sign:
-  //    ld a, lhs
-  //    sub rhs
-  //    bit 7, a
-  //    jp nz .target
-  //    jp .fallthrough
-  // .target
-  //    jp __target
-  // .fallthrough
-  //    jp __fallthrough
   MachineFunction *Func = MBB->getParent();
   const BasicBlock *BB = MBB->getBasicBlock();
   MachineFunction::iterator I = ++MBB->getIterator();
@@ -791,13 +774,14 @@ MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
 
   StartMBB->addSuccessor(SameSignMBB);
   StartMBB->addSuccessor(FallthroughOnDiffSign ? FallthroughMBB : TargetMBB);
-  SameSignMBB->addSuccessor(TargetMBB);
-  SameSignMBB->addSuccessor(FallthroughMBB);
 
   // MITarget is no-longer a successor of the StartMBB
   FallthroughMBB->removeSuccessor(MITarget);
   MITarget->replacePhiUsesWith(FallthroughMBB, TargetMBB);
   TargetMBB->addSuccessor(MITarget);
+
+  // Target block
+  BuildMI(TargetMBB, DL, TII.get(GB::JR)).addMBB(MITarget);
 
   // Setup the start block
   BuildMI(StartMBB, DL, TII.get(GB::BIT_r)).addReg(MILHS).addImm(7);
@@ -808,7 +792,55 @@ MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
   BuildMI(StartMBB, DL, TII.get(GB::JR))
       .addMBB(FallthroughOnDiffSign ? FallthroughMBB : TargetMBB);
 
+  MI.eraseFromParent(); // Delete the SBR_CC pseudo
+
   // Same sign block
+  if (MIRHSConst == 0) {
+    // Special case 0 to avoid redundant compares
+    switch (MICC) {
+    case SBRCC::ge:
+      // Always matched
+      SameSignMBB->removeSuccessor(TargetMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(TargetMBB);
+      break;
+    case SBRCC::lt:
+      // Never matched
+      SameSignMBB->addSuccessor(FallthroughMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+      break;
+    case SBRCC::gt:
+      // Matched only if lhs!=0
+      SameSignMBB->addSuccessor(FallthroughMBB);
+      SameSignMBB->addSuccessor(TargetMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
+      BuildMI(SameSignMBB, DL, TII.get(GB::CPI))
+          .addImm(0)
+          ->addRegisterKilled(GB::A, &TRI);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+          .addImm(GBFlag::NZ)
+          .addMBB(TargetMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+      break;
+    case SBRCC::le:
+      // Matched only if lhs==0
+      SameSignMBB->addSuccessor(FallthroughMBB);
+      SameSignMBB->addSuccessor(TargetMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
+      BuildMI(SameSignMBB, DL, TII.get(GB::CPI))
+          .addImm(0)
+          ->addRegisterKilled(GB::A, &TRI);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+          .addImm(GBFlag::Z)
+          .addMBB(TargetMBB);
+      BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+      break;
+    }
+    return FallthroughMBB;
+  }
+
+  SameSignMBB->addSuccessor(TargetMBB);
+  SameSignMBB->addSuccessor(FallthroughMBB);
+
   switch (MICC) {
   case SBRCC::gt:
   case SBRCC::le:
@@ -822,30 +854,28 @@ MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
     break;
   }
 
-  BuildMI(SameSignMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+  BuildMI(SameSignMBB, DL, TII.get(GB::RLCA))->addRegisterKilled(GB::A, &TRI);
 
   if (MICC == SBRCC::ge || MICC == SBRCC::le) {
     BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
-        .addImm(GBFlag::Z)
+        .addImm(GBFlag::NC)
         .addMBB(TargetMBB);
   } else {
     assert(MICC == SBRCC::lt || MICC == SBRCC::gt);
     BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
-        .addImm(GBFlag::NZ)
+        .addImm(GBFlag::C)
         .addMBB(TargetMBB);
   }
   BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
 
-  // Target block
-  BuildMI(TargetMBB, DL, TII.get(GB::JR)).addMBB(MITarget);
-
-  MI.eraseFromParent(); // Delete the SBR_CC pseudo
   return FallthroughMBB;
 }
 
 MachineBasicBlock *GBTargetLowering::emitUnknownSBRCCWithCustomInserter(
     MachineInstr &MI, MachineBasicBlock *MBB) const {
   const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+  const TargetRegisterInfo &TRI =
+      *MBB->getParent()->getSubtarget().getRegisterInfo();
 
   enum class SBRCC {
     gt = 0,
@@ -922,9 +952,9 @@ MachineBasicBlock *GBTargetLowering::emitUnknownSBRCCWithCustomInserter(
   // Setup the start block
   BuildMI(StartMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
   BuildMI(StartMBB, DL, TII.get(GB::XOR_r)).addReg(MIRHS);
-  BuildMI(StartMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+  BuildMI(StartMBB, DL, TII.get(GB::RLCA))->addRegisterKilled(GB::A, &TRI);
   BuildMI(StartMBB, DL, TII.get(GB::JR_COND))
-      .addImm(GBFlag::Z)
+      .addImm(GBFlag::NC)
       .addMBB(SameSignMBB);
   BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(DifferentSignMBB);
 
@@ -957,15 +987,15 @@ MachineBasicBlock *GBTargetLowering::emitUnknownSBRCCWithCustomInserter(
   }
   BuildMI(SameSignMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
   BuildMI(SameSignMBB, DL, TII.get(GB::SUB_r)).addReg(MIRHS);
-  BuildMI(SameSignMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+  BuildMI(SameSignMBB, DL, TII.get(GB::RLCA))->addRegisterKilled(GB::A, &TRI);
   if (MICC == SBRCC::ge) {
     BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
-        .addImm(GBFlag::Z)
+        .addImm(GBFlag::NC)
         .addMBB(TargetMBB);
   } else {
     assert(MICC == SBRCC::lt);
     BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
-        .addImm(GBFlag::NZ)
+        .addImm(GBFlag::C)
         .addMBB(TargetMBB);
   }
   BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
