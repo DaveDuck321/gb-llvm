@@ -224,15 +224,15 @@ define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_gt:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, c
-; GBI-NEXT:    xor b
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    rlc d
-; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
-; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    xor b
+; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB20_1
 ; GBI-NEXT:  ; %bb.2:
-; GBI-NEXT:    rlca
+; GBI-NEXT:    rlc d
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
 ; GBI-NEXT:  .LBB20_1:
 ; GBI-NEXT:    rlc c
@@ -246,15 +246,15 @@ define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_lt:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    xor c
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    rlc d
-; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    xor c
+; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB21_1
 ; GBI-NEXT:  ; %bb.2:
-; GBI-NEXT:    rlca
+; GBI-NEXT:    rlc d
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
 ; GBI-NEXT:  .LBB21_1:
 ; GBI-NEXT:    rlc b
@@ -268,16 +268,15 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_le:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, c
-; GBI-NEXT:    xor b
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    rlc d
-; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
-; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, c
+; GBI-NEXT:    xor b
+; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB22_1
 ; GBI-NEXT:  ; %bb.2:
-; GBI-NEXT:    rlca
-; GBI-NEXT:    ld c, a
+; GBI-NEXT:    rlc d
+; GBI-NEXT:    ld c, d
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
@@ -294,16 +293,15 @@ define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ge:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    xor c
-; GBI-NEXT:    ld d, a
-; GBI-NEXT:    rlc d
-; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
-; GBI-NEXT:    bit 0, d
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    xor c
+; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB23_1
 ; GBI-NEXT:  ; %bb.2:
-; GBI-NEXT:    rlca
-; GBI-NEXT:    ld b, a
+; GBI-NEXT:    rlc d
+; GBI-NEXT:    ld b, d
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret

@@ -106,6 +106,91 @@ _sgt:
 ; EXPECT: a=01
     debugtrap
 
+    ld b, 0
+    call sgt_0
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 127
+    call sgt_0
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 1
+    call sgt_0
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    call sgt_0
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0
+    call sgt_1
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 127
+    call sgt_1
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 1
+    call sgt_1
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    call sgt_1
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0
+    call sgt_n1
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 127
+    call sgt_n1
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 1
+    call sgt_n1
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    call sgt_n1
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0
+    call sgt_n127
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 127
+    call sgt_n127
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 1
+    call sgt_n127
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0xff
+    call sgt_n127
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 0x80
+    call sgt_n127
+; EXPECT: a=00
+    debugtrap
+
 _sle:
     ld b, 0x10
     ld c, 0x01
@@ -148,6 +233,26 @@ _sle:
     ld c, 0xfe
     call sle
 ; EXPECT: a=00
+    debugtrap
+
+    ld b, 0
+    call sle_0
+; EXPECT: a=01
+    debugtrap
+
+    ld b, 127
+    call sle_0
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 1
+    call sle_0
+; EXPECT: a=00
+    debugtrap
+
+    ld b, 0xff
+    call sle_0
+; EXPECT: a=01
     debugtrap
 
 _slt:

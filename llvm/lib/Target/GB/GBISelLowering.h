@@ -31,6 +31,7 @@ enum NodeType : unsigned {
   RL,
   RLC,
   RR,
+  SBR_CC,
   SELECT_CC,
   SHL,
   UPPER,
@@ -80,6 +81,14 @@ private:
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *MBB) const override;
+
+  MachineBasicBlock *
+  emitUnknownSBRCCWithCustomInserter(MachineInstr &MI,
+                                     MachineBasicBlock *MBB) const;
+
+  MachineBasicBlock *
+  emitConstantSBRCCWithCustomInserter(MachineInstr &MI,
+                                      MachineBasicBlock *MBB) const;
 
   MachineBasicBlock *
   emitSelectCCWithCustomInserter(MachineInstr &MI,

@@ -254,6 +254,9 @@ foreach shift = [0, 1, 2, 3, 4, 5, 6, 7] in {
   defvar imm = !shl(1, shift);
   def : Pat<(CP_NODE SETNE, (and GPR8:$rs, imm), 0), (BIT_r GPR8:$rs, shift)>;
   def : Pat<(CP_NODE SETEQ, (and GPR8:$rs, imm), 0), (BIT_r GPR8:$rs, shift)>;
+
+  def : Pat<(CP_NODE SETEQ, (srl GPR8:$rs, (i8 shift)), 0), (BIT_r GPR8:$rs, shift)>;
+  def : Pat<(CP_NODE SETNE, (srl GPR8:$rs, (i8 shift)), 0), (BIT_r GPR8:$rs, shift)>;
 }
 
 // Rotates, useful for %i1 = sign(a)
@@ -377,6 +380,43 @@ let mayStore = true, Uses = [SP] in {
   def Save8ToFrameIndex : Pseudo<"#save8 ", "$r to $i", (outs), (ins GPR8:$r, simm8:$i)>;
 }
 
+// Signed BR_CC
+def P_SBR_CC_r
+    : Pseudo<"#sbr_cc", "$bb, $cond, $rs1, $rs2",
+        (outs),
+        (ins simm8:$cond, bb_absolute:$bb, GPR8:$rs1, GPR8:$rs2)> {
+  let usesCustomInserter = true;
+  let isTerminator = true;
+  let isBranch = true;
+}
+
+def P_SBR_CCI
+    : Pseudo<"#sbr_cc", "$bb, $cond, $rs1, $imm",
+        (outs),
+        (ins simm8:$cond, bb_absolute:$bb, GPR8:$rs1, simm8:$imm)> {
+  let usesCustomInserter = true;
+  let isTerminator = true;
+  let isBranch = true;
+}
+
+def SDTGB_SBR_CC  : SDTypeProfile<0, 4, [
+  SDTCisVT<0, /*CC=*/OtherVT>,
+  SDTCisVT<1, /*BB=*/OtherVT>,
+  SDTCisVT<2, /*LHS=*/i8>,
+  SDTCisVT<3, /*RHS=*/i8>
+]>;
+def SBR_CC_NODE : SDNode<"GBISD::SBR_CC", SDTGB_SBR_CC, [SDNPHasChain]>;
+def : Pat<(SBR_CC_NODE SETGT, bb:$bb, GPR8:$rs1, GPR8:$rs2), (P_SBR_CC_r 0, bb:$bb, GPR8:$rs1, GPR8:$rs2)>;
+def : Pat<(SBR_CC_NODE SETLT, bb:$bb, GPR8:$rs1, GPR8:$rs2), (P_SBR_CC_r 1, bb:$bb, GPR8:$rs1, GPR8:$rs2)>;
+def : Pat<(SBR_CC_NODE SETGE, bb:$bb, GPR8:$rs1, GPR8:$rs2), (P_SBR_CC_r 2, bb:$bb, GPR8:$rs1, GPR8:$rs2)>;
+def : Pat<(SBR_CC_NODE SETLE, bb:$bb, GPR8:$rs1, GPR8:$rs2), (P_SBR_CC_r 3, bb:$bb, GPR8:$rs1, GPR8:$rs2)>;
+
+def : Pat<(SBR_CC_NODE SETGT, bb:$bb, GPR8:$rs1, imm8:$imm), (P_SBR_CCI 0, bb:$bb, GPR8:$rs1, imm8:$imm)>;
+def : Pat<(SBR_CC_NODE SETLT, bb:$bb, GPR8:$rs1, imm8:$imm), (P_SBR_CCI 1, bb:$bb, GPR8:$rs1, imm8:$imm)>;
+def : Pat<(SBR_CC_NODE SETGE, bb:$bb, GPR8:$rs1, imm8:$imm), (P_SBR_CCI 2, bb:$bb, GPR8:$rs1, imm8:$imm)>;
+def : Pat<(SBR_CC_NODE SETLE, bb:$bb, GPR8:$rs1, imm8:$imm), (P_SBR_CCI 3, bb:$bb, GPR8:$rs1, imm8:$imm)>;
+
+
 // Select
 def P_SELECT_CC
     : Pseudo<"#select_cc", "$rd, $flag, $ifTrue, $ifFalse",
@@ -420,6 +460,9 @@ defm P_SRA : P_SHIFT<sra, "sra">;
 defm P_SRL : P_SHIFT<srl, "srl">;
 defm P_ROTL : P_SHIFT<rotl, "rotl">;
 defm P_ROTR : P_SHIFT<rotr, "rotr">;
+
+def : Pat<(rotl GPR8:$rs, (i8 1)), (RLC_r GPR8:$rs)>;
+def : Pat<(rotr GPR8:$rs, (i8 1)), (RRC_r GPR8:$rs)>;
 
 // Calling
 def SDT_GBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;

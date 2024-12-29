@@ -222,14 +222,16 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
   auto ConvertToSubCp = [&](ISD::CondCode EqCode) {
     // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
     // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
-    SDValue SignBitLHS = DAG.getNode(GBISD::RLC, DL, MVT::i8, LHS);
+    SDValue SignBitLHS = DAG.getNode(ISD::ROTL, DL, MVT::i8, LHS,
+                                     DAG.getConstant(1, DL, MVT::i8));
 
     SDValue XOR = DAG.getNode(ISD::XOR, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitXOR = DAG.getNode(GBISD::RLC, DL, MVT::i8, XOR);
+    SDValue SignBitXOR = DAG.getNode(ISD::ROTL, DL, MVT::i8, XOR,
+                                     DAG.getConstant(1, DL, MVT::i8));
 
     SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitSub = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
-
+    SDValue SignBitSub = DAG.getNode(ISD::ROTL, DL, MVT::i8, Sub,
+                                     DAG.getConstant(1, DL, MVT::i8));
     SDValue Result =
         DAG.getSelect(DL, MVT::i8, SignBitXOR, SignBitLHS, SignBitSub);
     Result = DAG.getNode(ISD::AND, DL, MVT::i8, Result,
@@ -266,10 +268,6 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
     std::swap(LHS, RHS);
     [[fallthrough]];
   case ISD::CondCode::SETGE:
-    // Use ULT and 0x80 here rather than ULE and 0x7f so we can emit CPI rather
-    // than an intermediate register copy
-    // TODO GB: we could improve codegen by inverting the jump condition and
-    // using an rla... But... I want this to work in the general case
     ConvertToSubCp(ISD::CondCode::SETEQ);
     break;
   }
@@ -286,6 +284,18 @@ SDValue GBTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue RHS = Op.getOperand(3);
   SDValue BB = Op.getOperand(4);
   SDLoc DL = Op;
+
+  switch (CCode) {
+  default:
+    break;
+  case ISD::CondCode::SETLE:
+  case ISD::CondCode::SETLT:
+  case ISD::CondCode::SETGT:
+  case ISD::CondCode::SETGE:
+    // Signed arithmetic needs special lowering
+    return DAG.getNode(GBISD::SBR_CC, DL, MVT::Other, Chain,
+                       DAG.getCondCode(CCode), BB, LHS, RHS);
+  }
 
   SDValue CmpGlue = LowerCMP_CC(LHS, RHS, CCode, DAG, DL);
   SDValue CC = DAG.getCondCode(CCode);
@@ -317,14 +327,16 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   auto ConvertToBitManip = [&](bool SwapResult) {
     // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
     // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
-    SDValue SignBitLHS = DAG.getNode(GBISD::RLC, DL, MVT::i8, LHS);
+    SDValue SignBitLHS = DAG.getNode(ISD::ROTL, DL, MVT::i8, LHS,
+                                     DAG.getConstant(1, DL, MVT::i8));
 
     SDValue XOR = DAG.getNode(ISD::XOR, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitXOR = DAG.getNode(GBISD::RLC, DL, MVT::i8, XOR);
+    SDValue SignBitXOR = DAG.getNode(ISD::ROTL, DL, MVT::i8, XOR,
+                                     DAG.getConstant(1, DL, MVT::i8));
 
     SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitSub = DAG.getNode(GBISD::RLC, DL, MVT::i8, Sub);
-
+    SDValue SignBitSub = DAG.getNode(ISD::ROTL, DL, MVT::i8, Sub,
+                                     DAG.getConstant(1, DL, MVT::i8));
     SDValue Result =
         DAG.getSelect(DL, MVT::i8, SignBitXOR, SignBitLHS, SignBitSub);
     if (SwapResult) {
@@ -381,10 +393,6 @@ SDValue GBTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     std::swap(LHS, RHS);
     [[fallthrough]];
   case ISD::CondCode::SETGE:
-    // Use ULT and 0x80 here rather than ULE and 0x7f so we can emit CPI rather
-    // than an intermediate register copy
-    // TODO GB: we could improve codegen by inverting the jump condition and
-    // using an rla... But... I want this to work in the general case
     return ConvertToBitManip(true);
   }
 
@@ -487,6 +495,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::RLC";
   case GBISD::RR:
     return "GBISD::RR";
+  case GBISD::SBR_CC:
+    return "GBISD::SBR_CC";
   case GBISD::SELECT_CC:
     return "GBISD::SELECT_CC";
   case GBISD::SHL:
@@ -692,6 +702,10 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     llvm_unreachable("Instruction emitter not implemented!");
+  case GB::P_SBR_CC_r:
+    return emitUnknownSBRCCWithCustomInserter(MI, MBB);
+  case GB::P_SBR_CCI:
+    return emitConstantSBRCCWithCustomInserter(MI, MBB);
   case GB::P_SELECT_CC:
     return emitSelectCCWithCustomInserter(MI, MBB);
   case GB::P_SLA_r:
@@ -707,6 +721,260 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case GB::P_ROTRI:
     return emitConstantShiftWithCustomInserter(MI, MBB);
   }
+}
+
+MachineBasicBlock *GBTargetLowering::emitConstantSBRCCWithCustomInserter(
+    MachineInstr &MI, MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+
+  enum class SBRCC {
+    gt = 0,
+    lt = 1,
+    ge = 2,
+    le = 3,
+  };
+
+  // If sign(lhs) == sign(rhs) then we can subtract and branch on the sign bit
+  // If sign(lhs) != sign(rhs) then we need to branch on the sign bit of lhs
+  auto MICC = SBRCC(MI.getOperand(0).getImm());
+  auto *MITarget = MI.getOperand(1).getMBB();
+  auto MILHS = MI.getOperand(2).getReg();
+  auto MIRHSConst = MI.getOperand(3).getImm();
+  bool RHSConstPositive = (MIRHSConst & 0x80) == 0;
+
+  bool FallthroughOnDiffSign = [&] {
+    if (RHSConstPositive) {
+      return MICC == SBRCC::gt || MICC == SBRCC::ge;
+    }
+    return MICC == SBRCC::lt || MICC == SBRCC::le;
+  }();
+
+  // We have:
+  // jp sgt .target
+  // jp .fallthrough
+
+  // We want the following codegen:
+  //    ld a, lhs
+  //    xor rhs
+  //    bit 7, a
+  //    jp z, .same_sign
+  //    jp either target or fallthrough
+  // .same_sign:
+  //    ld a, lhs
+  //    sub rhs
+  //    bit 7, a
+  //    jp nz .target
+  //    jp .fallthrough
+  // .target
+  //    jp __target
+  // .fallthrough
+  //    jp __fallthrough
+  MachineFunction *Func = MBB->getParent();
+  const BasicBlock *BB = MBB->getBasicBlock();
+  MachineFunction::iterator I = ++MBB->getIterator();
+  DebugLoc DL = MI.getDebugLoc();
+
+  // Create all the basic blocks (with the correct successors)
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *SameSignMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *TargetMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *FallthroughMBB = Func->CreateMachineBasicBlock(BB);
+  Func->insert(I, SameSignMBB);
+  Func->insert(I, TargetMBB);
+  Func->insert(I, FallthroughMBB);
+
+  // Split up the start block
+  FallthroughMBB->splice(FallthroughMBB->begin(), StartMBB,
+                         std::next(MachineBasicBlock::iterator(MI)),
+                         StartMBB->end());
+  FallthroughMBB->transferSuccessorsAndUpdatePHIs(StartMBB);
+
+  StartMBB->addSuccessor(SameSignMBB);
+  StartMBB->addSuccessor(FallthroughOnDiffSign ? FallthroughMBB : TargetMBB);
+  SameSignMBB->addSuccessor(TargetMBB);
+  SameSignMBB->addSuccessor(FallthroughMBB);
+
+  // MITarget is no-longer a successor of the StartMBB
+  FallthroughMBB->removeSuccessor(MITarget);
+  MITarget->replacePhiUsesWith(FallthroughMBB, TargetMBB);
+  TargetMBB->addSuccessor(MITarget);
+
+  // Setup the start block
+  BuildMI(StartMBB, DL, TII.get(GB::BIT_r)).addReg(MILHS).addImm(7);
+  BuildMI(StartMBB, DL, TII.get(GB::JR_COND))
+      .addImm(RHSConstPositive ? GBFlag::Z : GBFlag::NZ)
+      .addMBB(SameSignMBB);
+
+  BuildMI(StartMBB, DL, TII.get(GB::JR))
+      .addMBB(FallthroughOnDiffSign ? FallthroughMBB : TargetMBB);
+
+  // Same sign block
+  switch (MICC) {
+  case SBRCC::gt:
+  case SBRCC::le:
+    BuildMI(SameSignMBB, DL, TII.get(GB::LDI8_r), GB::A).addImm(MIRHSConst);
+    BuildMI(SameSignMBB, DL, TII.get(GB::SUB_r)).addReg(MILHS);
+    break;
+  case SBRCC::ge:
+  case SBRCC::lt:
+    BuildMI(SameSignMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
+    BuildMI(SameSignMBB, DL, TII.get(GB::SUBI)).addImm(MIRHSConst);
+    break;
+  }
+
+  BuildMI(SameSignMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+
+  if (MICC == SBRCC::ge || MICC == SBRCC::le) {
+    BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::Z)
+        .addMBB(TargetMBB);
+  } else {
+    assert(MICC == SBRCC::lt || MICC == SBRCC::gt);
+    BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::NZ)
+        .addMBB(TargetMBB);
+  }
+  BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+
+  // Target block
+  BuildMI(TargetMBB, DL, TII.get(GB::JR)).addMBB(MITarget);
+
+  MI.eraseFromParent(); // Delete the SBR_CC pseudo
+  return FallthroughMBB;
+}
+
+MachineBasicBlock *GBTargetLowering::emitUnknownSBRCCWithCustomInserter(
+    MachineInstr &MI, MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+
+  enum class SBRCC {
+    gt = 0,
+    lt = 1,
+    ge = 2,
+    le = 3,
+  };
+
+  // If sign(lhs) == sign(rhs) then we can subtract and branch on the sign bit
+  // If sign(lhs) != sign(rhs) then we need to branch on the sign bit of lhs
+  auto MICC = SBRCC(MI.getOperand(0).getImm());
+  auto *MITarget = MI.getOperand(1).getMBB();
+  auto MILHS = MI.getOperand(2).getReg();
+  auto MIRHS = MI.getOperand(3).getReg();
+
+  // We have:
+  // jp sgt .target
+  // jp .fallthrough
+
+  // We want the following codegen:
+  //    ld a, lhs
+  //    xor rhs
+  //    bit 7, a
+  //    jp z, .same_sign
+  //    jp .different_sign
+  // .different_sign:
+  //    bit 7, lhs
+  //    jp nz .target
+  //    jp .fallthrough
+  // .same_sign:
+  //    ld a, lhs
+  //    sub rhs
+  //    bit 7, a
+  //    jp nz .target
+  //    jp .fallthrough
+  // .target
+  //    jp __target
+  // .fallthrough
+  //    jp __fallthrough
+  MachineFunction *Func = MBB->getParent();
+  const BasicBlock *BB = MBB->getBasicBlock();
+  MachineFunction::iterator I = ++MBB->getIterator();
+  DebugLoc DL = MI.getDebugLoc();
+
+  // Create all the basic blocks (with the correct successors)
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *DifferentSignMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *SameSignMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *TargetMBB = Func->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *FallthroughMBB = Func->CreateMachineBasicBlock(BB);
+  Func->insert(I, DifferentSignMBB);
+  Func->insert(I, SameSignMBB);
+  Func->insert(I, TargetMBB);
+  Func->insert(I, FallthroughMBB);
+
+  // Split up the start block
+  FallthroughMBB->splice(FallthroughMBB->begin(), StartMBB,
+                         std::next(MachineBasicBlock::iterator(MI)),
+                         StartMBB->end());
+  FallthroughMBB->transferSuccessorsAndUpdatePHIs(StartMBB);
+
+  StartMBB->addSuccessor(DifferentSignMBB);
+  StartMBB->addSuccessor(SameSignMBB);
+  DifferentSignMBB->addSuccessor(TargetMBB);
+  DifferentSignMBB->addSuccessor(FallthroughMBB);
+  SameSignMBB->addSuccessor(TargetMBB);
+  SameSignMBB->addSuccessor(FallthroughMBB);
+
+  // MITarget is no-longer a successor of the StartMBB
+  FallthroughMBB->removeSuccessor(MITarget);
+  MITarget->replacePhiUsesWith(FallthroughMBB, TargetMBB);
+  TargetMBB->addSuccessor(MITarget);
+
+  // Setup the start block
+  BuildMI(StartMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
+  BuildMI(StartMBB, DL, TII.get(GB::XOR_r)).addReg(MIRHS);
+  BuildMI(StartMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+  BuildMI(StartMBB, DL, TII.get(GB::JR_COND))
+      .addImm(GBFlag::Z)
+      .addMBB(SameSignMBB);
+  BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(DifferentSignMBB);
+
+  // Different sign block
+  BuildMI(DifferentSignMBB, DL, TII.get(GB::BIT_r)).addReg(MILHS).addImm(7);
+  if (MICC == SBRCC::ge || MICC == SBRCC::gt) {
+    BuildMI(DifferentSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::Z)
+        .addMBB(TargetMBB);
+  } else {
+    assert(MICC == SBRCC::le || MICC == SBRCC::lt);
+    BuildMI(DifferentSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::NZ)
+        .addMBB(TargetMBB);
+  }
+  BuildMI(DifferentSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+
+  // Same sign block
+  switch (MICC) {
+  default:
+    break;
+  case SBRCC::gt:
+    MICC = SBRCC::lt;
+    std::swap(MILHS, MIRHS);
+    break;
+  case SBRCC::le:
+    MICC = SBRCC::ge;
+    std::swap(MILHS, MIRHS);
+    break;
+  }
+  BuildMI(SameSignMBB, DL, TII.get(GB::COPY), GB::A).addReg(MILHS);
+  BuildMI(SameSignMBB, DL, TII.get(GB::SUB_r)).addReg(MIRHS);
+  BuildMI(SameSignMBB, DL, TII.get(GB::BIT_r)).addReg(GB::A).addImm(7);
+  if (MICC == SBRCC::ge) {
+    BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::Z)
+        .addMBB(TargetMBB);
+  } else {
+    assert(MICC == SBRCC::lt);
+    BuildMI(SameSignMBB, DL, TII.get(GB::JR_COND))
+        .addImm(GBFlag::NZ)
+        .addMBB(TargetMBB);
+  }
+  BuildMI(SameSignMBB, DL, TII.get(GB::JR)).addMBB(FallthroughMBB);
+
+  // Target block
+  BuildMI(TargetMBB, DL, TII.get(GB::JR)).addMBB(MITarget);
+
+  MI.eraseFromParent(); // Delete the SBR_CC pseudo
+  return FallthroughMBB;
 }
 
 MachineBasicBlock *

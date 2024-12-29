@@ -18,24 +18,19 @@ define i8 @sge(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    rlc d
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
-; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jp nz, .LBB1_1
-; GBI-O3-NEXT:  ; %bb.2:
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    bit 0, b
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB1_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    bit 7, b
 ; GBI-O3-NEXT:    jp z, .LBB1_4
-; GBI-O3-NEXT:  .LBB1_5: ; %label2
+; GBI-O3-NEXT:  .LBB1_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB1_1:
-; GBI-O3-NEXT:    rlc b
-; GBI-O3-NEXT:    bit 0, b
-; GBI-O3-NEXT:    jp nz, .LBB1_5
+; GBI-O3-NEXT:  .LBB1_3:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp nz, .LBB1_2
 ; GBI-O3-NEXT:  .LBB1_4: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -51,26 +46,21 @@ label2:
 define i8 @sgt(i8 %b, i8 %c) nounwind {
 ; GBI-O3-LABEL: sgt:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    xor b
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    rlc d
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jp nz, .LBB2_1
-; GBI-O3-NEXT:  ; %bb.2:
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp nz, .LBB2_4
-; GBI-O3-NEXT:  .LBB2_5: ; %label2
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    xor c
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB2_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp z, .LBB2_4
+; GBI-O3-NEXT:  .LBB2_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB2_1:
-; GBI-O3-NEXT:    rlc c
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp z, .LBB2_5
+; GBI-O3-NEXT:  .LBB2_3:
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB2_2
 ; GBI-O3-NEXT:  .LBB2_4: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -83,30 +73,146 @@ label2:
   ret i8 0
 }
 
+define i8 @sgt_0(i8 %b) nounwind {
+; GBI-O3-LABEL: sgt_0:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB3_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub $01
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB3_2
+; GBI-O3-NEXT:  .LBB3_3: ; %label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB3_2: ; %label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+  %result = icmp sgt i8 %b, 0
+  br i1 %result, label %label1, label %label2
+label1:
+  ret i8 1
+label2:
+  ret i8 0
+}
+
+define i8 @sle_0(i8 %b) nounwind {
+; GBI-O3-LABEL: sle_0:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB4_2
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB4_2
+; GBI-O3-NEXT:  ; %bb.3: ; %label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB4_2: ; %label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+  %result = icmp sle i8 %b, 0
+  br i1 %result, label %label1, label %label2
+label1:
+  ret i8 1
+label2:
+  ret i8 0
+}
+
+define i8 @sgt_1(i8 %b) nounwind {
+; GBI-O3-LABEL: sgt_1:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB5_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub $02
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB5_2
+; GBI-O3-NEXT:  .LBB5_3: ; %label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB5_2: ; %label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+  %result = icmp sgt i8 %b, 1
+  br i1 %result, label %label1, label %label2
+label1:
+  ret i8 1
+label2:
+  ret i8 0
+}
+
+define i8 @sgt_n1(i8 %b) nounwind {
+; GBI-O3-LABEL: sgt_n1:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB6_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub $00
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB6_2
+; GBI-O3-NEXT:  .LBB6_3: ; %label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB6_2: ; %label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+  %result = icmp sgt i8 %b, -1
+  br i1 %result, label %label1, label %label2
+label1:
+  ret i8 1
+label2:
+  ret i8 0
+}
+
+define i8 @sgt_n127(i8 %b) nounwind {
+; GBI-O3-LABEL: sgt_n127:
+; GBI-O3:       ; %bb.0:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp z, .LBB7_2
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub $82
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB7_2
+; GBI-O3-NEXT:  ; %bb.3: ; %label2
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB7_2: ; %label1
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+  %result = icmp sgt i8 %b, -127
+  br i1 %result, label %label1, label %label2
+label1:
+  ret i8 1
+label2:
+  ret i8 0
+}
+
+
 define i8 @sle(i8 %b, i8 %c) nounwind {
 ; GBI-O3-LABEL: sle:
 ; GBI-O3:       ; %bb.0:
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    xor b
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    rlc d
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jp nz, .LBB3_1
-; GBI-O3-NEXT:  ; %bb.2:
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp z, .LBB3_4
-; GBI-O3-NEXT:  .LBB3_5: ; %label2
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    xor c
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB8_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB8_4
+; GBI-O3-NEXT:  .LBB8_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB3_1:
-; GBI-O3-NEXT:    rlc c
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp nz, .LBB3_5
-; GBI-O3-NEXT:  .LBB3_4: ; %label1
+; GBI-O3-NEXT:  .LBB8_3:
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp nz, .LBB8_2
+; GBI-O3-NEXT:  .LBB8_4: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
 
@@ -123,25 +229,20 @@ define i8 @slt(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    rlc d
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
-; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jp nz, .LBB4_1
-; GBI-O3-NEXT:  ; %bb.2:
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    bit 0, b
-; GBI-O3-NEXT:    jp nz, .LBB4_4
-; GBI-O3-NEXT:  .LBB4_5: ; %label2
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB9_3
+; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB9_4
+; GBI-O3-NEXT:  .LBB9_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB4_1:
-; GBI-O3-NEXT:    rlc b
-; GBI-O3-NEXT:    bit 0, b
-; GBI-O3-NEXT:    jp z, .LBB4_5
-; GBI-O3-NEXT:  .LBB4_4: ; %label1
+; GBI-O3-NEXT:  .LBB9_3:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB9_2
+; GBI-O3-NEXT:  .LBB9_4: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
 
@@ -158,11 +259,11 @@ define i8 @uge(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp c
-; GBI-O3-NEXT:    jp c, .LBB5_2
+; GBI-O3-NEXT:    jp c, .LBB10_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB5_2: ; %label2
+; GBI-O3-NEXT:  .LBB10_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp uge i8 %b, %c
@@ -178,11 +279,11 @@ define i8 @ugt(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp nc, .LBB6_2
+; GBI-O3-NEXT:    jp nc, .LBB11_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB6_2: ; %label2
+; GBI-O3-NEXT:  .LBB11_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp ugt i8 %b, %c
@@ -198,11 +299,11 @@ define i8 @ule(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp c, .LBB7_2
+; GBI-O3-NEXT:    jp c, .LBB12_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB7_2: ; %label2
+; GBI-O3-NEXT:  .LBB12_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp ule i8 %b, %c
@@ -218,11 +319,11 @@ define i8 @ult(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp c
-; GBI-O3-NEXT:    jp nc, .LBB8_2
+; GBI-O3-NEXT:    jp nc, .LBB13_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB8_2: ; %label2
+; GBI-O3-NEXT:  .LBB13_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp ult i8 %b, %c
@@ -239,11 +340,11 @@ define i8 @eq(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp c
-; GBI-O3-NEXT:    jp nz, .LBB9_2
+; GBI-O3-NEXT:    jp nz, .LBB14_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB9_2: ; %label2
+; GBI-O3-NEXT:  .LBB14_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp eq i8 %b, %c
@@ -259,11 +360,11 @@ define i8 @ne(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp c
-; GBI-O3-NEXT:    jp z, .LBB10_2
+; GBI-O3-NEXT:    jp z, .LBB15_2
 ; GBI-O3-NEXT:  ; %bb.1: ; %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB10_2: ; %label2
+; GBI-O3-NEXT:  .LBB15_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp ne i8 %b, %c
@@ -278,11 +379,11 @@ define i8 @phi(i1 %b) nounwind {
 ; GBI-O3-LABEL: phi:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    bit 0, b
-; GBI-O3-NEXT:    jp z, .LBB11_2
+; GBI-O3-NEXT:    jp z, .LBB16_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB11_2: ; %label2
+; GBI-O3-NEXT:  .LBB16_2: ; %label2
 ; GBI-O3-NEXT:    ld a, $05
 ; GBI-O3-NEXT:    ret
   br i1 %b, label %label1, label %label2
@@ -299,11 +400,11 @@ define i8 @select(i1 %b) nounwind {
 ; GBI-O3-LABEL: select:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    bit 0, b
-; GBI-O3-NEXT:    jp z, .LBB12_2
+; GBI-O3-NEXT:    jp z, .LBB17_2
 ; GBI-O3-NEXT:  ; %bb.1:
 ; GBI-O3-NEXT:    ld a, $04
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB12_2: ; %select.false
+; GBI-O3-NEXT:  .LBB17_2: ; %select.false
 ; GBI-O3-NEXT:    ld a, $05
 ; GBI-O3-NEXT:    ret
   %result = select i1 %b, i8 4, i8 5
@@ -313,52 +414,41 @@ define i8 @select(i1 %b) nounwind {
 define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-LABEL: jt:
 ; GBI-O3:       ; %bb.0: ; %entry
-; GBI-O3-NEXT:    ld c, $02
-; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jp nz, .LBB18_2
+; GBI-O3-NEXT:  ; %bb.1: ; %entry
+; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    xor $02
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    bit 0, a
-; GBI-O3-NEXT:    jp nz, .LBB13_1
-; GBI-O3-NEXT:  ; %bb.2: ; %entry
-; GBI-O3-NEXT:    rlc d
-; GBI-O3-NEXT:    ld c, d
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp z, .LBB13_4
-; GBI-O3-NEXT:  .LBB13_7: ; %entry
-; GBI-O3-NEXT:    cp $03
-; GBI-O3-NEXT:    jp z, .LBB13_11
-; GBI-O3-NEXT:  ; %bb.8: ; %entry
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    cp $04
-; GBI-O3-NEXT:    jp nz, .LBB13_12
-; GBI-O3-NEXT:  ; %bb.9: ; %bb4
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB13_1:
-; GBI-O3-NEXT:    rlc c
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    bit 0, c
-; GBI-O3-NEXT:    jp nz, .LBB13_7
-; GBI-O3-NEXT:  .LBB13_4: ; %entry
-; GBI-O3-NEXT:    cp $01
-; GBI-O3-NEXT:    jp z, .LBB13_10
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jp z, .LBB18_2
 ; GBI-O3-NEXT:  ; %bb.5: ; %entry
 ; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $03
+; GBI-O3-NEXT:    jp z, .LBB18_9
+; GBI-O3-NEXT:  ; %bb.6: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $04
+; GBI-O3-NEXT:    jp nz, .LBB18_10
+; GBI-O3-NEXT:  ; %bb.7: ; %bb4
+; GBI-O3-NEXT:    ld (hl), $01
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB18_2: ; %entry
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $01
+; GBI-O3-NEXT:    jp z, .LBB18_8
+; GBI-O3-NEXT:  ; %bb.3: ; %entry
+; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp $02
-; GBI-O3-NEXT:    jp nz, .LBB13_12
-; GBI-O3-NEXT:  ; %bb.6: ; %bb2
+; GBI-O3-NEXT:    jp nz, .LBB18_10
+; GBI-O3-NEXT:  ; %bb.4: ; %bb2
 ; GBI-O3-NEXT:    ld (hl), $03
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB13_11: ; %bb3
-; GBI-O3-NEXT:    ld (hl), $02
-; GBI-O3-NEXT:  .LBB13_12: ; %exit
-; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB13_10: ; %bb1
+; GBI-O3-NEXT:  .LBB18_8: ; %bb1
 ; GBI-O3-NEXT:    ld (hl), $04
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB18_9: ; %bb3
+; GBI-O3-NEXT:    ld (hl), $02
+; GBI-O3-NEXT:  .LBB18_10: ; %exit
 ; GBI-O3-NEXT:    ret
 entry:
   switch i8 %in, label %exit [
@@ -387,10 +477,10 @@ define i8 @indirectbr(ptr %target) nounwind {
 ; GBI-O3-LABEL: indirectbr:
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    jp (hl)
-; GBI-O3-NEXT:  .LBB14_1: ; %test_label1
+; GBI-O3-NEXT:  .LBB19_1: ; %test_label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB14_2: ; %test_label2
+; GBI-O3-NEXT:  .LBB19_2: ; %test_label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   indirectbr ptr %target, [label %test_label1, label %test_label2]
