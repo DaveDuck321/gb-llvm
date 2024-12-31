@@ -427,6 +427,22 @@ def P_SELECT_CC
   let Uses = [F];
 }
 
+def P_SSELECT_CC_r
+    : Pseudo<"#sselect_cc", "$rd, $cond, $lhs, $rhs, $ifTrue, $ifFalse",
+        (outs GPR8:$rd),
+        (ins simm8:$cond, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse)> {
+  let usesCustomInserter = true;
+  let isSelect = true;
+}
+
+def P_SSELECT_CCI
+    : Pseudo<"#sselect_cc", "$rd, $cond, $lhs, $imm, $ifTrue, $ifFalse",
+        (outs GPR8:$rd),
+        (ins simm8:$cond, GPR8:$lhs, simm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse)> {
+  let usesCustomInserter = true;
+  let isSelect = true;
+}
+
 def SDT_GBSELECT_CC : SDTypeProfile<1, 3, [/*Out=*/SDTCisVT<0, i8>, /*CCODE=*/ SDTCisVT<1, OtherVT>, /*IfTrue=*/ SDTCisVT<2, i8>, /*IfFalse=*/ SDTCisVT<3, i8>]>;
 def SELECT_CC_NODE : SDNode<"GBISD::SELECT_CC", SDT_GBSELECT_CC, [SDNPInGlue]>;
 def : Pat<(SELECT_CC_NODE SETUGT, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_C.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
@@ -435,6 +451,26 @@ def : Pat<(SELECT_CC_NODE SETULT, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBF
 def : Pat<(SELECT_CC_NODE SETULE, GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NC.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
 def : Pat<(SELECT_CC_NODE SETEQ,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_Z.Encoding,  GPR8:$ifTrue, GPR8:$ifFalse)>;
 def : Pat<(SELECT_CC_NODE SETNE,  GPR8:$ifTrue, GPR8:$ifFalse), (P_SELECT_CC GBFLAG_NZ.Encoding, GPR8:$ifTrue, GPR8:$ifFalse)>;
+
+def SDT_GBSSELECT_CC : SDTypeProfile<1, 5, [
+  /*Out=*/SDTCisVT<0, i8>,
+  /*CCODE=*/ SDTCisVT<1, OtherVT>,
+  /*LHS=*/ SDTCisVT<2, i8>,
+  /*RHS=*/ SDTCisVT<3, i8>,
+  /*IfTrue=*/ SDTCisVT<4, i8>,
+  /*IfFalse=*/ SDTCisVT<5, i8>
+]>;
+def SSELECT_CC_NODE : SDNode<"GBISD::SSELECT_CC", SDT_GBSSELECT_CC, []>;
+def : Pat<(SSELECT_CC_NODE SETGT, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CC_r 0, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETLT, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CC_r 1, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETGE, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CC_r 2, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETLE, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CC_r 3, GPR8:$lhs, GPR8:$rhs, GPR8:$ifTrue, GPR8:$ifFalse)>;
+
+def : Pat<(SSELECT_CC_NODE SETGT, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CCI 0, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETLT, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CCI 1, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETGE, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CCI 2, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse)>;
+def : Pat<(SSELECT_CC_NODE SETLE, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse), (P_SSELECT_CCI 3, GPR8:$lhs, imm8:$imm, GPR8:$ifTrue, GPR8:$ifFalse)>;
+
 
 // Shifts
 multiclass P_SHIFT<SDNode node, string name> {

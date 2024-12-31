@@ -220,29 +220,6 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
                                       ISD::CondCode &CCode, SelectionDAG &DAG,
                                       SDLoc DL) const {
   assert(LHS.getValueType() == MVT::i8 && RHS.getValueType() == MVT::i8);
-  auto ConvertToSubCp = [&](ISD::CondCode EqCode) {
-    // If sign(lhs) == sign(rhs) then we can subtract and check the sign bit
-    // If sign(lhs) != sign(rhs) then we only need to return the sign bit of lhs
-    SDValue SignBitLHS = DAG.getNode(ISD::ROTL, DL, MVT::i8, LHS,
-                                     DAG.getConstant(1, DL, MVT::i8));
-
-    SDValue XOR = DAG.getNode(ISD::XOR, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitXOR = DAG.getNode(ISD::ROTL, DL, MVT::i8, XOR,
-                                     DAG.getConstant(1, DL, MVT::i8));
-
-    SDValue Sub = DAG.getNode(ISD::SUB, DL, MVT::i8, LHS, RHS);
-    SDValue SignBitSub = DAG.getNode(ISD::ROTL, DL, MVT::i8, Sub,
-                                     DAG.getConstant(1, DL, MVT::i8));
-    SDValue Result =
-        DAG.getSelect(DL, MVT::i8, SignBitXOR, SignBitLHS, SignBitSub);
-    Result = DAG.getNode(ISD::AND, DL, MVT::i8, Result,
-                         DAG.getConstant(1, DL, MVT::i8));
-
-    CCode = EqCode;
-    LHS = Result;
-    RHS = DAG.getConstant(0, DL, MVT::i8);
-  };
-
   switch (CCode) {
   default:
     llvm_unreachable("unrecognized condition code");
@@ -254,22 +231,6 @@ SDValue GBTargetLowering::LowerCMP_CC(SDValue LHS, SDValue RHS,
   case ISD::CondCode::SETULE:
   case ISD::CondCode::SETEQ:
   case ISD::CondCode::SETNE:
-    break;
-
-  // We doesn't have hardware support for signed cmp, convert to subtract
-  // and unsigned cmp
-  case ISD::CondCode::SETGT:
-    std::swap(LHS, RHS);
-    [[fallthrough]];
-  case ISD::CondCode::SETLT:
-    ConvertToSubCp(ISD::CondCode::SETNE);
-    break;
-
-  case ISD::CondCode::SETLE:
-    std::swap(LHS, RHS);
-    [[fallthrough]];
-  case ISD::CondCode::SETGE:
-    ConvertToSubCp(ISD::CondCode::SETEQ);
     break;
   }
 
@@ -311,6 +272,18 @@ SDValue GBTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   ISD::CondCode CCode =
       dyn_cast<CondCodeSDNode>(Op.getOperand(4).getNode())->get();
   SDLoc DL = Op;
+
+  switch (CCode) {
+  default:
+    break;
+  case ISD::CondCode::SETLE:
+  case ISD::CondCode::SETLT:
+  case ISD::CondCode::SETGT:
+  case ISD::CondCode::SETGE:
+    // Signed arithmetic needs special lowering
+    return DAG.getNode(GBISD::SSELECT_CC, DL, MVT::i8, DAG.getCondCode(CCode),
+                       LHS, RHS, IfTrue, IfFalse);
+  }
 
   SDValue CmpGlue = LowerCMP_CC(LHS, RHS, CCode, DAG, DL);
   SDValue CC = DAG.getCondCode(CCode);
@@ -500,6 +473,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::SBR_CC";
   case GBISD::SELECT_CC:
     return "GBISD::SELECT_CC";
+  case GBISD::SSELECT_CC:
+    return "GBISD::SSELECT_CC";
   case GBISD::SHL:
     return "GBISD::SHL";
   case GBISD::UPPER:
@@ -709,6 +684,9 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     return emitConstantSBRCCWithCustomInserter(MI, MBB);
   case GB::P_SELECT_CC:
     return emitSelectCCWithCustomInserter(MI, MBB);
+  case GB::P_SSELECT_CC_r:
+  case GB::P_SSELECT_CCI:
+    return emitSignedSelectCCWithCustomInserter(MI, MBB);
   case GB::P_SLA_r:
   case GB::P_SRA_r:
   case GB::P_SRL_r:
@@ -1007,17 +985,12 @@ MachineBasicBlock *GBTargetLowering::emitUnknownSBRCCWithCustomInserter(
   return FallthroughMBB;
 }
 
-MachineBasicBlock *
-GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
-                                                 MachineBasicBlock *MBB) const {
+template <typename Fn>
+static MachineBasicBlock *emitSelectCC(Fn &&BuildJumpFn, MachineInstr &MI,
+                                       MachineBasicBlock *MBB, Register IfTrue,
+                                       Register IfFalse) {
   const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
-  // Atm, we've got the following sequence
-  // cmp xx
-  // P_SELECT_CC flag ifTrue, ifFalse
   const auto MIResult = MI.getOperand(0).getReg();
-  const auto MIFlag = MI.getOperand(1).getImm();
-  const auto MIIfTrue = MI.getOperand(2).getReg();
-  const auto MIIfFalse = MI.getOperand(3).getReg();
 
   // This should codegen to:
   //      cmp xx
@@ -1035,6 +1008,7 @@ GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
   //      BR .end
   // .end
   //      PHI ifTrue .start ifFalse .false
+
   MachineFunction *Func = MBB->getParent();
   const BasicBlock *BB = MBB->getBasicBlock();
   MachineFunction::iterator I = ++MBB->getIterator();
@@ -1057,19 +1031,78 @@ GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
   FalseMBB->addSuccessor(EndMBB);
 
   // Add the jumps
-  BuildMI(StartMBB, DL, TII.get(GB::JR_COND)).addImm(MIFlag).addMBB(EndMBB);
+  BuildJumpFn(StartMBB, EndMBB, DL);
   BuildMI(StartMBB, DL, TII.get(GB::JR)).addMBB(FalseMBB);
   BuildMI(FalseMBB, DL, TII.get(GB::JR)).addMBB(EndMBB);
 
   // Add the PHI
   // %result = phi [ %TrueValue, StartMBB ], [ %FalseValue, FalseMBB ]
   BuildMI(*EndMBB, EndMBB->begin(), DL, TII.get(GB::PHI), MIResult)
-      .addReg(MIIfTrue)
+      .addReg(IfTrue)
       .addMBB(StartMBB)
-      .addReg(MIIfFalse)
+      .addReg(IfFalse)
       .addMBB(FalseMBB);
 
   MI.eraseFromParent(); // The pseudo instruction is gone now.
+
+  return EndMBB;
+}
+
+MachineBasicBlock *
+GBTargetLowering::emitSelectCCWithCustomInserter(MachineInstr &MI,
+                                                 MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+
+  // P_SELECT_CC flag ifTrue, ifFalse
+  const auto MIFlag = MI.getOperand(1).getImm();
+  const auto MIIfTrue = MI.getOperand(2).getReg();
+  const auto MIIfFalse = MI.getOperand(3).getReg();
+
+  return emitSelectCC(
+      [&](MachineBasicBlock *StartMBB, MachineBasicBlock *EndMBB, DebugLoc DL) {
+        BuildMI(StartMBB, DL, TII.get(GB::JR_COND))
+            .addImm(MIFlag)
+            .addMBB(EndMBB);
+      },
+      MI, MBB, MIIfTrue, MIIfFalse);
+}
+
+MachineBasicBlock *GBTargetLowering::emitSignedSelectCCWithCustomInserter(
+    MachineInstr &MI, MachineBasicBlock *MBB) const {
+  const TargetInstrInfo &TII = *MBB->getParent()->getSubtarget().getInstrInfo();
+
+  // P_SSELECT_CC cond, lhs, rhs, ifTrue, ifFalse
+  const auto MICond = MI.getOperand(1).getImm();
+  const auto MILHS = MI.getOperand(2).getReg();
+  const auto MIRHS = MI.getOperand(3);
+  const auto MIIfTrue = MI.getOperand(4).getReg();
+  const auto MIIfFalse = MI.getOperand(5).getReg();
+
+  MachineInstr *PseudoJumpInstr = nullptr;
+
+  auto *EndMBB = emitSelectCC(
+      [&](MachineBasicBlock *StartMBB, MachineBasicBlock *EndMBB, DebugLoc DL) {
+        if (MIRHS.isImm()) {
+          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::P_SBR_CCI))
+                                .addImm(MICond)
+                                .addMBB(EndMBB)
+                                .addReg(MILHS)
+                                .addImm(MIRHS.getImm())
+                                .getInstr();
+        } else {
+          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::P_SBR_CC_r))
+                                .addImm(MICond)
+                                .addMBB(EndMBB)
+                                .addReg(MILHS)
+                                .addReg(MIRHS.getReg())
+                                .getInstr();
+        }
+      },
+      MI, MBB, MIIfTrue, MIIfFalse);
+
+  // Fill in the pseudo signed jump
+  EmitInstrWithCustomInserter(*PseudoJumpInstr, MBB);
+
   return EndMBB;
 }
 

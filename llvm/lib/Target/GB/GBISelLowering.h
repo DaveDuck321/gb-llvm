@@ -33,6 +33,7 @@ enum NodeType : unsigned {
   RR,
   SBR_CC,
   SELECT_CC,
+  SSELECT_CC,
   SHL,
   UPPER,
 };
@@ -78,6 +79,7 @@ private:
                       const SmallVectorImpl<SDValue> &OutsVals, const SDLoc &DL,
                       SelectionDAG &) const override;
 
+public:
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *MBB) const override;
@@ -93,6 +95,14 @@ private:
   MachineBasicBlock *
   emitSelectCCWithCustomInserter(MachineInstr &MI,
                                  MachineBasicBlock *MBB) const;
+
+  MachineBasicBlock *
+  emitFlagSelectCCWithCustomInserter(MachineInstr &MI,
+                                     MachineBasicBlock *MBB) const;
+
+  MachineBasicBlock *
+  emitSignedSelectCCWithCustomInserter(MachineInstr &MI,
+                                       MachineBasicBlock *MBB) const;
 
   MachineBasicBlock *
   emitUnknownShiftWithCustomInserter(MachineInstr &MI,
