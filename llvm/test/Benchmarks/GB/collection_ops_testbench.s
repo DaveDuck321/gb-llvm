@@ -1,5 +1,7 @@
 ; RUN: run-graphene-test.sh %s $GB_TEST_PATH/collection_ops.c3 -O3 \
-; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE
+; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-O3
+; RUN: run-graphene-test.sh %s $GB_TEST_PATH/collection_ops.c3 -Oz \
+; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-Oz
 ; RUN: run-graphene-test.sh %s $GB_TEST_PATH/collection_ops.c3 -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
@@ -18,7 +20,8 @@ main:
     call _Z10get_playercc
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 37
+; EXPECT-CYCLE-O3: 37
+; EXPECT-CYCLE-Oz: 37
     debugtrap
 
     ld b, 30
@@ -27,7 +30,8 @@ main:
     call _Z10get_playercc
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 37
+; EXPECT-CYCLE-O3: 37
+; EXPECT-CYCLE-Oz: 37
     debugtrap
 
     ld hl, sp + 0
@@ -36,7 +40,8 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 46
+; EXPECT-CYCLE-O3: 46
+; EXPECT-CYCLE-Oz: 46
 ; EXPECT: a=00
     debugtrap
 
@@ -46,7 +51,8 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 43
+; EXPECT-CYCLE-O3: 43
+; EXPECT-CYCLE-Oz: 43
 ; EXPECT: a=01
     debugtrap
 
@@ -58,7 +64,8 @@ main:
     and 1
 
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 274
+; EXPECT-CYCLE-O3: 274
+; EXPECT-CYCLE-Oz: 284
 ; EXPECT: a=01
     debugtrap
 

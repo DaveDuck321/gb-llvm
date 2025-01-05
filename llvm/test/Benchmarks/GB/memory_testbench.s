@@ -1,5 +1,7 @@
 ; RUN: run-graphene-test.sh %s $GB_TEST_PATH/memory.c3 -O3 \
-; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE
+; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-O3
+; RUN: run-graphene-test.sh %s $GB_TEST_PATH/memory.c3 -Oz \
+; RUN:   | FileCheck %s -check-prefixes=EXPECT,EXPECT-CYCLE-Oz
 ; RUN: run-graphene-test.sh %s $GB_TEST_PATH/memory.c3 -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
@@ -20,7 +22,8 @@ main:
     ld hl, sp + 16 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 1143
+; EXPECT-CYCLE-O3: 1143
+; EXPECT-CYCLE-Oz: 1574
 ; EXPECT: a=ee
     debugtrap
 
@@ -33,7 +36,8 @@ main:
     ld hl, sp + 88 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 1143
+; EXPECT-CYCLE-O3: 1143
+; EXPECT-CYCLE-Oz: 1574
 ; EXPECT: a=01
     debugtrap
 
@@ -47,7 +51,8 @@ main:
     ld hl, sp + 73 ; Test a random value
     ld a, (hl)
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 1474
+; EXPECT-CYCLE-O3: 1474
+; EXPECT-CYCLE-Oz: 1880
 ; EXPECT: a=ee
     debugtrap
 
@@ -57,7 +62,8 @@ main:
     ld hl, sp, 0
     call _Z8g_strlenKPA_h
 ; EXPECT: Debug trap!
-; EXPECT-CYCLE: 1124
+; EXPECT-CYCLE-O3: 1124
+; EXPECT-CYCLE-Oz: 1124
 ; EXPECT: hl=0063
     debugtrap
 

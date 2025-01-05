@@ -15,7 +15,7 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld hl, sp, 4
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld l, a
@@ -24,12 +24,12 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld hl, sp, 8
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
@@ -40,7 +40,7 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    push af
-; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a

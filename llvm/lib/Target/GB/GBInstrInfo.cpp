@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
@@ -17,6 +18,8 @@
 
 #define GET_INSTRINFO_CTOR_DTOR
 #include "GBGenInstrInfo.inc"
+
+#define DEBUG_TYPE "gb-stack-slot-lowering"
 
 using namespace llvm;
 
@@ -101,6 +104,9 @@ void GBInstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
     bool IsKill, int FrameIndex, const TargetRegisterClass *RC,
     const TargetRegisterInfo *TRI, Register VReg) const {
+  LLVM_DEBUG(dbgs() << "Added StoreToStackSlot: " << printReg(SrcReg, TRI)
+                    << " slot." << FrameIndex << "\n");
+
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   // TODO GB: The GameBoy is really ill-suited for this constant stack offset...
@@ -137,6 +143,8 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI,
                                        Register VReg) const {
+  LLVM_DEBUG(dbgs() << "Added LoadFromStackSlot: " << printReg(DestReg, TRI)
+                    << " slot." << FrameIndex << "\n");
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction *MF = MBB.getParent();

@@ -11,8 +11,6 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "asm-printer"
-
 namespace {
 
 class GBAsmPrinter : public AsmPrinter {
@@ -26,7 +24,6 @@ public:
 } // namespace
 
 void GBAsmPrinter::emitInstruction(const MachineInstr *MI) {
-  LLVM_DEBUG(dbgs() << "Inst=" << MI->getOpcode() << "\n";);
   MCInst Inst;
   LowerGBMachineInstrToMCInst(MI, Inst, *this);
   EmitToStreamer(*OutStreamer, Inst);

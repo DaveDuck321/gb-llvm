@@ -21,6 +21,9 @@ struct GBRegisterInfo : public GBGenRegisterInfo {
                            RegScavenger *RS = nullptr) const override;
 
   Register getFrameRegister(const MachineFunction &MF) const override;
+
+  bool shouldUseDeferredSpillingForVirtReg(
+      const MachineFunction &MF, const LiveInterval &VirtReg) const override;
 };
 
 } // namespace llvm

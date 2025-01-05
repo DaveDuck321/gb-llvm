@@ -98,3 +98,8 @@ Register GBRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   assert(not TFI->hasFP(MF) && "Frame pointer generation is not supported");
   return GB::SP;
 }
+
+bool GBRegisterInfo::shouldUseDeferredSpillingForVirtReg(
+    const MachineFunction &MF, const LiveInterval &VirtReg) const {
+  return true;
+}
