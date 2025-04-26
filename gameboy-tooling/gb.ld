@@ -12,22 +12,22 @@ SECTIONS {
   .rst 0x0000 : {
     /* We emulate `call (HL)` with RST00 */
     BYTE(0xE9)    /* JP (HL) */
-    . = DEFINED( rst08 ) ? 0x0008 : .; *(.text.rst08)
-    . = DEFINED( rst10 ) ? 0x0010 : .; *(.text.rst10)
-    . = DEFINED( rst18 ) ? 0x0018 : .; *(.text.rst18)
-    . = DEFINED( rst20 ) ? 0x0020 : .; *(.text.rst20)
-    . = DEFINED( rst28 ) ? 0x0028 : .; *(.text.rst28)
-    . = DEFINED( rst30 ) ? 0x0030 : .; *(.text.rst30)
-    . = DEFINED( rst38 ) ? 0x0038 : .; *(.text.rst38)
+    . = DEFINED( rst08 ) ? 0x0008 : .; KEEP(*(.text.rst08))
+    . = DEFINED( rst10 ) ? 0x0010 : .; KEEP(*(.text.rst10))
+    . = DEFINED( rst18 ) ? 0x0018 : .; KEEP(*(.text.rst18))
+    . = DEFINED( rst20 ) ? 0x0020 : .; KEEP(*(.text.rst20))
+    . = DEFINED( rst28 ) ? 0x0028 : .; KEEP(*(.text.rst28))
+    . = DEFINED( rst30 ) ? 0x0030 : .; KEEP(*(.text.rst30))
+    . = DEFINED( rst38 ) ? 0x0038 : .; KEEP(*(.text.rst38))
     . = 0x0040;
   } > rom0 = 0xd3d3d3d3 /* trap */
 
   .int 0x0040 : {
-    . = 0x0040; *(.text.int_vblank)
-    . = 0x0048; *(.text.int_lcdc_status)
-    . = 0x0050; *(.text.int_timer)
-    . = 0x0058; *(.text.int_serial)
-    . = 0x0060; *(.text.int_input)
+    . = 0x0040; KEEP(*(.text.int_vblank))
+    . = 0x0048; KEEP(*(.text.int_lcdc_status))
+    . = 0x0050; KEEP(*(.text.int_timer))
+    . = 0x0058; KEEP(*(.text.int_serial))
+    . = 0x0060; KEEP(*(.text.int_input))
     . = 0x0068;
   } > rom0 = 0xd3d3d3d3 /* trap */
 
@@ -37,8 +37,15 @@ SECTIONS {
     SHORT(_start)
   } > rom0
 
-  .meta 0x0104 : { *(.meta*) } > rom0
-  .text 0x0150 : { *(.rodata*), *(.text*) } > rom0
+  .meta 0x0104 : {
+    KEEP(*(.meta*))
+    . = 0x0150;
+  } > rom0 = 0
+
+  .rodata : { *(.rodata*) } > rom0
+  .init_array : { KEEP(*(.init_array*)) } > rom0
+  .fini_array : { KEEP(*(.fini_array*)) } > rom0
+  .text : { *(.text*) } > rom0
 
   /* Data (VMA: RAM, LMA: ROM Switchable bank) */
   . = ORIGIN(ram0);
@@ -54,5 +61,5 @@ __gb_data_start = ADDR(.data);
 __gb_data_end = __gb_data_start + SIZEOF(.data);
 __gb_data_load_addr = LOADADDR(.data);
 
-__gb_bss_start = ADDR(.data);
+__gb_bss_start = ADDR(.bss);
 __gb_bss_end = __gb_bss_start + SIZEOF(.bss);

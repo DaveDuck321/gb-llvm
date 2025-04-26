@@ -17,7 +17,10 @@ using namespace llvm;
 
 GBToolchain::GBToolchain(const Driver &driver, const llvm::Triple &target,
                          const llvm::opt::ArgList &args)
-    : ToolChain(driver, target, args) {}
+    : ToolChain(driver, target, args) {
+  // Add our build directory to the search path to avoid finding the host's lld
+  getProgramPaths().push_back(getDriver().Dir);
+}
 
 Tool *GBToolchain::buildLinker() const { return new GB::Linker(*this); }
 
@@ -86,9 +89,9 @@ void GB::Linker::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back(TCArgs.MakeArgString(RtLib));
       }
     };
-    add_lib_rt_component("builtins-gb", ToolChain::FT_Static);
-    add_lib_rt_component("crtbegin-gb", ToolChain::FT_Object);
-    add_lib_rt_component("crtend-gb", ToolChain::FT_Object);
+    add_lib_rt_component("builtins", ToolChain::FT_Static);
+    add_lib_rt_component("crtbegin", ToolChain::FT_Object);
+    add_lib_rt_component("crtend", ToolChain::FT_Object);
   }
 
   C.addCommand(std::make_unique<Command>(
