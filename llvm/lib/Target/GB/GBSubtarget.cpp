@@ -15,4 +15,5 @@ using namespace llvm;
 GBSubtarget::GBSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
                          const TargetMachine &TM)
     : GBGenSubtargetInfo(TT, CPU, /* TuneCPU */ CPU, FS), InstrInfo(),
-      FrameLowering(*this), TargetLowering(TM, *this) {}
+      FrameLowering(*this), RegisterInfo(), TargetLowering(TM, *this),
+      TSInfo() {}

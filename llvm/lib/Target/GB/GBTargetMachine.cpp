@@ -19,6 +19,8 @@ using namespace llvm;
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeGBTarget() {
   llvm::RegisterTargetMachine<GBTargetMachine> _(getTheGBTarget());
+  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  initializeGBDAGToDAGISelPass(PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,

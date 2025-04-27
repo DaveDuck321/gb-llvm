@@ -17,6 +17,7 @@
 #include <vector>
 
 #define DEBUG_TYPE "gb-isel"
+#define PASS_NAME "GB Instruction Selection"
 
 #define GET_DAGISEL_BODY GBDAGToDAGISel
 #include "GBGenDAGISel.inc"
@@ -327,6 +328,8 @@ bool GBDAGToDAGISel::serializei16IncDec(std::vector<SDNode *> AllNodes,
 }
 
 char GBDAGToDAGISel::ID = 0;
+INITIALIZE_PASS(GBDAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
+
 
 FunctionPass *llvm::createGBISelDag(GBTargetMachine &TM,
                                     CodeGenOptLevel OptLevel) {

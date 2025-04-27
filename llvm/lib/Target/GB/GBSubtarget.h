@@ -18,9 +18,10 @@ namespace llvm {
 class GBSubtarget final : public GBGenSubtargetInfo {
   GBInstrInfo InstrInfo;
   GBFrameLowering FrameLowering;
+  GBRegisterInfo RegisterInfo;
+
   GBTargetLowering TargetLowering;
   SelectionDAGTargetInfo TSInfo;
-  GBRegisterInfo RegisterInfo;
 
 public:
   GBSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
