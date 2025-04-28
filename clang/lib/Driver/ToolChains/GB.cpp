@@ -24,6 +24,59 @@ GBToolchain::GBToolchain(const Driver &driver, const llvm::Triple &target,
 
 Tool *GBToolchain::buildLinker() const { return new GB::Linker(*this); }
 
+std::string GBToolchain::computeSysRoot() const {
+  if (!getDriver().SysRoot.empty())
+    return getDriver().SysRoot;
+
+  SmallString<128> Dir;
+  llvm::sys::path::append(Dir, getDriver().Dir, "..");
+  return std::string(Dir);
+}
+
+void GBToolchain::AddClangCXXStdlibIncludeArgs(
+    const llvm::opt::ArgList &DriverArgs,
+    llvm::opt::ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdinc, options::OPT_nostdlibinc,
+                        options::OPT_nostdincxx)) {
+    return;
+  }
+
+  std::string SysRoot(computeSysRoot());
+  assert(!SysRoot.empty());
+
+  {
+    // Generic c++ includes
+    SmallString<128> Dir(SysRoot);
+    llvm::sys::path::append(Dir, "include", "c++", "v1");
+    addSystemInclude(DriverArgs, CC1Args, Dir.str());
+  }
+  {
+    // Target-specific includes
+    SmallString<128> Dir(SysRoot);
+    llvm::sys::path::append(Dir, "include");
+
+    auto subdir = getTargetSubDirPath(Dir);
+    if (subdir.has_value()) {
+      Dir = *subdir;
+      llvm::sys::path::append(Dir, "c++", "v1");
+      addSystemInclude(DriverArgs, CC1Args, Dir.str());
+    }
+  }
+}
+
+void GBToolchain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
+                                            ArgStringList &CC1Args) const {
+  if (DriverArgs.hasArg(options::OPT_nostdinc)) {
+    return;
+  }
+
+  if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
+    SmallString<128> Dir(getDriver().ResourceDir);
+    llvm::sys::path::append(Dir, "include");
+    addSystemInclude(DriverArgs, CC1Args, Dir.str());
+  }
+}
+
 void GBToolchain::addClangTargetOptions(
     const llvm::opt::ArgList &DriverArgs, llvm::opt::ArgStringList &CC1Args,
     Action::OffloadKind DeviceOffloadKind) const {
@@ -32,6 +85,8 @@ void GBToolchain::addClangTargetOptions(
   // Needed to fit compiler-rt into imem
   CC1Args.push_back("-fdata-sections");
   CC1Args.push_back("-ffunction-sections");
+
+  CC1Args.push_back("-D__GB__");
 }
 
 void GB::Linker::ConstructJob(Compilation &C, const JobAction &JA,

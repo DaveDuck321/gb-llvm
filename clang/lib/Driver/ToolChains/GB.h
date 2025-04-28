@@ -11,6 +11,16 @@ namespace clang::driver::toolchains {
 class LLVM_LIBRARY_VISIBILITY GBToolchain : public ToolChain {
   Tool *buildLinker() const override;
 
+  std::string computeSysRoot() const override;
+
+  void AddClangCXXStdlibIncludeArgs(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
+
+  void
+  AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                            llvm::opt::ArgStringList &CC1Args) const override;
+
   void
   addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
                         llvm::opt::ArgStringList &CC1Args,
