@@ -10,6 +10,7 @@
 #include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "MachOUtils.h"
+#include "SwiftModule.h"
 #include "dsymutil.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -147,7 +148,7 @@ DwarfLinkerForBinary::loadObject(const DebugMapObject &Obj,
   if (!ObjectEntry) {
     auto Err = ObjectEntry.takeError();
     reportWarning(Twine(Obj.getObjectFilename()) + ": " +
-                      toString(std::move(Err)),
+                      toStringWithoutConsuming(Err),
                   Obj.getObjectFilename());
     return errorToErrorCode(std::move(Err));
   }
@@ -156,7 +157,7 @@ DwarfLinkerForBinary::loadObject(const DebugMapObject &Obj,
   if (!Object) {
     auto Err = Object.takeError();
     reportWarning(Twine(Obj.getObjectFilename()) + ": " +
-                      toString(std::move(Err)),
+                      toStringWithoutConsuming(Err),
                   Obj.getObjectFilename());
     return errorToErrorCode(std::move(Err));
   }
@@ -783,6 +784,21 @@ bool DwarfLinkerForBinary::linkImpl(
         reportWarning("Could not open '" + File + "'");
         continue;
       }
+      auto FromInterfaceOrErr =
+          IsBuiltFromSwiftInterface((*ErrorOrMem)->getBuffer());
+      if (!FromInterfaceOrErr) {
+        reportWarning("Could not parse binary Swift module: " +
+                          toString(FromInterfaceOrErr.takeError()),
+                      Obj->getObjectFilename());
+        // Only skip swiftmodules that could be parsed and are
+        // positively identified as textual.
+      } else if (*FromInterfaceOrErr) {
+        if (Options.Verbose)
+          outs() << "Skipping compiled textual Swift interface: "
+                 << Obj->getObjectFilename() << "\n";
+        continue;
+      }
+
       sys::fs::file_status Stat;
       if (auto Err = sys::fs::status(File, Stat)) {
         reportWarning(Err.message());

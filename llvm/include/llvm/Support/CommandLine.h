@@ -28,7 +28,6 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
@@ -236,12 +235,6 @@ public:
 
   Option *ConsumeAfterOpt = nullptr; // The ConsumeAfter option if it exists.
 };
-
-// A special subcommand representing no subcommand
-extern ManagedStatic<SubCommand> TopLevelSubCommand;
-
-// A special subcommand that can be used to put an option into all subcommands.
-extern ManagedStatic<SubCommand> AllSubCommands;
 
 class SubCommandGroup {
   SmallVector<SubCommand *, 4> Subs;
@@ -1466,19 +1459,15 @@ class opt
     }
   }
 
-  template <class T, class = std::enable_if_t<std::is_assignable_v<T &, T>>>
-  void setDefaultImpl() {
-    const OptionValue<DataType> &V = this->getDefault();
-    if (V.hasValue())
-      this->setValue(V.getValue());
-    else
-      this->setValue(T());
+  void setDefault() override {
+    if constexpr (std::is_assignable_v<DataType &, DataType>) {
+      const OptionValue<DataType> &V = this->getDefault();
+      if (V.hasValue())
+        this->setValue(V.getValue());
+      else
+        this->setValue(DataType());
+    }
   }
-
-  template <class T, class = std::enable_if_t<!std::is_assignable_v<T &, T>>>
-  void setDefaultImpl(...) {}
-
-  void setDefault() override { setDefaultImpl<DataType>(); }
 
   void done() {
     addArgument();

@@ -16,6 +16,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/DirectoryLookup.h"
+#include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Lex/ModuleMap.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -90,7 +91,9 @@ struct HeaderFileInfo {
   LLVM_PREFERRED_TYPE(bool)
   unsigned isModuleHeader : 1;
 
-  /// Whether this header is a `textual header` in a module.
+  /// Whether this header is a `textual header` in a module. If a header is
+  /// textual in one module and normal in another module, this bit will not be
+  /// set, only `isModuleHeader`.
   LLVM_PREFERRED_TYPE(bool)
   unsigned isTextualModuleHeader : 1;
 
@@ -105,26 +108,9 @@ struct HeaderFileInfo {
   LLVM_PREFERRED_TYPE(bool)
   unsigned Resolved : 1;
 
-  /// Whether this is a header inside a framework that is currently
-  /// being built.
-  ///
-  /// When a framework is being built, the headers have not yet been placed
-  /// into the appropriate framework subdirectories, and therefore are
-  /// provided via a header map. This bit indicates when this is one of
-  /// those framework headers.
-  LLVM_PREFERRED_TYPE(bool)
-  unsigned IndexHeaderMapHeader : 1;
-
   /// Whether this file has been looked up as a header.
   LLVM_PREFERRED_TYPE(bool)
   unsigned IsValid : 1;
-
-  /// The ID number of the controlling macro.
-  ///
-  /// This ID number will be non-zero when there is a controlling
-  /// macro whose IdentifierInfo may not yet have been loaded from
-  /// external storage.
-  unsigned ControllingMacroID = 0;
 
   /// If this file has a \#ifndef XXX (or equivalent) guard that
   /// protects the entire contents of the file, this is the identifier
@@ -134,17 +120,13 @@ struct HeaderFileInfo {
   /// the controlling macro of this header, since
   /// getControllingMacro() is able to load a controlling macro from
   /// external storage.
-  const IdentifierInfo *ControllingMacro = nullptr;
-
-  /// If this header came from a framework include, this is the name
-  /// of the framework.
-  StringRef Framework;
+  LazyIdentifierInfoPtr LazyControllingMacro;
 
   HeaderFileInfo()
       : IsLocallyIncluded(false), isImport(false), isPragmaOnce(false),
         DirInfo(SrcMgr::C_User), External(false), isModuleHeader(false),
         isTextualModuleHeader(false), isCompilingModuleHeader(false),
-        Resolved(false), IndexHeaderMapHeader(false), IsValid(false) {}
+        Resolved(false), IsValid(false) {}
 
   /// Retrieve the controlling macro for this header file, if
   /// any.
@@ -157,6 +139,8 @@ struct HeaderFileInfo {
   /// isTextualModuleHeader will be set or cleared based on the role update.
   void mergeModuleMembership(ModuleMap::ModuleHeaderRole Role);
 };
+
+static_assert(sizeof(HeaderFileInfo) <= 16);
 
 /// An external source of header file information, which may supply
 /// information about header files already included.
@@ -257,7 +241,7 @@ class HeaderSearch {
   friend SearchDirIterator;
 
   /// Header-search options used to initialize this header search.
-  std::shared_ptr<HeaderSearchOptions> HSOpts;
+  const HeaderSearchOptions &HSOpts;
 
   /// Mapping from SearchDir to HeaderSearchOptions::UserEntries indices.
   llvm::DenseMap<unsigned, unsigned> SearchDirToHSEntry;
@@ -375,15 +359,15 @@ class HeaderSearch {
   void indexInitialHeaderMaps();
 
 public:
-  HeaderSearch(std::shared_ptr<HeaderSearchOptions> HSOpts,
-               SourceManager &SourceMgr, DiagnosticsEngine &Diags,
-               const LangOptions &LangOpts, const TargetInfo *Target);
+  HeaderSearch(const HeaderSearchOptions &HSOpts, SourceManager &SourceMgr,
+               DiagnosticsEngine &Diags, const LangOptions &LangOpts,
+               const TargetInfo *Target);
   HeaderSearch(const HeaderSearch &) = delete;
   HeaderSearch &operator=(const HeaderSearch &) = delete;
 
   /// Retrieve the header-search options with which this header search
   /// was initialized.
-  HeaderSearchOptions &getHeaderSearchOpts() const { return *HSOpts; }
+  const HeaderSearchOptions &getHeaderSearchOpts() const { return HSOpts; }
 
   FileManager &getFileMgr() const { return FileMgr; }
 
@@ -580,7 +564,7 @@ public:
   /// no-op \#includes.
   void SetFileControllingMacro(FileEntryRef File,
                                const IdentifierInfo *ControllingMacro) {
-    getFileInfo(File).ControllingMacro = ControllingMacro;
+    getFileInfo(File).LazyControllingMacro = ControllingMacro;
   }
 
   /// Determine whether this file is intended to be safe from

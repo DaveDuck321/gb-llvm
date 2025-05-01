@@ -164,7 +164,7 @@ void UnaryExpressions(int *p) {
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:8> 'int *' lvalue ParmVar 0x{{[^ ]*}} 'p' 'int *'
 
   ::delete p;
-  // CHECK: CXXDeleteExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:12> 'void' global Function 0x{{[^ ]*}} 'operator delete' 'void (void *) noexcept'
+  // CHECK: CXXDeleteExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:12> 'void' global Function 0x{{[^ ]*}} 'operator delete' 'void (void *, unsigned long) noexcept'
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:12> 'int *' lvalue ParmVar 0x{{[^ ]*}} 'p' 'int *'
 
@@ -229,11 +229,10 @@ void PostfixExpressions(S a, S *p, U<int> *r) {
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:3> 'S *' lvalue ParmVar 0x{{[^ ]*}} 'p' 'S *'
 
-  // FIXME: there is no mention that this used the template keyword.
   r->template U<int>::~U();
   // CHECK: CXXMemberCallExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:26> 'void'
   // CHECK-NEXT: MemberExpr 0x{{[^ ]*}} <col:3, col:24> '<bound member function type>' ->~U 0x{{[^ ]*}}
-  // CHECK-NEXT: NestedNameSpecifier TypeSpecWithTemplate 'U<int>'
+  // CHECK-NEXT: NestedNameSpecifier TypeSpec 'template U<int>':'U<int>'
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:3> 'U<int> *' lvalue ParmVar 0x{{[^ ]*}} 'r' 'U<int> *'
 
