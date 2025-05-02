@@ -27,16 +27,13 @@ public:
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
 
-  unsigned getNumFixupKinds() const override;
-
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsResolved,
                   const MCSubtargetInfo *STI) const override;
 
-  bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
-                            const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const override;
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value) const override;
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
 };
@@ -47,8 +44,6 @@ std::unique_ptr<MCObjectTargetWriter>
 GBAsmBackend::createObjectTargetWriter() const {
   return createGBELFObjectWriter();
 }
-
-unsigned GBAsmBackend::getNumFixupKinds() const { return 0; }
 
 void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                               const MCValue &Target, MutableArrayRef<char> Data,
@@ -81,8 +76,8 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     Ctx.reportError(Fixup.getLoc(), "fixup value out of range");
   }
 
-  const auto NumBytes = Info.TargetSize / 8;
-  const auto Offset = Fixup.getOffset();
+  const size_t NumBytes = Info.TargetSize / 8;
+  const size_t Offset = Fixup.getOffset();
   assert(Offset + NumBytes <= Data.size());
 
   for (unsigned I = 0; I < NumBytes; I++) {
@@ -92,9 +87,8 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
   }
 }
 
-bool GBAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
-                                        const MCRelaxableFragment *DF,
-                                        const MCAsmLayout &Layout) const {
+bool GBAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
+                                        uint64_t Value) const {
   return false;
 }
 

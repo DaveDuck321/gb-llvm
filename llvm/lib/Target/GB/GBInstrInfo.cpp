@@ -28,8 +28,9 @@ GBInstrInfo::GBInstrInfo()
 
 void GBInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
-                              const DebugLoc &DL, MCRegister DestReg,
-                              MCRegister SrcReg, bool KillSrc) const {
+                              const DebugLoc &DL, Register DestReg,
+                              Register SrcReg, bool KillSrc, bool RenamableDest,
+                              bool RenamableSrc) const {
 
   // 8-bit copy
   if (GB::GPR8RegClass.contains(SrcReg, DestReg)) {
@@ -103,7 +104,8 @@ Register GBInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
 void GBInstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
     bool IsKill, int FrameIndex, const TargetRegisterClass *RC,
-    const TargetRegisterInfo *TRI, Register VReg) const {
+    const TargetRegisterInfo *TRI, Register VReg,
+    MachineInstr::MIFlag Flags) const {
   LLVM_DEBUG(dbgs() << "Added StoreToStackSlot: " << printReg(SrcReg, TRI)
                     << " slot." << FrameIndex << "\n");
 
@@ -137,12 +139,11 @@ void GBInstrInfo::storeRegToStackSlot(
   llvm_unreachable("Could not save reg to stack slot!");
 }
 
-void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator MI,
-                                       Register DestReg, int FrameIndex,
-                                       const TargetRegisterClass *RC,
-                                       const TargetRegisterInfo *TRI,
-                                       Register VReg) const {
+void GBInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register DestReg,
+    int FrameIndex, const TargetRegisterClass *RC,
+    const TargetRegisterInfo *TRI, Register VReg,
+    MachineInstr::MIFlag Flags) const {
   LLVM_DEBUG(dbgs() << "Added LoadFromStackSlot: " << printReg(DestReg, TRI)
                     << " slot." << FrameIndex << "\n");
   DebugLoc DL = MBB.findDebugLoc(MI);

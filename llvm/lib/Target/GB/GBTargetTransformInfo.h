@@ -37,14 +37,15 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout()),
         ST(TM->getGBSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
 
-  unsigned getNumberOfRegisters(unsigned ClassID) const {
+  unsigned getNumberOfRegisters(unsigned ClassID) const override {
     if (ClassID == 0) {
       return 5; // A, B, C, D, E
     }
     return 3; // HL, BC, DE
   }
 
-  unsigned getRegisterClassForType(bool Vector, Type *Ty = nullptr) const {
+  unsigned getRegisterClassForType(bool Vector,
+                                   Type *Ty = nullptr) const override {
     if (!Vector && Ty != nullptr && Ty->getPrimitiveSizeInBits() == 8) {
       // We're an 8-bit register
       return 0;
@@ -54,7 +55,8 @@ public:
     return 1;
   };
 
-  bool isLSRCostLess(const TTI::LSRCost &C1, const TTI::LSRCost &C2) const {
+  bool isLSRCostLess(const TTI::LSRCost &C1,
+                     const TTI::LSRCost &C2) const override {
     // Increments are cheap but multiplications and arbitrary 16-bit additions
     // are expensive.
     return std::tie(C1.NumRegs, C1.NumIVMuls, C1.NumBaseAdds, C1.AddRecCost,
@@ -64,29 +66,30 @@ public:
   }
 
   TTI::AddressingModeKind
-  getPreferredAddressingMode(const Loop *L, ScalarEvolution *SE) const {
+  getPreferredAddressingMode(const Loop *L,
+                             ScalarEvolution *SE) const override {
     TRACE_FN("getPreferredAddressingMode");
     return TTI::AMK_PostIndexed;
   }
 
-  bool isIndexedLoadLegal(TargetTransformInfo::MemIndexedMode Mode, Type *Ty,
-                          const DataLayout &) const {
+  bool isIndexedLoadLegal(TargetTransformInfo::MemIndexedMode Mode,
+                          Type *Ty) const override {
     TRACE_FN("isIndexedLoadLegal");
     return Ty->getPrimitiveSizeInBits() == 16 &&
            (Mode == TargetTransformInfo::MIM_PostInc);
   }
-  bool isIndexedStoreLegal(TargetTransformInfo::MemIndexedMode Mode, Type *Ty,
-                           const DataLayout &DL) const {
+  bool isIndexedStoreLegal(TargetTransformInfo::MemIndexedMode Mode,
+                           Type *Ty) const override {
     TRACE_FN("isIndexedStoreLegal");
-    return isIndexedLoadLegal(Mode, Ty, DL);
+    return isIndexedLoadLegal(Mode, Ty);
   }
 
-  bool canMacroFuseCmp() const {
+  bool canMacroFuseCmp() const override {
     TRACE_FN("canMacroFuseCmp");
     return true;
   }
 
-  const char *getRegisterClassName(unsigned ClassID) const {
+  const char *getRegisterClassName(unsigned ClassID) const override {
     switch (ClassID) {
     default:
       return "GB::Unknown Register Class";
@@ -97,7 +100,8 @@ public:
     }
   }
 
-  TypeSize getRegisterBitWidth(TargetTransformInfo::RegisterKind) const {
+  TypeSize
+  getRegisterBitWidth(TargetTransformInfo::RegisterKind) const override {
     TRACE_FN("getRegisterBitWidth");
     // Hmm, seems unnecessary when we already have the datalayout
     // Let's return our preferred size

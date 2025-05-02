@@ -1,6 +1,5 @@
 #include "Symbols.h"
 #include "Target.h"
-#include "lld/Common/ErrorHandler.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
@@ -15,7 +14,7 @@ using namespace lld::elf;
 namespace {
 class GB final : public TargetInfo {
 public:
-  GB();
+  GB(Ctx &);
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
 
@@ -25,7 +24,7 @@ public:
 };
 } // namespace
 
-GB::GB() {
+GB::GB(Ctx &ctx) : TargetInfo{ctx} {
   // STOP 0
   trapInstr = {0x10, 0x00};
 }
@@ -49,9 +48,9 @@ int64_t GB::getImplicitAddend(const uint8_t *buf, RelType type) const {
   case R_GB_16:
     return read16le(buf);
   case R_GB_DWARF_32:
-    return SignExtend64<32>(read32(buf));
+    return SignExtend64<32>(read32(ctx, buf));
   default:
-    error(getErrorLocation(buf) + "unrecognized relocation " + toString(type));
+    InternalErr(ctx, buf) << "unrecognized relocation " << type;
     return 0;
   }
 }
@@ -59,27 +58,23 @@ int64_t GB::getImplicitAddend(const uint8_t *buf, RelType type) const {
 void GB::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   switch (rel.type) {
   case R_GB_8:
-    checkIntUInt(loc, val, 8, rel);
+    checkIntUInt(ctx, loc, val, 8, rel);
     *loc = val;
     break;
   case R_GB_PCREL_8:
-    checkInt(loc, val, 8, rel);
+    checkInt(ctx, loc, val, 8, rel);
     *loc = val;
     break;
   case R_GB_16:
-    checkIntUInt(loc, val, 16, rel);
+    checkIntUInt(ctx, loc, val, 16, rel);
     write16le(loc, val);
     break;
   case R_GB_DWARF_32:
-    write32(loc, val);
+    write32(ctx, loc, val);
     break;
   default:
-    error(getErrorLocation(loc) + "unrecognized relocation " +
-          toString(rel.type));
+    InternalErr(ctx, loc) << "unrecognized relocation " << rel.type;
   }
 }
 
-TargetInfo *elf::getGBTargetInfo() {
-  static GB target;
-  return &target;
-}
+void elf::setGBTargetInfo(Ctx &ctx) { ctx.target.reset(new GB(ctx)); }

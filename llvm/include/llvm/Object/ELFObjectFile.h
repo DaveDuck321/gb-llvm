@@ -1458,7 +1458,6 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
     return Triple::xtensa;
 
   case ELF::EM_GB:
-    // TODO GB: should we also suport GBC here?
     return Triple::gb;
 
   default:

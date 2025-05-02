@@ -44,8 +44,8 @@ void GBTargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__GB__");
 }
 
-ArrayRef<Builtin::Info> GBTargetInfo::getTargetBuiltins() const {
-  return std::nullopt;
+llvm::SmallVector<Builtin::InfosShard> GBTargetInfo::getTargetBuiltins() const {
+  return {};
 }
 
 bool GBTargetInfo::allowsLargerPreferedTypeAlignment() const { return false; }

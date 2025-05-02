@@ -214,10 +214,10 @@ public:
   ParseStatus tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
                                 SMLoc &EndLoc);
 
-  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+  bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 
-  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+  bool matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
@@ -367,7 +367,7 @@ bool GBAsmParser::parseNextOperand(StringRef Name, OperandVector &Operands) {
   return Error(ErrLoc, "unknown operand");
 }
 
-bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+bool GBAsmParser::parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                    SMLoc NameLoc, OperandVector &Operands) {
 
   auto &Lexer = getLexer();
@@ -413,7 +413,7 @@ bool GBAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   return false; // Success
 }
 
-bool GBAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+bool GBAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           OperandVector &Operands,
                                           MCStreamer &Out, uint64_t &ErrorInfo,
                                           bool MatchingInlineAsm) {

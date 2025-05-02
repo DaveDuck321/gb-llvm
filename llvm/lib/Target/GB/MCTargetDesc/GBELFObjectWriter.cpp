@@ -4,6 +4,7 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <memory>
@@ -16,8 +17,7 @@ class GBELFObjectWriter : public MCELFObjectTargetWriter {
 
 public:
   GBELFObjectWriter()
-      : MCELFObjectTargetWriter(false, ELF::ELFOSABI_NONE, ELF::EM_GB,
-                                true){};
+      : MCELFObjectTargetWriter(false, ELF::ELFOSABI_NONE, ELF::EM_GB, true) {};
 
   ~GBELFObjectWriter() override = default;
 
@@ -31,11 +31,11 @@ unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                          const MCFixup &Fixup,
                                          bool IsPCRel) const {
   unsigned Kind = Fixup.getTargetKind();
-  if (Kind >= FirstLiteralRelocationKind) {
-    return Kind - FirstLiteralRelocationKind;
+  if (mc::isRelocation(Fixup.getKind())) {
+    return Kind;
   }
 
-  switch ((unsigned)Fixup.getKind()) {
+  switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
   case FK_PCRel_1:

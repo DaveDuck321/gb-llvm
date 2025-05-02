@@ -72,11 +72,7 @@ decompose16BitConstantAddition(SDValue ResultLSB, SDValue ResultMSB) {
 
 GBDAGToDAGISel::GBDAGToDAGISel(GBTargetMachine &TargetMachine,
                                CodeGenOptLevel OptLevel)
-    : SelectionDAGISel(ID, TargetMachine) {}
-
-StringRef GBDAGToDAGISel::getPassName() const {
-  return "GB DAG->DAG Pattern Instruction Selection";
-}
+    : SelectionDAGISel(TargetMachine) {}
 
 void GBDAGToDAGISel::Select(SDNode *Node) {
   if (Node->isMachineOpcode()) {
@@ -327,11 +323,16 @@ bool GBDAGToDAGISel::serializei16IncDec(std::vector<SDNode *> AllNodes,
   return MadeChanges;
 }
 
-char GBDAGToDAGISel::ID = 0;
-INITIALIZE_PASS(GBDAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
-
-
 FunctionPass *llvm::createGBISelDag(GBTargetMachine &TM,
                                     CodeGenOptLevel OptLevel) {
-  return new GBDAGToDAGISel(TM, OptLevel);
+  return new GBDAGToDAGISelLegacy(TM, OptLevel);
 }
+
+char GBDAGToDAGISelLegacy::ID = 0;
+
+GBDAGToDAGISelLegacy::GBDAGToDAGISelLegacy(GBTargetMachine &TM,
+                                           CodeGenOptLevel OptLevel)
+    : SelectionDAGISelLegacy(ID,
+                             std::make_unique<GBDAGToDAGISel>(TM, OptLevel)) {}
+
+INITIALIZE_PASS(GBDAGToDAGISelLegacy, DEBUG_TYPE, PASS_NAME, false, false)

@@ -17,10 +17,10 @@ public:
   void printInst(const MCInst *, uint64_t Address, StringRef Annot,
                  const MCSubtargetInfo &, raw_ostream &) override;
 
-  void printRegName(raw_ostream &, MCRegister) const override;
+  void printRegName(raw_ostream &, MCRegister) override;
 
   // NOTE: Required by tablegen
-  void printOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
+  void printOperand(const MCInst *, unsigned OpNo, raw_ostream &);
   void printU3ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printS8ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
   void printU8ImmOperand(const MCInst *, unsigned OpNo, raw_ostream &) const;
@@ -31,7 +31,7 @@ public:
                               raw_ostream &) const;
 
   // NOTE: these are TableGen'ed
-  std::pair<const char *, uint64_t> getMnemonic(const MCInst *) override;
+  std::pair<const char *, uint64_t> getMnemonic(const MCInst &) const override;
   void printInstruction(const MCInst *, uint64_t Address, raw_ostream &);
   static const char *getRegisterName(MCRegister);
 };

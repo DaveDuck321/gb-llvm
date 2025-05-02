@@ -20,7 +20,7 @@ using namespace llvm;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeGBTarget() {
   llvm::RegisterTargetMachine<GBTargetMachine> _(getTheGBTarget());
   PassRegistry &PR = *PassRegistry::getPassRegistry();
-  initializeGBDAGToDAGISelPass(PR);
+  initializeGBDAGToDAGISelLegacyPass(PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
@@ -40,9 +40,9 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
                                  std::optional<Reloc::Model> RM,
                                  std::optional<CodeModel::Model> CM,
                                  CodeGenOptLevel OL, bool JIT)
-    : LLVMTargetMachine(T, DataLayout, TT, CPU, FS, Options,
-                        getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+    : CodeGenTargetMachineImpl(T, DataLayout, TT, CPU, FS, Options,
+                               getEffectiveRelocModel(TT, RM),
+                               getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF{std::make_unique<TargetLoweringObjectFileELF>()},
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
@@ -50,7 +50,7 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
 
 TargetTransformInfo
 GBTargetMachine::getTargetTransformInfo(const Function &F) const {
-  return TargetTransformInfo(GBTTIImpl(this, F));
+  return TargetTransformInfo(std::make_unique<GBTTIImpl>(this, F));
 }
 
 namespace {

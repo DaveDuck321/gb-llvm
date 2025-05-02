@@ -94,7 +94,7 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-bool GBFrameLowering::hasFP(const MachineFunction &MF) const {
+bool GBFrameLowering::hasFPImpl(const MachineFunction &MF) const {
   // FIXME GB: alloca
   return false;
 }

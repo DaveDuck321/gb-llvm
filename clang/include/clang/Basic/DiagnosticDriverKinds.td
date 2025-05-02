@@ -152,7 +152,7 @@ def err_drv_invalid_thread_model_for_target : Error<
 def err_drv_invalid_linker_name : Error<
   "invalid linker name in argument '%0'">;
 def err_drv_lld_only : Error<
-  "invalid liker. lld is required.">;
+  "invalid liker. lld is required">;
 def err_drv_invalid_rtlib_name : Error<
   "invalid runtime library name in argument '%0'">;
 def err_drv_unsupported_rtlib_for_platform : Error<

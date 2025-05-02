@@ -4,6 +4,7 @@
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -13,7 +14,7 @@
 
 namespace llvm {
 
-class GBTargetMachine : public LLVMTargetMachine {
+class GBTargetMachine : public CodeGenTargetMachineImpl {
   const static std::string DataLayout;
 
   std::unique_ptr<TargetLoweringObjectFile> TLOF;

@@ -10,11 +10,8 @@ namespace {
 
 class GBDAGToDAGISel final : public SelectionDAGISel {
 public:
-  static char ID;
-
   GBDAGToDAGISel(GBTargetMachine &TargetMachine, CodeGenOptLevel OptLevel);
 
-  StringRef getPassName() const override;
   void Select(SDNode *) override;
 
   void PreprocessISelDAG() override;
@@ -27,4 +24,10 @@ private:
 #include "GBGenDAGISel.inc"
 };
 
+class GBDAGToDAGISelLegacy : public SelectionDAGISelLegacy {
+public:
+  static char ID;
+  explicit GBDAGToDAGISelLegacy(GBTargetMachine &TargetMachine,
+                                CodeGenOptLevel OptLevel);
+};
 } // namespace

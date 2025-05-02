@@ -655,7 +655,8 @@ SDValue GBTargetLowering::LowerFormalArguments(
 
 bool GBTargetLowering::CanLowerReturn(
     CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
-    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context,
+    const Type *RetTy) const {
   assert(not IsVarArg);
   assert(is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
                       CallConv));

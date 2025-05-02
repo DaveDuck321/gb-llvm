@@ -11,7 +11,6 @@ class MCInst;
 class AsmPrinter;
 class PassRegistry;
 
-
 class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
@@ -23,7 +22,7 @@ FunctionPass *createGBInstructionRelaxation(GBTargetMachine &, CodeGenOptLevel);
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);
 
-void initializeGBDAGToDAGISelPass(PassRegistry &);
+void initializeGBDAGToDAGISelLegacyPass(PassRegistry &);
 
 } // namespace llvm
 

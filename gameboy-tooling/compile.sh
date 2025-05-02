@@ -29,5 +29,5 @@ cmake -S llvm -B build -G Ninja \
 
 ninja -C build
 
-mkdir -p $(pwd)/build/lib/clang/19/lib/gb-unknown-unknown/ldscripts
-ln -s $(pwd)/gameboy-tooling/gb.ld $(pwd)/build/lib/clang/19/lib/gb-unknown-unknown/ldscripts/gb.ld
+mkdir -p $(pwd)/build/lib/clang/21/lib/gb-unknown-unknown/ldscripts
+ln -s $(pwd)/gameboy-tooling/gb.ld $(pwd)/build/lib/clang/21/lib/gb-unknown-unknown/ldscripts/gb.ld
