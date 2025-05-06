@@ -127,10 +127,9 @@ begin:
 define void @store_bit_1() #0 {
 ; GBI-LABEL: store_bit_1:
 ; GBI:       ; %bb.0: ; %entry
-; GBI-NEXT:    ld bc, $ff0f
-; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    or $01
-; GBI-NEXT:    ld (bc), a
+; GBI-NEXT:    ldh ($0f), a
 ; GBI-NEXT:    ret
 entry:
   %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
@@ -142,10 +141,9 @@ entry:
 define dso_local void @store_bit_3() #0 {
 ; GBI-LABEL: store_bit_3:
 ; GBI:       ; %bb.0: ; %entry
-; GBI-NEXT:    ld bc, $ff0f
-; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    or $04
-; GBI-NEXT:    ld (bc), a
+; GBI-NEXT:    ldh ($0f), a
 ; GBI-NEXT:    ret
 entry:
   %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
@@ -157,8 +155,7 @@ entry:
 define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_3() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_3:
 ; GBI:       ; %bb.0: ; %entry
-; GBI-NEXT:    ld bc, $ff0f
-; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    and $01
@@ -173,8 +170,7 @@ entry:
 define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_1() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_1:
 ; GBI:       ; %bb.0: ; %entry
-; GBI-NEXT:    ld bc, $ff0f
-; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
 entry:

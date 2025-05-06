@@ -206,6 +206,7 @@ let mayStore = true in {
 // Immediate types
 def imm8 : ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
 def imm16 : ImmLeaf<i16, [{return isInt<16>(Imm);}]>;
+def io_imm16 : ImmLeaf<i16, [{return isInt<16>(Imm) && (Imm & 0xff00U) == 0xff00U;}]>;
 
 def to_lower_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant(N->getZExtValue() & 0xFF, SDLoc(N), MVT::i8); }]>;
 def to_upper_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant((N->getZExtValue() >> 8) & 0xFF, SDLoc(N), MVT::i8); }]>;
@@ -364,9 +365,11 @@ let mayStore = true, Uses = [A] in {
   def LD_iGPR16_A : Pseudo<"ld", "($rs) a", (outs), (ins IntReg16:$rs)>;
 }
 
+def : Pat<(load io_imm16:$imm), (LDH_A_iImm (to_lower_imm $imm))>;
 def : Pat<(load GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
 def : Pat<(extload GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
 
+def : Pat<(store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
 def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
 def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
