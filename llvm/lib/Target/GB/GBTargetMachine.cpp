@@ -32,7 +32,7 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
 
 // https://llvm.org/docs/LangRef.html#langref-datalayout
 const std::string GBTargetMachine::DataLayout =
-    "e-S16-p:16:16-i8:8-i16:16-a:16-m:e-n8:16";
+    "e-S16-p:16:16-i8:8-i16:16-a:0-m:e-n8:16";
 
 GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
                                  StringRef CPU, StringRef FS,
