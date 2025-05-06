@@ -123,3 +123,62 @@ begin:
   %2 = load i1, ptr %1, align 1
   ret i1 %2
 }
+
+define void @store_bit_1() #0 {
+; GBI-LABEL: store_bit_1:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld bc, $ff0f
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    or $01
+; GBI-NEXT:    ld (bc), a
+; GBI-NEXT:    ret
+entry:
+  %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
+  %bf.set.i = or i8 %bf.load.i, 1
+  store volatile i8 %bf.set.i, ptr inttoptr (i16 -241 to ptr), align 1
+  ret void
+}
+
+define dso_local void @store_bit_3() #0 {
+; GBI-LABEL: store_bit_3:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld bc, $ff0f
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    or $04
+; GBI-NEXT:    ld (bc), a
+; GBI-NEXT:    ret
+entry:
+  %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
+  %bf.set.i = or i8 %bf.load.i, 4
+  store volatile i8 %bf.set.i, ptr inttoptr (i16 -241 to ptr), align 1
+  ret void
+}
+
+define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_3() local_unnamed_addr #0 {
+; GBI-LABEL: load_bit_3:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld bc, $ff0f
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    srl a
+; GBI-NEXT:    srl a
+; GBI-NEXT:    and $01
+; GBI-NEXT:    ret
+entry:
+  %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
+  %bf.lshr.i = lshr i8 %bf.load.i, 2
+  %bf.clear.i = and i8 %bf.lshr.i, 1
+  ret i8 %bf.clear.i
+}
+
+define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_1() local_unnamed_addr #0 {
+; GBI-LABEL: load_bit_1:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld bc, $ff0f
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    and $01
+; GBI-NEXT:    ret
+entry:
+  %bf.load.i = load volatile i8, ptr inttoptr (i16 -241 to ptr), align 1
+  %bf.clear.i = and i8 %bf.load.i, 1
+  ret i8 %bf.clear.i
+}
