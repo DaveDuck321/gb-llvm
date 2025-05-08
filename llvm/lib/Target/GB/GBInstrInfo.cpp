@@ -139,11 +139,13 @@ void GBInstrInfo::storeRegToStackSlot(
   llvm_unreachable("Could not save reg to stack slot!");
 }
 
-void GBInstrInfo::loadRegFromStackSlot(
-    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register DestReg,
-    int FrameIndex, const TargetRegisterClass *RC,
-    const TargetRegisterInfo *TRI, Register VReg,
-    MachineInstr::MIFlag Flags) const {
+void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                       Register DestReg, int FrameIndex,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI,
+                                       Register VReg,
+                                       MachineInstr::MIFlag Flags) const {
   LLVM_DEBUG(dbgs() << "Added LoadFromStackSlot: " << printReg(DestReg, TRI)
                     << " slot." << FrameIndex << "\n");
   DebugLoc DL = MBB.findDebugLoc(MI);
@@ -311,6 +313,49 @@ bool GBInstrInfo::reverseBranchCondition(
       llvm_unreachable("Unrecognized branch flag");
     }
   }());
+  return false;
+}
 
+bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  // During the pattern match, we produce LD_A_iGPR16 and LD_iGPR16_A
+  // LD_A_iGPR16 is lowered to L_A_iHL or LD_A_iR16 depending on the 16-bit
+  // source register. This can be improved  by detecting cases where L_r8_iHL
+  // would be more optimal than L_A_iHL.
+  case GB::LD_A_iGPR16: {
+    Register PtrReg = MI.getOperand(0).getReg();
+    switch (PtrReg) {
+    default:
+      llvm_unreachable("Unexpected register");
+    case GB::HL:
+      MI.setDesc(get(GB::LD_r_iHL));
+      MI.getOperand(0).ChangeToRegister(GB::A, true);
+      MI.getOperand(1).ChangeToRegister(GB::HL, false, true);
+      break;
+    case GB::BC:
+    case GB::DE:
+      MI.setDesc(get(GB::LD_A_iR16));
+      break;
+    }
+    return true;
+  }
+  case GB::LD_iGPR16_A: {
+    Register PtrReg = MI.getOperand(0).getReg();
+    switch (PtrReg) {
+    default:
+      llvm_unreachable("Unexpected register");
+    case GB::HL:
+      MI.setDesc(get(GB::LD_iHL_r));
+      MI.getOperand(0).ChangeToRegister(GB::A, false);
+      MI.getOperand(1).ChangeToRegister(GB::HL, false, true);
+      break;
+    case GB::BC:
+    case GB::DE:
+      MI.setDesc(get(GB::LD_iR16_A));
+      break;
+    }
+    return true;
+  }
+  }
   return false;
 }

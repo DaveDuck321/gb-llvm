@@ -15,7 +15,6 @@ class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBStackSlotLowering(GBTargetMachine &, CodeGenOptLevel);
-FunctionPass *createGBLDLowering(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBPushPopCombine(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBInstructionRelaxation(GBTargetMachine &, CodeGenOptLevel);
 

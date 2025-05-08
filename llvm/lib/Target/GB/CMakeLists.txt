@@ -21,7 +21,6 @@ add_llvm_target(GBCodeGen
     GBInstructionRelaxation.cpp
     GBISelDAGToDAG.cpp
     GBISelLowering.cpp
-    GBLDLowering.cpp
     GBMCInstLower.cpp
     GBPushPopCombine.cpp
     GBRegisterInfo.cpp
