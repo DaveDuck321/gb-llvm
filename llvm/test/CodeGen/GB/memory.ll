@@ -178,3 +178,19 @@ entry:
   %bf.clear.i = and i8 %bf.load.i, 1
   ret i8 %bf.clear.i
 }
+
+@ext = external dso_local global i16, align 2
+define i16 @load_global() {
+; GBI-LABEL: load_global:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld bc, ext
+; GBI-NEXT:    ld de, ext+1
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ret
+entry:
+  %0 = load i16, ptr @ext, align 2
+  ret i16 %0
+}

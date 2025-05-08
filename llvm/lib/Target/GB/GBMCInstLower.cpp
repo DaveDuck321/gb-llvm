@@ -7,6 +7,8 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Debug.h"
 
+#include <cassert>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "gb-mcinstlower"
@@ -34,15 +36,24 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       MCOp = MCOperand::createExpr(
           MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));
       break;
-    case MachineOperand::MO_GlobalAddress:
-      MCOp = MCOperand::createExpr(
-          MCSymbolRefExpr::create(AP.getSymbol(MO.getGlobal()), AP.OutContext));
+    case MachineOperand::MO_GlobalAddress: {
+      MCExpr const *Expr =
+          MCSymbolRefExpr::create(AP.getSymbol(MO.getGlobal()), AP.OutContext);
+      if (MO.getOffset() != 0) {
+        Expr = MCBinaryExpr::createAdd(
+            Expr, MCConstantExpr::create(MO.getOffset(), AP.OutContext),
+            AP.OutContext);
+      }
+      MCOp = MCOperand::createExpr(Expr);
       break;
+    }
     case MachineOperand::MO_BlockAddress:
+      assert(MO.getOffset() == 0);
       MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
           AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP.OutContext));
       break;
     case MachineOperand::MO_ExternalSymbol:
+      assert(MO.getOffset() == 0);
       MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
           AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP.OutContext));
       break;
