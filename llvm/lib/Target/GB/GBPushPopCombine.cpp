@@ -96,8 +96,8 @@ bool GBPushPopCombine::combinePopThenPush(MachineFunction &MF) {
         if (CurrentPopReg == PushReg && KillsTargetReg(MI, CurrentPopReg)) {
           LLVM_DEBUG(dbgs() << "Combining redundant pop-push sequence\n";
                      CurrentPop->dump(); MI.dump(); dbgs() << "\n");
-          CurrentPop->removeFromParent();
-          MI.removeFromParent();
+          CurrentPop->eraseFromParent();
+          MI.eraseFromParent();
           MadeChanges = true;
 
           CurrentPop = nullptr;

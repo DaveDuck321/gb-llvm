@@ -623,7 +623,7 @@ bool GBStackSlotLowering::runOnMachineFunction(MachineFunction &MF) {
         break;
       }
 
-      MI.removeFromParent();
+      MI.eraseFromParent();
       MadeChanges = true;
     }
   }

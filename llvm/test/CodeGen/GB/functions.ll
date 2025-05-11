@@ -156,35 +156,35 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    inc de
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld b, d
+; GBI-O3-NEXT:    ld c, e
 ; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld c, a
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
 ; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld (de), a
 ; GBI-O3-NEXT:    add sp, 10
 ; GBI-O3-NEXT:    ret
   %val = call i32 @large_return()
@@ -248,8 +248,8 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld bc, untyped_fn_symbol
 ; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    call (hl)

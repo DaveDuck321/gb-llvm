@@ -23,7 +23,7 @@ let mayStore = true, Uses = [A, HL], Defs = [HL] in {
 
 let mayLoad = true, Defs = [A] in {
   def LDH_A_iImm : _GB_SimpleImm8<"ldh a, ($imm)", 0xF0, uimm8, FixupData8>;
-  def LD_A_iImm : GBAbsImm16<"ld a, ($imm)", 0xFA>;
+  def LD_A_iImm : GBAbsImm16<"ld a, ($imm)", 0xFA, uimm16>;
   def LD_A_iR16 : _GB_IR16S16Sequence<"ld a, ($rs)", 0x0A>;
 
   let Uses = [C] in
@@ -310,10 +310,9 @@ def to_tframeindex : SDNodeXForm<frameindex, [{
 def : Pat<(frameindex:$imm), (LD_HL_SP (to_tframeindex $imm))>;
 
 // ALU 8-bit
-multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, GBInstr indInstr, bit alreadyHasOutputGlue=0> {
+multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, bit alreadyHasOutputGlue=0> {
   def : Pat<!setdagop((? A, imm8:$imm), node), !setdagop((? imm8:$imm), immInstr)>;
   def : Pat<!setdagop((? A, GPR8:$rs),  node), !setdagop((? GPR8:$rs),  regInstr)>;
-  def : Pat<!setdagop((? A, (load HL)), node), !setdagop((?),           indInstr)>;
 
   // ALU ops set the zero flag, CP 0 is redundant in these cases
   // Unfortunately only one glued output is permitted so we can't make this optimization if we need the carry flag
@@ -321,22 +320,21 @@ multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, GBInstr indI
     foreach flag = [SETNE, SETEQ] in {
       def : Pat<(CP_NODE flag, !setdagop((? A, imm8:$imm), node), 0), !setdagop((? imm8:$imm), immInstr)>;
       def : Pat<(CP_NODE flag, !setdagop((? A, GPR8:$rs),  node), 0), !setdagop((? GPR8:$rs),  regInstr)>;
-      def : Pat<(CP_NODE flag, !setdagop((? A, (load HL)), node), 0), !setdagop((?),           indInstr)>;
     }
   }
 }
 
-defm : ALU_Pat<add,  ADDI, ADD_r, ADD_iHL>;
-defm : ALU_Pat<addc, ADDI, ADD_r, ADD_iHL, /*alreadyHasOutputGlue=*/ 1>;
-defm : ALU_Pat<adde, ADCI, ADC_r, ADC_iHL, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<add,  ADDI, ADD_r>;
+defm : ALU_Pat<addc, ADDI, ADD_r, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<adde, ADCI, ADC_r, /*alreadyHasOutputGlue=*/ 1>;
 
-defm : ALU_Pat<sub,  SUBI, SUB_r, SUB_iHL>;
-defm : ALU_Pat<subc, SUBI, SUB_r, SUB_iHL, /*alreadyHasOutputGlue=*/ 1>;
-defm : ALU_Pat<sube, SBCI, SBC_r, SBC_iHL, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<sub,  SUBI, SUB_r>;
+defm : ALU_Pat<subc, SUBI, SUB_r, /*alreadyHasOutputGlue=*/ 1>;
+defm : ALU_Pat<sube, SBCI, SBC_r, /*alreadyHasOutputGlue=*/ 1>;
 
-defm : ALU_Pat<and, ANDI, AND_r, AND_iHL>;
-defm : ALU_Pat<xor, XORI, XOR_r, XOR_iHL>;
-defm : ALU_Pat<or,  ORI,  OR_r,  OR_iHL>;
+defm : ALU_Pat<and, ANDI, AND_r>;
+defm : ALU_Pat<xor, XORI, XOR_r>;
+defm : ALU_Pat<or,  ORI,  OR_r>;
 
 def : Pat<(xor A, -1), (CPL)>;
 
@@ -357,8 +355,8 @@ class Pseudo<string name, string args, dag outs, dag ins>
 }
 
 // Memory ops: decay into either L_A_iHL or LD_A_iR16 after register allocation
-let mayLoad = true, Defs = [A] in {
-  def LD_A_iGPR16 : Pseudo<"ld", "a ($rs)", (outs), (ins IntReg16:$rs)>;
+let mayLoad = true, canFoldAsLoad = true, Defs = [A] in {
+  def LD_r_iGPR16 : Pseudo<"ld", "$rd ($rs)", (outs GPR8:$rd), (ins IntReg16:$rs)>;
 }
 
 let mayStore = true, Uses = [A] in {
@@ -366,8 +364,8 @@ let mayStore = true, Uses = [A] in {
 }
 
 def : Pat<(load io_imm16:$imm), (LDH_A_iImm (to_lower_imm $imm))>;
-def : Pat<(load GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
-def : Pat<(extload GPR16:$rs), (LD_A_iGPR16 GPR16:$rs)>;
+def : Pat<(load GPR16:$rs), (LD_r_iGPR16 GPR16:$rs)>;
+def : Pat<(extload GPR16:$rs), (LD_r_iGPR16 GPR16:$rs)>;
 
 def : Pat<(store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
 def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;

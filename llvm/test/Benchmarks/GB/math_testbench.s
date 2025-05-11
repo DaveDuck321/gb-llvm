@@ -54,16 +54,16 @@ main:
 
     ld hl, 3600
     call floating_point_add
-; EXPECT-CYCLE-O3: 4205
-; EXPECT-CYCLE-Oz: 4205
+; EXPECT-CYCLE-O3: 4203
+; EXPECT-CYCLE-Oz: 4203
 ; EXPECT: hl=0e59
     debugtrap
 
 
     ld hl, 50
     call floating_point_mul
-; EXPECT-CYCLE-O3: 20809
-; EXPECT-CYCLE-Oz: 20809
+; EXPECT-CYCLE-O3: 20807
+; EXPECT-CYCLE-Oz: 20807
 ; FIXME: 02fe
 ; EXPECT-FAILING: hl=0302
     debugtrap

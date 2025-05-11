@@ -89,7 +89,7 @@ bool GBRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   // ADD HL, SP
   BuildMI(MBB, MI, DL, TII.get(GB::LDI16), GB::HL).addImm(Offset);
   BuildMI(MBB, MI, DL, TII.get(GB::ADD_HL)).addReg(GB::SP);
-  MI->removeFromParent();
+  MI->eraseFromParent();
   return true;
 }
 

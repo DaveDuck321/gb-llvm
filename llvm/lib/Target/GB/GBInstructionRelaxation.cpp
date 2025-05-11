@@ -114,11 +114,11 @@ bool GBInstructionRelaxation::mergeLoadStoreIncrementIntoLDI(
 
       // Have we found a compatible load/ store, inc pattern?
       if (Inc != nullptr) {
-        Inc->removeFromParent();
+        Inc->eraseFromParent();
         auto NewOpcode =
             MI.getOpcode() == GB::LD_r_iHL ? GB::LDI_A_iHL : GB::LDI_iHL_A;
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(NewOpcode));
-        MI.removeFromParent();
+        MI.eraseFromParent();
         return true; // We've just invalidated the iterator
       }
     }
@@ -148,7 +148,7 @@ bool GBInstructionRelaxation::foldRedundantCopies(MachineFunction &MF) {
         Register DstReg = MI.getOperand(0).getReg();
         Register SrcReg = MI.getOperand(1).getReg();
         if (DstReg == SrcReg) {
-          MI.removeFromParent();
+          MI.eraseFromParent();
           MadeChanges = true;
           continue;
         }
@@ -197,7 +197,7 @@ bool GBInstructionRelaxation::foldRedundantCopies(MachineFunction &MF) {
 
       // We've passed all the checks, fold
       if (MoveToOmit != nullptr) {
-        MoveToOmit->removeFromParent();
+        MoveToOmit->eraseFromParent();
         MI.getOperand(0).ChangeToRegister(MoveToReg, true);
         MadeChanges = true;
         break;
@@ -215,7 +215,7 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
     for (MachineInstr &MI : llvm::make_early_inc_range(MBB)) {
       if (MI.getOpcode() == GB::RRC_r && MI.getOperand(0).getReg() == GB::A) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RRCA));
-        MI.removeFromParent();
+        MI.eraseFromParent();
 
         MadeChanges = true;
         continue;
@@ -223,7 +223,7 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
 
       if (MI.getOpcode() == GB::RR_r && MI.getOperand(0).getReg() == GB::A) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RRA));
-        MI.removeFromParent();
+        MI.eraseFromParent();
 
         MadeChanges = true;
         continue;
@@ -231,7 +231,7 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
 
       if (MI.getOpcode() == GB::RLC_r && MI.getOperand(0).getReg() == GB::A) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLCA));
-        MI.removeFromParent();
+        MI.eraseFromParent();
 
         MadeChanges = true;
         continue;
@@ -239,7 +239,7 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
 
       if (MI.getOpcode() == GB::RL_r && MI.getOperand(0).getReg() == GB::A) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLA));
-        MI.removeFromParent();
+        MI.eraseFromParent();
 
         MadeChanges = true;
         continue;
@@ -262,7 +262,7 @@ bool GBInstructionRelaxation::simplifyCp00(MachineFunction &MF) {
       // that relies on this.
       if (MI.getOpcode() == GB::CPI && MI.getOperand(0).getImm() == 0) {
         BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::OR_r)).addReg(GB::A);
-        MI.removeFromParent();
+        MI.eraseFromParent();
 
         MadeChanges = true;
       }

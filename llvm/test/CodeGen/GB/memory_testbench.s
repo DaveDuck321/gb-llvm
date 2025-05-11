@@ -3,6 +3,10 @@
 ; RUN: run-emulator-test.sh %s $GB_TEST_PATH/memory.ll -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
+; Placeholder ext definition for codegen-only test
+.global ext
+ext:
+
 .global _start
 _start:
     di

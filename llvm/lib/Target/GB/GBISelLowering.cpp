@@ -1238,7 +1238,7 @@ MachineBasicBlock *GBTargetLowering::emitConstantShiftWithCustomInserter(
         .addReg(GB::A);
   }
 
-  MI.removeFromParent();
+  MI.eraseFromParent();
   return MBB;
 }
 

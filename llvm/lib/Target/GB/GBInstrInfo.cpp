@@ -254,7 +254,7 @@ unsigned GBInstrInfo::removeBranch(MachineBasicBlock &MBB,
       *BytesRemoved += getInstSizeInBytes(*I);
     }
     BranchesRemoved += 1;
-    I->removeFromParent();
+    I->eraseFromParent();
     I = MBB.getLastNonDebugInstr();
   }
   return BranchesRemoved;
@@ -317,45 +317,185 @@ bool GBInstrInfo::reverseBranchCondition(
 }
 
 bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
+  auto *MBB = MI.getParent();
+  auto *TRI = MBB->getParent()->getRegInfo().getTargetRegisterInfo();
+  auto MBBI = MI.getIterator();
+  auto DL = MI.getDebugLoc();
+
   switch (MI.getOpcode()) {
-  // During the pattern match, we produce LD_A_iGPR16 and LD_iGPR16_A
-  // LD_A_iGPR16 is lowered to L_A_iHL or LD_A_iR16 depending on the 16-bit
+  // During the pattern match, we produce LD_r_iGPR16 and LD_iGPR16_A
+  // LD_r_iGPR16 is lowered to L_A_iHL or LD_A_iR16 depending on the 16-bit
   // source register. This can be improved  by detecting cases where L_r8_iHL
   // would be more optimal than L_A_iHL.
-  case GB::LD_A_iGPR16: {
-    Register PtrReg = MI.getOperand(0).getReg();
+  case GB::LD_r_iGPR16: {
+    Register DstReg = MI.getOperand(0).getReg();
+    Register PtrReg = MI.getOperand(1).getReg();
+    bool DidKillPtr = MI.killsRegister(PtrReg, TRI);
+
     switch (PtrReg) {
     default:
       llvm_unreachable("Unexpected register");
     case GB::HL:
-      MI.setDesc(get(GB::LD_r_iHL));
-      MI.getOperand(0).ChangeToRegister(GB::A, true);
-      MI.getOperand(1).ChangeToRegister(GB::HL, false, true);
+      // Note: we always produce LD A, (HL) here rather than loading directly to
+      // the target GPR since this allows us to produce peephole optimizations
+      // like LDH.
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_r_iHL), GB::A)
+          .addReg(GB::HL, getImplRegState(true) | getKillRegState(DidKillPtr));
       break;
     case GB::BC:
     case GB::DE:
-      MI.setDesc(get(GB::LD_A_iR16));
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iR16))
+          .addDef(GB::A, getImplRegState(true))
+          .addReg(PtrReg, getKillRegState(DidKillPtr));
       break;
     }
+    if (DstReg != GB::A) {
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_rr), DstReg)
+          .addReg(GB::A, getKillRegState(true));
+    }
+    MI.eraseFromParent();
     return true;
   }
   case GB::LD_iGPR16_A: {
     Register PtrReg = MI.getOperand(0).getReg();
+    bool DidKillPtr = MI.killsRegister(PtrReg, TRI);
+
     switch (PtrReg) {
     default:
       llvm_unreachable("Unexpected register");
     case GB::HL:
-      MI.setDesc(get(GB::LD_iHL_r));
-      MI.getOperand(0).ChangeToRegister(GB::A, false);
-      MI.getOperand(1).ChangeToRegister(GB::HL, false, true);
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_iHL_r))
+          .addReg(GB::A)
+          .addReg(GB::HL, getImplRegState(true) | getKillRegState(DidKillPtr));
       break;
     case GB::BC:
     case GB::DE:
-      MI.setDesc(get(GB::LD_iR16_A));
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_iR16_A))
+          .addReg(PtrReg, getKillRegState(DidKillPtr));
       break;
     }
+    MI.eraseFromParent();
     return true;
   }
   }
   return false;
+}
+
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "gb-folding"
+
+bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
+                                Register Reg, MachineRegisterInfo *MRI) const {
+  auto *MBB = UseMI.getParent();
+  auto MBBI = UseMI.getIterator();
+  auto DL = UseMI.getDebugLoc();
+
+  LLVM_DEBUG(dbgs() << "foldImmediate: \n"; dbgs() << "  def=";
+             DefMI.print(dbgs()); dbgs() << "  use="; UseMI.print(dbgs()));
+  if (not MRI->hasOneNonDBGUse(Reg)) {
+    LLVM_DEBUG(dbgs() << "Fold rejected: has more than one use\n");
+    return false;
+  }
+
+  MachineOperand *Imm = nullptr;
+  switch (DefMI.getOpcode()) {
+  default:
+    LLVM_DEBUG(dbgs() << "Fold failed: unsupported def opcode "
+                      << DefMI.getOpcode() << "\n");
+    return false;
+  case GB::LDI16:
+    Imm = &DefMI.getOperand(1);
+    break;
+  }
+  assert(Imm->isImm() || Imm->isSymbol() || Imm->isGlobal());
+
+  switch (UseMI.getOpcode()) {
+  default:
+    LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "
+                      << UseMI.getOpcode() << "\n");
+    return false;
+  case GB::LD_r_iGPR16:
+    BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iImm))
+        .addDef(GB::A, getImplRegState(true))
+        ->addOperand(*Imm);
+
+    BuildMI(*MBB, MBBI, DL, get(GB::COPY), UseMI.getOperand(0).getReg())
+        .addReg(GB::A, getKillRegState(true));
+
+    break;
+  case GB::LD_iGPR16_A:
+    BuildMI(*MBB, MBBI, DL, get(GB::LD_iImm_A))
+        .addReg(GB::A, getImplRegState(true))
+        ->addOperand(*Imm);
+    break;
+  }
+  UseMI.eraseFromParent();
+  DefMI.eraseFromParent();
+
+  LLVM_DEBUG(dbgs() << "Fold accepted: "; UseMI.print(dbgs()));
+  LLVM_DEBUG(UseMI.getParent()->print(dbgs()));
+  return true;
+}
+
+MachineInstr *GBInstrInfo::foldMemoryOperandImpl(
+    MachineFunction &MF, MachineInstr &MI, ArrayRef<unsigned> Ops,
+    MachineBasicBlock::iterator InsertPt, MachineInstr &LoadMI,
+    LiveIntervals *LIS) const {
+  auto *MBB = MI.getParent();
+  auto *TRI = MBB->getParent()->getRegInfo().getTargetRegisterInfo();
+  LLVM_DEBUG(dbgs() << "foldMemoryOperandImpl: \n"; dbgs() << "  mi=";
+             MI.print(dbgs()));
+
+  if (LoadMI.getOpcode() != GB::LD_r_iGPR16) {
+    LLVM_DEBUG(dbgs() << "Fold rejected: load not supported\n");
+    return nullptr;
+  }
+  auto LoadedPtrReg = LoadMI.getOperand(1).getReg();
+  if (LoadedPtrReg.isPhysical()) {
+    LLVM_DEBUG(dbgs() << "Fold rejected: must be a virtual register\n");
+    return nullptr;
+  }
+
+  unsigned FoldedOpcode = 0;
+  switch (MI.getOpcode()) {
+  default:
+    LLVM_DEBUG(dbgs() << "Fold rejected: MI not supported\n");
+    return nullptr;
+
+  case GB::ADD_r:
+    FoldedOpcode = GB::ADD_iHL;
+    break;
+  case GB::ADC_r:
+    FoldedOpcode = GB::ADC_iHL;
+    break;
+  case GB::SUB_r:
+    FoldedOpcode = GB::SUB_iHL;
+    break;
+  case GB::SBC_r:
+    FoldedOpcode = GB::SBC_iHL;
+    break;
+  case GB::AND_r:
+    FoldedOpcode = GB::AND_iHL;
+    break;
+  case GB::XOR_r:
+    FoldedOpcode = GB::XOR_iHL;
+    break;
+  case GB::OR_r:
+    FoldedOpcode = GB::OR_iHL;
+    break;
+  }
+
+  if (Ops.size() != 1 || Ops[0] != 0) {
+    LLVM_DEBUG(dbgs() << "Fold rejected: Ops not supported\n");
+    return nullptr;
+  }
+
+  BuildMI(*MBB, InsertPt, MI.getDebugLoc(), get(GB::COPY), GB::HL)
+      .addReg(LoadedPtrReg,
+              getKillRegState(LoadMI.killsRegister(LoadedPtrReg, TRI)));
+
+  auto NewMI = BuildMI(*MBB, InsertPt, MI.getDebugLoc(), get(FoldedOpcode))
+                   .addDef(GB::A, getImplRegState(true))
+                   .addReg(GB::HL, getImplRegState(true));
+  return NewMI;
 }

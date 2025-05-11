@@ -16,8 +16,7 @@ define i8 @test_addresses() nounwind {
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    jp (hl)
@@ -40,8 +39,8 @@ define i16 @load_i16_global() nounwind {
 ; GBI-O3:       ; %bb.0:
 ; GBI-O3-NEXT:    ld bc, val16
 ; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ret

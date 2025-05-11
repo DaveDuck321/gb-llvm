@@ -451,6 +451,23 @@ bool LiveRange::overlaps(const LiveRange &Other, const CoalescerPair &CP,
       // I and J are overlapping. Find the later start.
       SlotIndex Def = std::max(I->start, J->start);
       // Allow the overlap if Def is a coalescable copy.
+
+      // GB: START HERE WHEN DEBUGGING THE ALLOCATOR
+      // Special case for the load pseudo instructions that clobber the A
+      // register BUT may also directly define A.
+      // Without this check, the allocator would avoid assigning to A since the
+      // ranges overlap.
+      bool IsEitherZeroLength =
+          (I->start.getBaseIndex() == I->end.getBaseIndex()) ||
+          (J->start.getBaseIndex() == J->end.getBaseIndex());
+      bool DoStartAtSameInstruction =
+          I->start.getBaseIndex() == J->start.getBaseIndex();
+      if (DoStartAtSameInstruction && IsEitherZeroLength) {
+        // We ignore the overlap if I and J are defined by the same instruction
+        // and either one of them is ignored
+        return false;
+      }
+
       if (Def.isBlock() ||
           !CP.isCoalescable(Indexes.getInstructionFromIndex(Def)))
         return true;
