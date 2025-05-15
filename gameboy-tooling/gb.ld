@@ -12,22 +12,22 @@ SECTIONS {
   .rst 0x0000 : {
     /* We emulate `call (HL)` with RST00 */
     BYTE(0xE9)    /* JP (HL) */
-    . = DEFINED( rst08 ) ? 0x0008 : .; KEEP(*(.text.rst08))
-    . = DEFINED( rst10 ) ? 0x0010 : .; KEEP(*(.text.rst10))
-    . = DEFINED( rst18 ) ? 0x0018 : .; KEEP(*(.text.rst18))
-    . = DEFINED( rst20 ) ? 0x0020 : .; KEEP(*(.text.rst20))
-    . = DEFINED( rst28 ) ? 0x0028 : .; KEEP(*(.text.rst28))
-    . = DEFINED( rst30 ) ? 0x0030 : .; KEEP(*(.text.rst30))
-    . = DEFINED( rst38 ) ? 0x0038 : .; KEEP(*(.text.rst38))
+    . = DEFINED( rst08 ) ? 0x0008 : .; KEEP(*(.text.__gb_rst08))
+    . = DEFINED( rst10 ) ? 0x0010 : .; KEEP(*(.text.__gb_rst10))
+    . = DEFINED( rst18 ) ? 0x0018 : .; KEEP(*(.text.__gb_rst18))
+    . = DEFINED( rst20 ) ? 0x0020 : .; KEEP(*(.text.__gb_rst20))
+    . = DEFINED( rst28 ) ? 0x0028 : .; KEEP(*(.text.__gb_rst28))
+    . = DEFINED( rst30 ) ? 0x0030 : .; KEEP(*(.text.__gb_rst30))
+    . = DEFINED( rst38 ) ? 0x0038 : .; KEEP(*(.text.__gb_rst38))
     . = 0x0040;
   } > rom0 = 0xd3d3d3d3 /* trap */
 
   .int 0x0040 : {
-    . = 0x0040; KEEP(*(.text.int_vblank))
-    . = 0x0048; KEEP(*(.text.int_lcdc_status))
-    . = 0x0050; KEEP(*(.text.int_timer))
-    . = 0x0058; KEEP(*(.text.int_serial))
-    . = 0x0060; KEEP(*(.text.int_input))
+    . = 0x0040; KEEP(*(.text.__gb_int_vblank))
+    . = 0x0048; KEEP(*(.text.__gb_int_lcd_status))
+    . = 0x0050; KEEP(*(.text.__gb_int_timer))
+    . = 0x0058; KEEP(*(.text.__gb_int_serial))
+    . = 0x0060; KEEP(*(.text.__gb_int_input))
     . = 0x0068;
   } > rom0 = 0xd3d3d3d3 /* trap */
 
