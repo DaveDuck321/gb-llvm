@@ -211,3 +211,6 @@ ld (de), a
 # CHECK-INST: rst $30
 # CHECK: encoding: [0xf7]
 rst 0x30
+# CHECK-INST: call (hl)
+# CHECK: encoding: [0xc7]
+call (hl)

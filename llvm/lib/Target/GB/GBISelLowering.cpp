@@ -399,8 +399,8 @@ SDValue GBTargetLowering::LowerGlobalAddress(SDValue Op,
   assert(Node);
 
   SDLoc DL = Op;
-  SDValue TargetAddr =
-      DAG.getTargetGlobalAddress(Node->getGlobal(), DL, MVT::i16, Node->getOffset());
+  SDValue TargetAddr = DAG.getTargetGlobalAddress(Node->getGlobal(), DL,
+                                                  MVT::i16, Node->getOffset());
   return DAG.getNode(GBISD::ADDR_WRAPPER, DL, MVT::i16, TargetAddr);
 }
 
@@ -1470,6 +1470,8 @@ bool GBTargetLowering::expandShiftByConstant(SelectionDAG &DAG, SDNode *N,
   }
   return true;
 }
+
+unsigned GBTargetLowering::maximumLegalStoreInBits() const { return 8; }
 
 GBTargetLowering::ShiftLegalizationStrategy
 GBTargetLowering::preferredShiftLegalizationStrategy(

@@ -108,6 +108,8 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
 
   emitSourceFileHeader("Target Register Enum Values", OS);
 
+  OS << "#include <cstdint>\n\n";
+
   OS << "\n#ifdef GET_REGINFO_ENUM\n";
   OS << "#undef GET_REGINFO_ENUM\n\n";
 

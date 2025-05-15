@@ -1108,6 +1108,17 @@ public:
     return VT.isSimple() && RegClassForVT[VT.getSimpleVT().SimpleTy] != nullptr;
   }
 
+  virtual unsigned maximumLegalStoreInBits() const {
+    unsigned MaximumLegalStoreInBits = 0;
+    // We use the minimum store size here, since that's all we can guarantee
+    // for the scalable vector types.
+    for (MVT VT : MVT::all_valuetypes())
+      if (EVT(VT).isSimple() && VT != MVT::Other && isTypeLegal(EVT(VT)) &&
+          VT.getSizeInBits().getKnownMinValue() >= MaximumLegalStoreInBits)
+        MaximumLegalStoreInBits = VT.getSizeInBits().getKnownMinValue();
+    return MaximumLegalStoreInBits;
+  }
+
   class ValueTypeActionImpl {
     /// ValueTypeActions - For each value type, keep a LegalizeTypeAction enum
     /// that indicates how instruction selection should deal with the type.

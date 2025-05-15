@@ -3,6 +3,12 @@
 ; RUN: run-emulator-test.sh %s $GB_TEST_PATH/addresses.ll -O0 \
 ; RUN:   | FileCheck %s -check-prefix=EXPECT
 
+    .data
+.global external_u16
+external_u16:
+    .short = 0
+
+    .text
 .global _start
 _start:
     di
@@ -35,6 +41,18 @@ _main:
 
     call load_i16_global
 ; EXPECT: hl=1992
+    debugtrap
+
+    call test_save_i16_to_external
+; EXPECT: hl=0000
+    debugtrap
+
+    ld hl, external_u16
+    ldi a, (hl)
+; EXPECT: a=12
+    debugtrap
+    ld a, (hl)
+; EXPECT: a=11
     debugtrap
 
 _end:

@@ -114,6 +114,9 @@ public:
 
   bool expandShiftByConstant(SelectionDAG &DAG, SDNode *N, const APInt &Amt,
                              SDValue &Lo, SDValue &Hi) const override;
+
+  unsigned maximumLegalStoreInBits() const override;
+
   ShiftLegalizationStrategy
   preferredShiftLegalizationStrategy(SelectionDAG &DAG, SDNode *N,
                                      unsigned ExpansionFactor) const override;

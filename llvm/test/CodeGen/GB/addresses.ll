@@ -102,3 +102,19 @@ define i16 @lw_sw_global(i16 %a) nounwind {
   store i16 %a, ptr %2
   ret i16 %1
 }
+
+@external_u16 = external dso_local global ptr, align 2
+
+define dso_local noundef i16 @test_save_i16_to_external() local_unnamed_addr {
+; GBI-O3-LABEL: test_save_i16_to_external:
+; GBI-O3:       ; %bb.0: ; %entry
+; GBI-O3-NEXT:    ld hl, external_u16+1
+; GBI-O3-NEXT:    ld (hl), $11
+; GBI-O3-NEXT:    ld hl, external_u16
+; GBI-O3-NEXT:    ld (hl), $12
+; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ret
+entry:
+  store ptr inttoptr (i16 4370 to ptr), ptr @external_u16, align 2
+  ret i16 0
+}
