@@ -9,7 +9,7 @@ cmake -S llvm -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=debug \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
-    -DLLVM_ENABLE_PROJECTS="clang;llvm;lld" \
+    -DLLVM_ENABLE_PROJECTS="clang;llvm;lld;lldb" \
     -DLLVM_TARGETS_TO_BUILD="" \
     -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=GB \
     -DLLVM_ENABLE_RUNTIMES="compiler-rt" \
