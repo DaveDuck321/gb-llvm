@@ -180,6 +180,10 @@ bool GBInstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   MachineInstr *FinalConditionalBranch = nullptr;
   MachineInstr *FinalUnconditionalBranch = nullptr;
   for (auto &MI : *MBB.getIterator()) {
+    if (MI.isDebugInstr()) {
+      continue;
+    }
+
     if (MI.isUnconditionalBranch()) {
       FinalUnconditionalBranch = &MI;
       break;

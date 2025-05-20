@@ -17,7 +17,8 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                        AsmPrinter &AP) {
   OutMI.setOpcode(MI->getOpcode());
 
-  LLVM_DEBUG(dbgs() << "MI=" << *MI);
+  LLVM_DEBUG(dbgs() << "MBB=" << MI->getParent()->getName();
+             dbgs() << " MI=" << *MI);
 
   for (const MachineOperand &MO : MI->operands()) {
     MCOperand MCOp;

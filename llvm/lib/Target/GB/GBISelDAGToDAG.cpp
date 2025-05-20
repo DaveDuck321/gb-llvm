@@ -40,19 +40,10 @@ identify16BitConstantAddSub(SDValue LSB, SDValue MSB) {
 
     if (LSBConstant->getOpcode() == ISD::Constant &&
         MSBConstant->getOpcode() == ISD::Constant) {
-      // Addition
-      if (MSBConstant->getAsZExtVal() == 0) {
-        size_t Offset = LSBConstant->getAsZExtVal();
-        assert(Offset > 0);
-        return std::make_tuple(LSBValue, MSBValue, Offset);
-      }
+      int16_t Offset =
+          (MSBConstant->getAsZExtVal() << 8) | LSBConstant->getAsZExtVal();
 
-      // Subtraction
-      if (MSBConstant->getAsZExtVal() == 0xff) {
-        long Offset = (signed char)MSBConstant->getAsZExtVal();
-        assert(Offset < 0);
-        return std::make_tuple(LSBValue, MSBValue, Offset);
-      }
+      return std::make_tuple(LSBValue, MSBValue, Offset);
     }
   }
   return std::nullopt;

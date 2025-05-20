@@ -756,3 +756,13 @@ define i8 @lshr_7(i8 %b) nounwind {
   %1 = lshr i8 %b, 7
   ret i8 %1
 }
+
+define i16 @sub_2(i16 %hl) nounwind {
+; GBI-LABEL: sub_2:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    dec hl
+; GBI-NEXT:    dec hl
+; GBI-NEXT:    ret
+  %1 = sub i16 %hl, 2
+  ret i16 %1
+}
