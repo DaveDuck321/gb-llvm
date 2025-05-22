@@ -462,15 +462,13 @@ bool LiveRange::overlaps(const LiveRange &Other, const CoalescerPair &CP,
           (J->start.getBaseIndex() == J->end.getBaseIndex());
       bool DoStartAtSameInstruction =
           I->start.getBaseIndex() == J->start.getBaseIndex();
-      if (DoStartAtSameInstruction && IsEitherZeroLength) {
-        // We ignore the overlap if I and J are defined by the same instruction
-        // and either one of them is ignored
-        return false;
+      // We ignore the overlap if I and J are defined by the same instruction
+      // and either one of them is ignored.
+      if (!DoStartAtSameInstruction || !IsEitherZeroLength) {
+        if (Def.isBlock() ||
+            !CP.isCoalescable(Indexes.getInstructionFromIndex(Def)))
+          return true;
       }
-
-      if (Def.isBlock() ||
-          !CP.isCoalescable(Indexes.getInstructionFromIndex(Def)))
-        return true;
     }
     // Advance the iterator that ends first to check for more overlaps.
     if (J->end > I->end) {

@@ -205,3 +205,42 @@ entry:
   store i16 %arg, ptr @ext, align 2
   ret void
 }
+
+%array = type { [16 x i8] }
+
+define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
+; GBI-LABEL: _Z3barN5libgb5ArrayIcLj16EEE:
+; GBI:       ; %bb.0: ; %entry
+; GBI-NEXT:    ld a, l
+; GBI-NEXT:    add $09
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld a, h
+; GBI-NEXT:    adc $00
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, l
+; GBI-NEXT:    add $07
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld a, h
+; GBI-NEXT:    adc $00
+; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ld e, $00
+; GBI-NEXT:    ld a, d
+; GBI-NEXT:    ld l, c
+; GBI-NEXT:    add (hl)
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld a, e
+; GBI-NEXT:    adc $00
+; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ret
+entry:
+  %arrayidx.i = getelementptr inbounds nuw i8, ptr %data, i16 7
+  %0 = load i8, ptr %arrayidx.i, align 1
+  %conv = zext i8 %0 to i16
+  %arrayidx.i3 = getelementptr inbounds nuw i8, ptr %data, i16 9
+  %1 = load i8, ptr %arrayidx.i3, align 1
+  %conv2 = zext i8 %1 to i16
+  %add = add nuw nsw i16 %conv2, %conv
+  ret i16 %add
+}
