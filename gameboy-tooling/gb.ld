@@ -37,7 +37,12 @@ SECTIONS {
     SHORT(_start)
   } > rom0
 
-  .meta 0x0104 : {
+  .logo 0x0104 : {
+    KEEP(*(.logo*))
+    . = 0x0134;
+  } > rom0 = 0
+
+  .meta 0x0134 : {
     KEEP(*(.meta*))
     . = 0x0150;
   } > rom0 = 0
