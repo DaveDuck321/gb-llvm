@@ -248,6 +248,11 @@ int TargetTransformInfo::getInlinerVectorBonusPercent() const {
   return TTIImpl->getInlinerVectorBonusPercent();
 }
 
+bool TargetTransformInfo::isTypeConversionAlwaysUndesirable(
+    unsigned FromWidth, unsigned ToWidth) const {
+  return TTIImpl->isTypeConversionAlwaysUndesirable(FromWidth, ToWidth);
+}
+
 InstructionCost TargetTransformInfo::getGEPCost(
     Type *PointeeType, const Value *Ptr, ArrayRef<const Value *> Operands,
     Type *AccessType, TTI::TargetCostKind CostKind) const {

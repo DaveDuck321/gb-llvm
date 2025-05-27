@@ -297,6 +297,9 @@ public:
     TCC_Expensive = 4 ///< The cost of a 'div' instruction on x86.
   };
 
+  bool isTypeConversionAlwaysUndesirable(unsigned FromWidth,
+                                         unsigned ToWidth) const;
+
   /// Estimate the cost of a GEP operation when lowered.
   ///
   /// \p PointeeType is the source element type of the GEP.

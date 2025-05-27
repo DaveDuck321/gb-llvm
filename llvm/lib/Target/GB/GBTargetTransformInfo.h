@@ -37,6 +37,22 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout()),
         ST(TM->getGBSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
 
+  bool isTypeConversionAlwaysUndesirable(unsigned FromWidth,
+                                         unsigned ToWidth) const override {
+    return FromWidth == 8 && ToWidth > 8;
+  }
+
+  InstructionCost getTypeCostMultiplier(EVT Type) const override {
+    auto SizeInBits = Type.getSizeInBits();
+    if (SizeInBits <= 8) {
+      return 1;
+    }
+    if (SizeInBits == 16) {
+      return 2;
+    }
+    return 3;
+  }
+
   unsigned getNumberOfRegisters(unsigned ClassID) const override {
     if (ClassID == 0) {
       return 5; // A, B, C, D, E

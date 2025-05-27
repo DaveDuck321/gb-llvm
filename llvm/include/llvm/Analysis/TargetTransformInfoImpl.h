@@ -49,6 +49,11 @@ public:
 
   virtual const DataLayout &getDataLayout() const { return DL; }
 
+  virtual bool isTypeConversionAlwaysUndesirable(unsigned FromWidth,
+                                                 unsigned ToWidth) const {
+    return false;
+  }
+
   // FIXME: It looks like this implementation is dead. All clients appear to
   //  use the (non-const) version from `TargetTransformInfoImplCRTPBase`.
   virtual InstructionCost getGEPCost(Type *PointeeType, const Value *Ptr,

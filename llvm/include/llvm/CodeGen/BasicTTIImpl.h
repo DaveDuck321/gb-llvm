@@ -86,6 +86,8 @@ private:
   /// Helper function to access this as a T.
   const T *thisT() const { return static_cast<const T *>(this); }
 
+  virtual InstructionCost getTypeCostMultiplier(EVT Type) const { return 1; }
+
   /// Estimate a cost of Broadcast as an extract and sequence of insert
   /// operations.
   InstructionCost
@@ -989,7 +991,7 @@ public:
     LLVMContext &C = Ty->getContext();
     EVT MTy = getTLI()->getValueType(DL, Ty);
 
-    InstructionCost Cost = 1;
+    InstructionCost Cost = getTypeCostMultiplier(MTy);
     // We keep legalizing the type until we find a legal kind. We assume that
     // the only operation that costs anything is the split. After splitting
     // we need to handle two types.

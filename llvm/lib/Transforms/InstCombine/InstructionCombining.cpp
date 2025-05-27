@@ -246,6 +246,14 @@ bool InstCombinerImpl::shouldChangeType(unsigned FromWidth,
   bool FromLegal = FromWidth == 1 || DL.isLegalInteger(FromWidth);
   bool ToLegal = ToWidth == 1 || DL.isLegalInteger(ToWidth);
 
+  // Yes, I see the irony here... But it makes absolutely no sense to promote i8
+  // to i16 unnecessarily -- the zext is free in hardware. Missing a few
+  // combining opportunities is worth the superior codegen.
+  if (TTIForTargetIntrinsicsOnly.isTypeConversionAlwaysUndesirable(FromWidth,
+                                                                   ToWidth)) {
+    return false;
+  }
+
   // Convert to desirable widths even if they are not legal types.
   // Only shrink types, to prevent infinite loops.
   if (ToWidth < FromWidth && isDesirableIntType(ToWidth))
