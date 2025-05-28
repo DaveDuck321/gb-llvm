@@ -23,6 +23,11 @@ _start:
     debugtrap
 
     ld b, 0xfe
+    call inc
+; EXPECT: a=ff
+    debugtrap
+
+    ld b, 0xfd
     call addi
 ; EXPECT: a=ff
     debugtrap
@@ -41,6 +46,17 @@ _start:
     call sub
 ; EXPECT: a=05
     debugtrap
+
+    ld b, 7
+    call subi
+; EXPECT: a=05
+    debugtrap
+
+    ld b, 7
+    call dec
+; EXPECT: a=06
+    debugtrap
+
 
     ld b, 0x06
     ld c, 0x14

@@ -327,10 +327,12 @@ multiclass ALU_Pat<SDNode node, GBInstr immInstr, GBInstr regInstr, bit alreadyH
 defm : ALU_Pat<add,  ADDI, ADD_r>;
 defm : ALU_Pat<addc, ADDI, ADD_r, /*alreadyHasOutputGlue=*/ 1>;
 defm : ALU_Pat<adde, ADCI, ADC_r, /*alreadyHasOutputGlue=*/ 1>;
+def : Pat<(add GPR8:$rs, 1), (INC_r GPR8:$rs)>;
 
 defm : ALU_Pat<sub,  SUBI, SUB_r>;
 defm : ALU_Pat<subc, SUBI, SUB_r, /*alreadyHasOutputGlue=*/ 1>;
 defm : ALU_Pat<sube, SBCI, SBC_r, /*alreadyHasOutputGlue=*/ 1>;
+def : Pat<(add GPR8:$rs, -1), (DEC_r GPR8:$rs)>;
 
 defm : ALU_Pat<and, ANDI, AND_r>;
 defm : ALU_Pat<xor, XORI, XOR_r>;

@@ -16,7 +16,18 @@ define i8 @addi(i8 %b) nounwind {
 ; GBI-LABEL: addi:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add $01
+; GBI-NEXT:    add $02
+; GBI-NEXT:    ret
+  %1 = add i8 %b, 2
+  ret i8 %1
+}
+
+
+define i8 @inc(i8 %b) nounwind {
+; GBI-LABEL: inc:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    inc a
 ; GBI-NEXT:    ret
   %1 = add i8 %b, 1
   ret i8 %1
@@ -47,7 +58,17 @@ define i8 @subi(i8 %b) nounwind {
 ; GBI-LABEL: subi:
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add $ff
+; GBI-NEXT:    add $fe
+; GBI-NEXT:    ret
+  %1 = sub i8 %b, 2
+  ret i8 %1
+}
+
+define i8 @dec(i8 %b) nounwind {
+; GBI-LABEL: dec:
+; GBI:       ; %bb.0:
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    dec a
 ; GBI-NEXT:    ret
   %1 = sub i8 %b, 1
   ret i8 %1
@@ -229,12 +250,12 @@ define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    xor b
 ; GBI-NEXT:    bit 7, a
-; GBI-NEXT:    jp nz, .LBB20_1
+; GBI-NEXT:    jp nz, .LBB22_1
 ; GBI-NEXT:  ; %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB20_1:
+; GBI-NEXT:  .LBB22_1:
 ; GBI-NEXT:    rlc c
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    ret
@@ -251,12 +272,12 @@ define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    xor c
 ; GBI-NEXT:    bit 7, a
-; GBI-NEXT:    jp nz, .LBB21_1
+; GBI-NEXT:    jp nz, .LBB23_1
 ; GBI-NEXT:  ; %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB21_1:
+; GBI-NEXT:  .LBB23_1:
 ; GBI-NEXT:    rlc b
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ret
@@ -273,14 +294,14 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    xor b
 ; GBI-NEXT:    bit 7, a
-; GBI-NEXT:    jp nz, .LBB22_1
+; GBI-NEXT:    jp nz, .LBB24_1
 ; GBI-NEXT:  ; %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld c, d
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB22_1:
+; GBI-NEXT:  .LBB24_1:
 ; GBI-NEXT:    rlc c
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cpl
@@ -298,14 +319,14 @@ define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    xor c
 ; GBI-NEXT:    bit 7, a
-; GBI-NEXT:    jp nz, .LBB23_1
+; GBI-NEXT:    jp nz, .LBB25_1
 ; GBI-NEXT:  ; %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld b, d
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB23_1:
+; GBI-NEXT:  .LBB25_1:
 ; GBI-NEXT:    rlc b
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cpl
@@ -366,12 +387,12 @@ define i8 @shl(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB28_2
-; GBI-NEXT:  .LBB28_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB30_2
+; GBI-NEXT:  .LBB30_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB28_1
-; GBI-NEXT:  .LBB28_2:
+; GBI-NEXT:    jp nz, .LBB30_1
+; GBI-NEXT:  .LBB30_2:
 ; GBI-NEXT:    ret
   %1 = shl i8 %b, %c
   ret i8 %1
@@ -383,12 +404,12 @@ define i8 @lshr(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB29_2
-; GBI-NEXT:  .LBB29_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB31_2
+; GBI-NEXT:  .LBB31_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB29_1
-; GBI-NEXT:  .LBB29_2:
+; GBI-NEXT:    jp nz, .LBB31_1
+; GBI-NEXT:  .LBB31_2:
 ; GBI-NEXT:    ret
   %1 = lshr i8 %b, %c
   ret i8 %1
@@ -400,12 +421,12 @@ define i8 @ashr(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
-; GBI-NEXT:    jp z, .LBB30_2
-; GBI-NEXT:  .LBB30_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    jp z, .LBB32_2
+; GBI-NEXT:  .LBB32_1: ; =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sra a
 ; GBI-NEXT:    dec c
-; GBI-NEXT:    jp nz, .LBB30_1
-; GBI-NEXT:  .LBB30_2:
+; GBI-NEXT:    jp nz, .LBB32_1
+; GBI-NEXT:  .LBB32_2:
 ; GBI-NEXT:    ret
   %1 = ashr i8 %b, %c
   ret i8 %1
@@ -504,15 +525,11 @@ define i8 @cttz(i8 %b) {
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or a
-; GBI-NEXT:    jp z, .LBB37_1
+; GBI-NEXT:    jp z, .LBB39_1
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    cpl
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add $ff
 ; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, c
+; GBI-NEXT:    dec b
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    and b
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    srl a
@@ -538,7 +555,7 @@ define i8 @cttz(i8 %b) {
 ; GBI-NEXT:    add c
 ; GBI-NEXT:    and $0f
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB37_1:
+; GBI-NEXT:  .LBB39_1:
 ; GBI-NEXT:    ld a, $08
 ; GBI-NEXT:    ret
   %1 = call i8 @llvm.cttz.i8(i8 %b)
@@ -551,7 +568,7 @@ define i8 @ctlz(i8 %b) {
 ; GBI:       ; %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or a
-; GBI-NEXT:    jp z, .LBB38_1
+; GBI-NEXT:    jp z, .LBB40_1
 ; GBI-NEXT:  ; %bb.2: ; %cond.false
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    srl b
@@ -591,7 +608,7 @@ define i8 @ctlz(i8 %b) {
 ; GBI-NEXT:    add c
 ; GBI-NEXT:    and $0f
 ; GBI-NEXT:    ret
-; GBI-NEXT:  .LBB38_1:
+; GBI-NEXT:  .LBB40_1:
 ; GBI-NEXT:    ld a, $08
 ; GBI-NEXT:    ret
   %1 = call i8 @llvm.ctlz.i8(i8 %b)
