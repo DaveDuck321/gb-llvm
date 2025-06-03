@@ -47,17 +47,18 @@ SECTIONS {
     . = 0x0150;
   } > rom0 = 0
 
-  .rodata : { *(.rodata*) } > rom0
+  .hram : { *(.text.hram*) } > hram AT> rom0
   .init_array : { KEEP(*(.init_array*)) } > rom0
   .fini_array : { KEEP(*(.fini_array*)) } > rom0
   .text : { *(.text*) } > rom0
 
+  .rodata : { *(.rodata*) } > romN
+
   /* Data (VMA: RAM, LMA: ROM Switchable bank) */
   . = ORIGIN(ram0);
-  .data . : { *(.data*) } > ram0 AT> romN
-
-  . = ALIGN(8); /* No technical reason, just prevent ld warnings */
   .bss . (NOLOAD) : { *(.bss*) } > ram0
+
+  .data : ALIGN(2) { *(.data*) } > ram0 AT> romN
 
   /* TODO: everything else */
 }
@@ -65,6 +66,10 @@ SECTIONS {
 __gb_data_start = ADDR(.data);
 __gb_data_end = __gb_data_start + SIZEOF(.data);
 __gb_data_load_addr = LOADADDR(.data);
+
+__gb_hram_start = ADDR(.hram);
+__gb_hram_end = __gb_hram_start + SIZEOF(.hram);
+__gb_hram_load_addr = LOADADDR(.hram);
 
 __gb_bss_start = ADDR(.bss);
 __gb_bss_end = __gb_bss_start + SIZEOF(.bss);

@@ -1,20 +1,15 @@
 ; void _gb_init_data(void)
-_gb_init_data:
-    ld hl, __gb_data_start
-    ld bc, __gb_data_load_addr
-    ld de, __gb_data_end
-
+_gb_init_section:
   __gb_init_data_loop_start:
     ld a, h
     cp d
-    jr nz, __gb_init_data_loop_body
+    jr nz, __gb_init_section_loop_body
 
     ld a, l
     cp e
     ret z
 
-  __gb_init_data_loop_body:
-    ; Load byte from __gb_data_load_addr to __gb_data_start
+  __gb_init_section_loop_body:
     ld a, (bc)
     ldi (hl), a
     inc bc
@@ -81,9 +76,20 @@ _gb_call_fn_ptr_list:
 .global _start
 _start:
     di
-    ld sp, 0xD000
+    xor a
+    ldh (0xff), a
+    ld sp, 0xdffe
 
-    call _gb_init_data
+    ld hl, __gb_data_start
+    ld bc, __gb_data_load_addr
+    ld de, __gb_data_end
+    call _gb_init_section
+
+    ld hl, __gb_hram_start
+    ld bc, __gb_hram_load_addr
+    ld de, __gb_hram_end
+    call _gb_init_section
+
     call _gb_init_bss
 
     ld bc, __init_array_start
