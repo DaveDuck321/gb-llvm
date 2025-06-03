@@ -31,7 +31,7 @@ namespace {
 std::optional<std::tuple<SDValue, SDValue, long>>
 identify16BitConstantAddSub(SDValue LSB, SDValue MSB) {
   if (LSB.getOpcode() == ISD::ADDC && MSB->getOpcode() == ISD::ADDE &&
-      MSB->getGluedNode() == LSB.getNode()) {
+      MSB->getGluedNode() == LSB.getNode() && MSB->getGluedUser() == nullptr) {
     auto LSBConstant = LSB->getOperand(1);
     auto MSBConstant = MSB->getOperand(1);
 
@@ -166,7 +166,7 @@ bool GBDAGToDAGISel::parallelizei16IncDec(std::vector<SDNode *> AllNodes) {
           SDValue ResLSB = CurDAG->getNode(
               ISD::ADDC, NodeLoc, CurDAG->getVTList(MVT::i8, MVT::Glue),
               ParentInputLSB,
-              CurDAG->getConstant(CombinedOffset, NodeLoc, MVT::i8));
+              CurDAG->getConstant(CombinedOffset & 0xFF, NodeLoc, MVT::i8));
 
           SDValue ResLSBGlue = SDValue(ResLSB.getNode(), 1);
 
