@@ -10,7 +10,7 @@
 
 define i8 @main() {
 ; GBI-O3-LABEL: main:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    add sp, -12
 ; GBI-O3-NEXT:    ld hl, sp, 4
 ; GBI-O3-NEXT:    ld b, h
@@ -63,7 +63,7 @@ begin:
 
 define %type._Z5Range @make_range() {
 ; GBI-O3-LABEL: make_range:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld (hl), $00
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
@@ -81,7 +81,7 @@ begin:
 
 define %type.Player @get_player(i8 %0, i8 %1) {
 ; GBI-O3-LABEL: get_player:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, c

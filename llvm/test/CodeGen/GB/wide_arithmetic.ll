@@ -4,7 +4,7 @@
 
 define i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: and:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    and b
 ; GBI-O3-NEXT:    ld d, a
@@ -19,7 +19,7 @@ define i16 @and(i16 %b, i16 %c) nounwind {
 
 define i16 @andi(i16 %b) nounwind {
 ; GBI-O3-LABEL: andi:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    and $01
@@ -32,7 +32,7 @@ define i16 @andi(i16 %b) nounwind {
 
 define i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: xor:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    xor b
 ; GBI-O3-NEXT:    ld d, a
@@ -47,7 +47,7 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
 
 define i16 @xori(i16 %b) nounwind {
 ; GBI-O3-LABEL: xori:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    xor $01
 ; GBI-O3-NEXT:    ld l, a
@@ -58,7 +58,7 @@ define i16 @xori(i16 %b) nounwind {
 
 define i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: or:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    or b
 ; GBI-O3-NEXT:    ld d, a
@@ -73,7 +73,7 @@ define i16 @or(i16 %b, i16 %c) nounwind {
 
 define i16 @ori(i16 %b) nounwind {
 ; GBI-O3-LABEL: ori:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    or $01
 ; GBI-O3-NEXT:    ld l, a
@@ -84,7 +84,7 @@ define i16 @ori(i16 %b) nounwind {
 
 define i16 @sub16(i16 %a, i8 %b) nounwind {
 ; GBI-O3-LABEL: sub16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    ld c, a
@@ -100,7 +100,7 @@ define i16 @sub16(i16 %a, i8 %b) nounwind {
 
 define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sless_than:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    cp c
 ; GBI-O3-NEXT:    rl d
@@ -111,12 +111,12 @@ define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    xor b
 ; GBI-O3-NEXT:    bit 7, a
 ; GBI-O3-NEXT:    jp nz, .LBB7_1
-; GBI-O3-NEXT:  ; %bb.2: ; %begin
+; GBI-O3-NEXT:  # %bb.2: # %begin
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp nz, .LBB7_3
-; GBI-O3-NEXT:  .LBB7_4: ; %begin
+; GBI-O3-NEXT:  .LBB7_4: # %begin
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB7_1:
@@ -125,7 +125,7 @@ define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp z, .LBB7_4
-; GBI-O3-NEXT:  .LBB7_3: ; %begin
+; GBI-O3-NEXT:  .LBB7_3: # %begin
 ; GBI-O3-NEXT:    ld d, e
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
@@ -136,7 +136,7 @@ begin:
 
 define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sgreater_than:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    cp l
 ; GBI-O3-NEXT:    rl d
@@ -147,12 +147,12 @@ define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    xor h
 ; GBI-O3-NEXT:    bit 7, a
 ; GBI-O3-NEXT:    jp nz, .LBB8_1
-; GBI-O3-NEXT:  ; %bb.2: ; %begin
+; GBI-O3-NEXT:  # %bb.2: # %begin
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp nz, .LBB8_3
-; GBI-O3-NEXT:  .LBB8_4: ; %begin
+; GBI-O3-NEXT:  .LBB8_4: # %begin
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB8_1:
@@ -161,7 +161,7 @@ define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp z, .LBB8_4
-; GBI-O3-NEXT:  .LBB8_3: ; %begin
+; GBI-O3-NEXT:  .LBB8_3: # %begin
 ; GBI-O3-NEXT:    ld d, e
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
@@ -173,7 +173,7 @@ begin:
 
 define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-LABEL: add32:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -4
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 4
@@ -203,7 +203,7 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    cp b
 ; GBI-O3-NEXT:    jp z, .LBB9_2
-; GBI-O3-NEXT:  ; %bb.1:
+; GBI-O3-NEXT:  # %bb.1:
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 3
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -211,7 +211,7 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:  .LBB9_2:
 ; GBI-O3-NEXT:    bit 0, d
 ; GBI-O3-NEXT:    jp nz, .LBB9_3
-; GBI-O3-NEXT:  ; %bb.4:
+; GBI-O3-NEXT:  # %bb.4:
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    jp .LBB9_5
 ; GBI-O3-NEXT:  .LBB9_3:
@@ -263,7 +263,7 @@ define i32 @add32(i32 %in) nounwind {
 
 define i16 @shl16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: shl16:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    call __ashlhi3
 ; GBI-O3-NEXT:    ret
@@ -274,7 +274,7 @@ begin:
 
 define i16 @lsr16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: lsr16:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    call __lshrhi3
 ; GBI-O3-NEXT:    ret
@@ -285,7 +285,7 @@ begin:
 
 define i16 @asr16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: asr16:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    call __ashrhi3
 ; GBI-O3-NEXT:    ret
@@ -296,7 +296,7 @@ begin:
 
 define i16 @shl16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: shl16_c2:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sla l
 ; GBI-O3-NEXT:    rl h
 ; GBI-O3-NEXT:    sla l
@@ -309,7 +309,7 @@ begin:
 
 define i16 @shl16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: shl16_c9:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sla l
 ; GBI-O3-NEXT:    ld c, $00
 ; GBI-O3-NEXT:    ld h, l
@@ -322,7 +322,7 @@ begin:
 
 define i16 @asr16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: asr16_c2:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    rr l
 ; GBI-O3-NEXT:    sra h
@@ -335,7 +335,7 @@ begin:
 
 define i16 @asr16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: asr16_c9:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    sra b
 ; GBI-O3-NEXT:    sra b
@@ -355,7 +355,7 @@ begin:
 
 define i16 @lsr16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: lsr16_c2:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    srl h
 ; GBI-O3-NEXT:    rr l
 ; GBI-O3-NEXT:    srl h
@@ -368,7 +368,7 @@ begin:
 
 define i16 @lsr16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: lsr16_c9:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    srl h
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld l, h

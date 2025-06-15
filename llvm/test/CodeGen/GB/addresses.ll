@@ -6,7 +6,7 @@
 
 define i8 @test_addresses() nounwind {
 ; GBI-O3-LABEL: test_addresses:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld de, .Ltmp0
 ; GBI-O3-NEXT:    ld bc, addr
 ; GBI-O3-NEXT:    ld h, b
@@ -20,8 +20,8 @@ define i8 @test_addresses() nounwind {
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    jp (hl)
-; GBI-O3-NEXT:  .Ltmp0: ; Block address taken
-; GBI-O3-NEXT:  .LBB0_1: ; %block
+; GBI-O3-NEXT:  .Ltmp0: # Block address taken
+; GBI-O3-NEXT:  .LBB0_1: # %block
 ; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:    ret
   store volatile ptr blockaddress(@test_addresses, %block), ptr @addr
@@ -36,7 +36,7 @@ block:
 @val16 = local_unnamed_addr global i16 6546, align 8
 define i16 @load_i16_global() nounwind {
 ; GBI-O3-LABEL: load_i16_global:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld bc, val16
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld l, a
@@ -52,7 +52,7 @@ define i16 @load_i16_global() nounwind {
 @G = global i16 0
 define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld bc, G
 ; GBI-O3-NEXT:    ld a, (bc)
@@ -107,7 +107,7 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 
 define dso_local noundef i16 @test_save_i16_to_external() local_unnamed_addr {
 ; GBI-O3-LABEL: test_save_i16_to_external:
-; GBI-O3:       ; %bb.0: ; %entry
+; GBI-O3:       # %bb.0: # %entry
 ; GBI-O3-NEXT:    ld hl, external_u16+1
 ; GBI-O3-NEXT:    ld (hl), $11
 ; GBI-O3-NEXT:    ld hl, external_u16

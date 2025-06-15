@@ -87,7 +87,7 @@ res 2, e
 set 7, h
 # CHECK-INST: stop
 # CHECK: encoding: [0x10]
-stop ; TODO: check stop 0
+stop # TODO: check stop 0
 # CHECK-INST: halt
 # CHECK: encoding: [0x76]
 halt

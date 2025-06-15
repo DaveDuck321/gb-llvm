@@ -1,9 +1,9 @@
-; RUN: run-emulator-test.sh %s $GB_TEST_PATH/memory.ll -O3 \
-; RUN:   | FileCheck %s -check-prefix=EXPECT
-; RUN: run-emulator-test.sh %s $GB_TEST_PATH/memory.ll -O0 \
-; RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/memory.ll -O3 \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/memory.ll -O0 \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
 
-; Placeholder ext definition for codegen-only test
+# Placeholder ext definition for codegen-only test
 .global ext
 ext:
 
@@ -12,8 +12,8 @@ _start:
     di
     ld a, 0x00
     ld hl, 0x0000
-; EXPECT: a=00
-; EXPECT: hl=0000
+# EXPECT: a=00
+# EXPECT: hl=0000
     debugtrap
 
     ld b, 13
@@ -31,43 +31,43 @@ _start:
 
     ld hl, 0xc0fe
     call load8
-; EXPECT: Debug trap!
-; EXPECT: a=0d
+# EXPECT: Debug trap!
+# EXPECT: a=0d
     debugtrap
 
     ld hl, 0xc0ff
     call load16
-; EXPECT: Debug trap!
-; EXPECT: hl=1234
+# EXPECT: Debug trap!
+# EXPECT: hl=1234
     debugtrap
 
     ld hl, 0xc0fd
     call load1
     and 1
-; EXPECT: a=01
+# EXPECT: a=01
     debugtrap
 
     ld hl, 0xc0fd
     call load_sext
-; EXPECT: a=ff
+# EXPECT: a=ff
     debugtrap
 
     ld hl, 0xc0fd
     call load_zext
-; EXPECT: a=01
+# EXPECT: a=01
     debugtrap
 
 
     ld b, 0xff
     call simple_stack
     and 1
-; EXPECT: a=01
+# EXPECT: a=01
     debugtrap
 
     ld b, 0xfe
     call simple_stack
     and 1
-; EXPECT: a=00
+# EXPECT: a=00
     debugtrap
 
     ld hl, 0xc0f0
@@ -78,7 +78,7 @@ _start:
     ld hl, 0xc0f0
     call load1
     and 1
-; EXPECT: a=01
+# EXPECT: a=01
     debugtrap
 
 _end:

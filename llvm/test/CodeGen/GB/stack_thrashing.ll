@@ -4,7 +4,7 @@
 
 define i32 @large_stack_i32_identity(i32 %0) {
 ; GBI-O3-LABEL: large_stack_i32_identity:
-; GBI-O3:       ; %bb.0: ; %begin
+; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, b

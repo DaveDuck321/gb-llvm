@@ -4,7 +4,7 @@
 
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O3-LABEL: trunc_i32:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ret
   %res = trunc i32 %0 to i8
@@ -13,7 +13,7 @@ define i8 @trunc_i32(i32 %0) {
 
 define i8 @trunc_i16(i16 %0) {
 ; GBI-O3-LABEL: trunc_i16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %0 to i8
@@ -22,7 +22,7 @@ define i8 @trunc_i16(i16 %0) {
 
 define i1 @trunc_i1(i8 %0) {
 ; GBI-O3-LABEL: trunc_i1:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ret
   %res = trunc i8 %0 to i1
@@ -31,7 +31,7 @@ define i1 @trunc_i1(i8 %0) {
 
 define i8 @sext8_i1(i1 %0) {
 ; GBI-O3-LABEL: sext8_i1:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
@@ -45,7 +45,7 @@ define i8 @sext8_i1(i1 %0) {
 
 define i16 @sext16_i1(i1 %0) {
 ; GBI-O3-LABEL: sext16_i1:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
@@ -61,7 +61,7 @@ define i16 @sext16_i1(i1 %0) {
 
 define i16 @sext16_i8(i8 %0) {
 ; GBI-O3-LABEL: sext16_i8:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld l, b
 ; GBI-O3-NEXT:    ld h, l
 ; GBI-O3-NEXT:    sra h
@@ -78,7 +78,7 @@ define i16 @sext16_i8(i8 %0) {
 
 define i16 @zext16_i8(i8 %0) {
 ; GBI-O3-LABEL: zext16_i8:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld l, b
 ; GBI-O3-NEXT:    ld h, $00
 ; GBI-O3-NEXT:    ret
@@ -90,7 +90,7 @@ declare void @llvm.trap() noreturn nounwind
 
 define void @trap(i8 %0) noreturn {
 ; GBI-O3-LABEL: trap:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    trap
   call void @llvm.trap()
   unreachable

@@ -264,8 +264,8 @@ ASM_FUNCTION_LOONGARCH_RE = re.compile(
 )
 
 ASM_FUNCTION_GB_RE = re.compile(
-    r'^_?(?P<func>[^:]+):[ \t]*;+[ \t]*@(?P=func)\n[^:]*?'
-    r'(?P<body>^;;?[ \t]+[^:]+:.*?)\s*'
+    r'^_?(?P<func>[^:]+):[ \t]*#+[ \t]*@(?P=func)\n[^:]*?'
+    r'(?P<body>^##?[ \t]+[^:]+:.*?)\s*'
     r'\.Lfunc_end[0-9]+:\n',
     flags=(re.M | re.S),
 )

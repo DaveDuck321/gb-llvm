@@ -4,7 +4,7 @@
 
 define i8 @argument0(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument0:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ret
   ret i8 %0
@@ -13,7 +13,7 @@ define i8 @argument0(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 
 define i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument1:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   ret i8 %1
@@ -21,7 +21,7 @@ define i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 
 define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument2:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
   ret i8 %2
@@ -29,7 +29,7 @@ define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 
 define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument0_i16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %0 to i8
@@ -38,7 +38,7 @@ define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 
 define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument1_i16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %1 to i8
@@ -47,7 +47,7 @@ define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 
 define i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument3:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    ret
   ret i8 %3
@@ -56,7 +56,7 @@ define i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 
 define i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
 ; GBI-O3-LABEL: argument4:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    ret
@@ -65,7 +65,7 @@ define i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
 
 define i8 @call_argument2() nounwind {
 ; GBI-O3-LABEL: call_argument2:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
 ; GBI-O3-NEXT:    ld d, $02
@@ -78,7 +78,7 @@ define i8 @call_argument2() nounwind {
 
 define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-LABEL: call_argument1_i16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, $0000
 ; GBI-O3-NEXT:    ld bc, $0001
 ; GBI-O3-NEXT:    call argument1_i16
@@ -89,7 +89,7 @@ define i8 @call_argument1_i16() nounwind {
 
 define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3-LABEL: call_argument2_with_locals:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld (hl), b
@@ -108,7 +108,7 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 
 define i8 @call_argument3() nounwind {
 ; GBI-O3-LABEL: call_argument3:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
 ; GBI-O3-NEXT:    ld d, $02
@@ -121,7 +121,7 @@ define i8 @call_argument3() nounwind {
 
 define i32 @large_return() nounwind {
 ; GBI-O3-LABEL: large_return:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld (hl), $01
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), $00
@@ -135,7 +135,7 @@ define i32 @large_return() nounwind {
 
 define i32 @call_large_return() nounwind {
 ; GBI-O3-LABEL: call_large_return:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -10
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
@@ -192,7 +192,7 @@ define i32 @call_large_return() nounwind {
 
 define i16 @empty16() nounwind {
 ; GBI-O3-LABEL: empty16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, $0001
 ; GBI-O3-NEXT:    ret
   ret i16 1
@@ -200,7 +200,7 @@ define i16 @empty16() nounwind {
 
 define i16 @test_spill_arg16(i16 %0) nounwind {
 ; GBI-O3-LABEL: test_spill_arg16:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
@@ -220,7 +220,7 @@ define i16 @test_spill_arg16(i16 %0) nounwind {
 
 define i8 @empty8(i8 %0) nounwind {
 ; GBI-O3-LABEL: empty8:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ret
   ret i8 %0
@@ -228,7 +228,7 @@ define i8 @empty8(i8 %0) nounwind {
 
 define i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O3-LABEL: test_spill_arg8:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 1
 ; GBI-O3-NEXT:    ld (hl), b
@@ -244,7 +244,7 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
  @untyped_fn_symbol = external global ptr
  define i8 @call_untyped_fn() {
 ; GBI-O3-LABEL: call_untyped_fn:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld bc, untyped_fn_symbol
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld l, a
@@ -260,7 +260,7 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
 
 define i1 @tail_caller(ptr %0) {
 ; GBI-O3-LABEL: tail_caller:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    call tail_callee
 ; GBI-O3-NEXT:    ret
   %3 = tail call i1 @tail_callee(ptr %0)
@@ -269,7 +269,7 @@ define i1 @tail_caller(ptr %0) {
 
 define i1 @tail_callee(ptr %0) {
 ; GBI-O3-LABEL: tail_callee:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    add $f9
 ; GBI-O3-NEXT:    cp $01
@@ -282,7 +282,7 @@ define i1 @tail_callee(ptr %0) {
 
 define ptr @call_with_save(ptr %0) {
 ; GBI-O3-LABEL: call_with_save:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
@@ -304,7 +304,7 @@ define ptr @call_with_save(ptr %0) {
 
 define internal fastcc i1 @fastcc_callee(ptr %0) {
 ; GBI-O3-LABEL: fastcc_callee:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    add $f9
 ; GBI-O3-NEXT:    cp $01
@@ -317,7 +317,7 @@ define internal fastcc i1 @fastcc_callee(ptr %0) {
 
 define ptr @call_fastcc(ptr %0) {
 ; GBI-O3-LABEL: call_fastcc:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
@@ -339,7 +339,7 @@ define ptr @call_fastcc(ptr %0) {
 
 define linkonce_odr dso_local noundef zeroext i8 @clang_fn(i8 noundef zeroext %lhs, i8 noundef zeroext %rhs) local_unnamed_addr {
 ; GBI-O3-LABEL: clang_fn:
-; GBI-O3:       ; %bb.0:
+; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:    ret
   ret i8 2

@@ -4,7 +4,7 @@
 
 define i8 @load8(ptr %a) nounwind {
 ; GBI-LABEL: load8:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %a
@@ -13,7 +13,7 @@ define i8 @load8(ptr %a) nounwind {
 
 define i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ldi a, (hl)
 ; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    ld h, (hl)
@@ -25,7 +25,7 @@ define i16 @load16(ptr %a) nounwind {
 
 define void @store8(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store8:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ret
@@ -35,7 +35,7 @@ define void @store8(ptr %a, i8 %b) nounwind {
 
 define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld d, h
 ; GBI-NEXT:    ld e, l
 ; GBI-NEXT:    inc de
@@ -50,7 +50,7 @@ define void @store16(ptr %a, i16 %b) nounwind {
 
 define void @store1(ptr %a, i1 %b) nounwind {
 ; GBI-LABEL: store1:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld (hl), a
@@ -61,7 +61,7 @@ define void @store1(ptr %a, i1 %b) nounwind {
 
 define i1 @load1(ptr %a) nounwind {
 ; GBI-LABEL: load1:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
@@ -70,7 +70,7 @@ define i1 @load1(ptr %a) nounwind {
 
 define i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    ld b, $00
 ; GBI-NEXT:    and $01
@@ -85,7 +85,7 @@ define i8 @load_sext(ptr %a) nounwind {
 
 define i8 @load_zext(ptr %a) nounwind {
 ; GBI-LABEL: load_zext:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
@@ -96,7 +96,7 @@ define i8 @load_zext(ptr %a) nounwind {
 
 define void @store_trunc(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store_trunc:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld (hl), a
@@ -108,7 +108,7 @@ define void @store_trunc(ptr %a, i8 %b) nounwind {
 
 define i1 @simple_stack(i1 %0) {
 ; GBI-LABEL: simple_stack:
-; GBI:       ; %bb.0: ; %begin
+; GBI:       # %bb.0: # %begin
 ; GBI-NEXT:    add sp, -2
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
@@ -126,7 +126,7 @@ begin:
 
 define void @store_bit_1() #0 {
 ; GBI-LABEL: store_bit_1:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    or $01
 ; GBI-NEXT:    ldh ($0f), a
@@ -140,7 +140,7 @@ entry:
 
 define dso_local void @store_bit_3() #0 {
 ; GBI-LABEL: store_bit_3:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    or $04
 ; GBI-NEXT:    ldh ($0f), a
@@ -154,7 +154,7 @@ entry:
 
 define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_3() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_3:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    srl a
@@ -169,7 +169,7 @@ entry:
 
 define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_1() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_1:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
@@ -182,7 +182,7 @@ entry:
 @ext = external dso_local global i16, align 2
 define i16 @load_global() {
 ; GBI-LABEL: load_global:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, (ext+1)
 ; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ld a, (ext)
@@ -195,7 +195,7 @@ entry:
 
 define void @store_global(i16 %arg) {
 ; GBI-LABEL: store_global:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    ld (ext+1), a
 ; GBI-NEXT:    ld a, l
@@ -210,7 +210,7 @@ entry:
 
 define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
 ; GBI-LABEL: _Z3barN5libgb5ArrayIcLj16EEE:
-; GBI:       ; %bb.0: ; %entry
+; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $09
 ; GBI-NEXT:    ld c, a

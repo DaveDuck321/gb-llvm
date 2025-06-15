@@ -4,7 +4,7 @@
 
 define i8 @add(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: add:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add c
 ; GBI-NEXT:    ret
@@ -14,7 +14,7 @@ define i8 @add(i8 %b, i8 %c) nounwind {
 
 define i8 @addi(i8 %b) nounwind {
 ; GBI-LABEL: addi:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add $02
 ; GBI-NEXT:    ret
@@ -25,7 +25,7 @@ define i8 @addi(i8 %b) nounwind {
 
 define i8 @inc(i8 %b) nounwind {
 ; GBI-LABEL: inc:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    inc a
 ; GBI-NEXT:    ret
@@ -35,7 +35,7 @@ define i8 @inc(i8 %b) nounwind {
 
 define i8 @add_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: add_hl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add (hl)
 ; GBI-NEXT:    ret
@@ -46,7 +46,7 @@ define i8 @add_hl(i8 %b, ptr %hl) nounwind {
 
 define i8 @sub(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: sub:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    ret
@@ -56,7 +56,7 @@ define i8 @sub(i8 %b, i8 %c) nounwind {
 
 define i8 @subi(i8 %b) nounwind {
 ; GBI-LABEL: subi:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add $fe
 ; GBI-NEXT:    ret
@@ -66,7 +66,7 @@ define i8 @subi(i8 %b) nounwind {
 
 define i8 @dec(i8 %b) nounwind {
 ; GBI-LABEL: dec:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec a
 ; GBI-NEXT:    ret
@@ -76,7 +76,7 @@ define i8 @dec(i8 %b) nounwind {
 
 define i8 @sub_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: sub_hl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub (hl)
 ; GBI-NEXT:    ret
@@ -87,7 +87,7 @@ define i8 @sub_hl(i8 %b, ptr %hl) nounwind {
 
 define i8 @and(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: and:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and c
 ; GBI-NEXT:    ret
@@ -97,7 +97,7 @@ define i8 @and(i8 %b, i8 %c) nounwind {
 
 define i8 @andi(i8 %b) nounwind {
 ; GBI-LABEL: andi:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
@@ -107,7 +107,7 @@ define i8 @andi(i8 %b) nounwind {
 
 define i8 @and_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: and_hl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    and (hl)
 ; GBI-NEXT:    ret
@@ -118,7 +118,7 @@ define i8 @and_hl(i8 %b, ptr %hl) nounwind {
 
 define i8 @xor(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: xor:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    xor c
 ; GBI-NEXT:    ret
@@ -128,7 +128,7 @@ define i8 @xor(i8 %b, i8 %c) nounwind {
 
 define i8 @xori(i8 %b) nounwind {
 ; GBI-LABEL: xori:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    xor $01
 ; GBI-NEXT:    ret
@@ -138,7 +138,7 @@ define i8 @xori(i8 %b) nounwind {
 
 define i8 @xor_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: xor_hl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    xor (hl)
 ; GBI-NEXT:    ret
@@ -149,7 +149,7 @@ define i8 @xor_hl(i8 %b, ptr %hl) nounwind {
 
 define i8 @or(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: or:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or c
 ; GBI-NEXT:    ret
@@ -159,7 +159,7 @@ define i8 @or(i8 %b, i8 %c) nounwind {
 
 define i8 @ori(i8 %b) nounwind {
 ; GBI-LABEL: ori:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or $01
 ; GBI-NEXT:    ret
@@ -169,7 +169,7 @@ define i8 @ori(i8 %b) nounwind {
 
 define i8 @or_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: or_hl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or (hl)
 ; GBI-NEXT:    ret
@@ -180,7 +180,7 @@ define i8 @or_hl(i8 %b, ptr %hl) nounwind {
 
 define i16 @add16(i16 %a) nounwind {
 ; GBI-LABEL: add16:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $14
 ; GBI-NEXT:    ld c, a
@@ -195,7 +195,7 @@ define i16 @add16(i16 %a) nounwind {
 
 define i1 @setcc_eq_zero(i8 %b) nounwind {
 ; GBI-LABEL: setcc_eq_zero:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cp $01
 ; GBI-NEXT:    rla
@@ -206,7 +206,7 @@ define i1 @setcc_eq_zero(i8 %b) nounwind {
 
 define i1 @setcc_ne_zero(i8 %b) nounwind {
 ; GBI-LABEL: setcc_ne_zero:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cp $01
 ; GBI-NEXT:    rla
@@ -218,7 +218,7 @@ define i1 @setcc_ne_zero(i8 %b) nounwind {
 
 define i1 @setcc_eq(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_eq:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    cp $01
@@ -230,7 +230,7 @@ define i1 @setcc_eq(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_ne(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ne:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    cp $01
@@ -243,7 +243,7 @@ define i1 @setcc_ne(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_gt:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
 ; GBI-NEXT:    ld d, a
@@ -251,7 +251,7 @@ define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    xor b
 ; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB22_1
-; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:  # %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
@@ -265,7 +265,7 @@ define i1 @setcc_gt(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_lt:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    ld d, a
@@ -273,7 +273,7 @@ define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    xor c
 ; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB23_1
-; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:  # %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ret
@@ -287,7 +287,7 @@ define i1 @setcc_lt(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_le:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    sub b
 ; GBI-NEXT:    ld d, a
@@ -295,7 +295,7 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    xor b
 ; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB24_1
-; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:  # %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld c, d
 ; GBI-NEXT:    ld a, c
@@ -312,7 +312,7 @@ define i1 @setcc_le(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ge:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sub c
 ; GBI-NEXT:    ld d, a
@@ -320,7 +320,7 @@ define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 ; GBI-NEXT:    xor c
 ; GBI-NEXT:    bit 7, a
 ; GBI-NEXT:    jp nz, .LBB25_1
-; GBI-NEXT:  ; %bb.2:
+; GBI-NEXT:  # %bb.2:
 ; GBI-NEXT:    rlc d
 ; GBI-NEXT:    ld b, d
 ; GBI-NEXT:    ld a, b
@@ -337,7 +337,7 @@ define i1 @setcc_ge(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_ugt(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ugt:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cp b
 ; GBI-NEXT:    rla
@@ -348,7 +348,7 @@ define i1 @setcc_ugt(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_ult(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ult:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cp c
 ; GBI-NEXT:    rla
@@ -359,7 +359,7 @@ define i1 @setcc_ult(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_ule(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_ule:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    cp b
 ; GBI-NEXT:    rla
@@ -371,7 +371,7 @@ define i1 @setcc_ule(i8 %b, i8 %c) nounwind {
 
 define i1 @setcc_uge(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: setcc_uge:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    cp c
 ; GBI-NEXT:    rla
@@ -383,12 +383,12 @@ define i1 @setcc_uge(i8 %b, i8 %c) nounwind {
 
 define i8 @shl(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: shl:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
 ; GBI-NEXT:    jp z, .LBB30_2
-; GBI-NEXT:  .LBB30_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:  .LBB30_1: # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    jp nz, .LBB30_1
@@ -400,12 +400,12 @@ define i8 @shl(i8 %b, i8 %c) nounwind {
 
 define i8 @lshr(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: lshr:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
 ; GBI-NEXT:    jp z, .LBB31_2
-; GBI-NEXT:  .LBB31_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:  .LBB31_1: # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    jp nz, .LBB31_1
@@ -417,12 +417,12 @@ define i8 @lshr(i8 %b, i8 %c) nounwind {
 
 define i8 @ashr(i8 %b, i8 %c) nounwind {
 ; GBI-LABEL: ashr:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    inc c
 ; GBI-NEXT:    jp z, .LBB32_2
-; GBI-NEXT:  .LBB32_1: ; =>This Inner Loop Header: Depth=1
+; GBI-NEXT:  .LBB32_1: # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    sra a
 ; GBI-NEXT:    dec c
 ; GBI-NEXT:    jp nz, .LBB32_1
@@ -435,7 +435,7 @@ define i8 @ashr(i8 %b, i8 %c) nounwind {
 
 define i8 @shl_c(i8 %b) nounwind {
 ; GBI-LABEL: shl_c:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    sla a
@@ -446,7 +446,7 @@ define i8 @shl_c(i8 %b) nounwind {
 
 define i8 @lshr_c(i8 %b) nounwind {
 ; GBI-LABEL: lshr_c:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    srl a
@@ -457,7 +457,7 @@ define i8 @lshr_c(i8 %b) nounwind {
 
 define i8 @ashr_c(i8 %b) nounwind {
 ; GBI-LABEL: ashr_c:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sra a
 ; GBI-NEXT:    sra a
@@ -468,7 +468,7 @@ define i8 @ashr_c(i8 %b) nounwind {
 
 define i8 @mul(i8 %b, i8 %c) {
 ; GBI-LABEL: mul:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    call __mulqi3
 ; GBI-NEXT:    ret
   %1 = mul i8 %b, %c
@@ -478,7 +478,7 @@ define i8 @mul(i8 %b, i8 %c) {
 declare i16 @llvm.bswap.i16(i16)
 define i16 @byte_swap(i16 %hl) {
 ; GBI-LABEL: byte_swap:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld c, h
 ; GBI-NEXT:    ld h, l
 ; GBI-NEXT:    ld l, c
@@ -490,7 +490,7 @@ define i16 @byte_swap(i16 %hl) {
 declare i8 @llvm.ctpop.i8(i8)
 define i8 @ctpop(i8 %b) {
 ; GBI-LABEL: ctpop:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    and $55
@@ -522,11 +522,11 @@ define i8 @ctpop(i8 %b) {
 declare i8 @llvm.cttz.i8(i8)
 define i8 @cttz(i8 %b) {
 ; GBI-LABEL: cttz:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or a
 ; GBI-NEXT:    jp z, .LBB39_1
-; GBI-NEXT:  ; %bb.2: ; %cond.false
+; GBI-NEXT:  # %bb.2: # %cond.false
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    dec b
 ; GBI-NEXT:    cpl
@@ -565,11 +565,11 @@ define i8 @cttz(i8 %b) {
 declare i8 @llvm.ctlz.i8(i8)
 define i8 @ctlz(i8 %b) {
 ; GBI-LABEL: ctlz:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    or a
 ; GBI-NEXT:    jp z, .LBB40_1
-; GBI-NEXT:  ; %bb.2: ; %cond.false
+; GBI-NEXT:  # %bb.2: # %cond.false
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    srl b
 ; GBI-NEXT:    or b
@@ -618,7 +618,7 @@ define i8 @ctlz(i8 %b) {
 
 define i8 @shl_1(i8 %b) nounwind {
 ; GBI-LABEL: shl_1:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    ret
@@ -628,7 +628,7 @@ define i8 @shl_1(i8 %b) nounwind {
 
 define i8 @shl_2(i8 %b) nounwind {
 ; GBI-LABEL: shl_2:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    sla a
@@ -639,7 +639,7 @@ define i8 @shl_2(i8 %b) nounwind {
 
 define i8 @shl_3(i8 %b) nounwind {
 ; GBI-LABEL: shl_3:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    sla a
 ; GBI-NEXT:    sla a
@@ -651,7 +651,7 @@ define i8 @shl_3(i8 %b) nounwind {
 
 define i8 @shl_4(i8 %b) nounwind {
 ; GBI-LABEL: shl_4:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
 ; GBI-NEXT:    and $f0
@@ -662,7 +662,7 @@ define i8 @shl_4(i8 %b) nounwind {
 
 define i8 @shl_5(i8 %b) nounwind {
 ; GBI-LABEL: shl_5:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
 ; GBI-NEXT:    rlca
@@ -674,7 +674,7 @@ define i8 @shl_5(i8 %b) nounwind {
 
 define i8 @shl_6(i8 %b) nounwind {
 ; GBI-LABEL: shl_6:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    rrca
 ; GBI-NEXT:    rrca
@@ -686,7 +686,7 @@ define i8 @shl_6(i8 %b) nounwind {
 
 define i8 @shl_7(i8 %b) nounwind {
 ; GBI-LABEL: shl_7:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    rrca
 ; GBI-NEXT:    and $80
@@ -697,7 +697,7 @@ define i8 @shl_7(i8 %b) nounwind {
 
 define i8 @lshr_1(i8 %b) nounwind {
 ; GBI-LABEL: lshr_1:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    ret
@@ -707,7 +707,7 @@ define i8 @lshr_1(i8 %b) nounwind {
 
 define i8 @lshr_2(i8 %b) nounwind {
 ; GBI-LABEL: lshr_2:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    srl a
@@ -718,7 +718,7 @@ define i8 @lshr_2(i8 %b) nounwind {
 
 define i8 @lshr_3(i8 %b) nounwind {
 ; GBI-LABEL: lshr_3:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    srl a
 ; GBI-NEXT:    srl a
@@ -730,7 +730,7 @@ define i8 @lshr_3(i8 %b) nounwind {
 
 define i8 @lshr_4(i8 %b) nounwind {
 ; GBI-LABEL: lshr_4:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
 ; GBI-NEXT:    and $0f
@@ -741,7 +741,7 @@ define i8 @lshr_4(i8 %b) nounwind {
 
 define i8 @lshr_5(i8 %b) nounwind {
 ; GBI-LABEL: lshr_5:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    swap a
 ; GBI-NEXT:    rrca
@@ -753,7 +753,7 @@ define i8 @lshr_5(i8 %b) nounwind {
 
 define i8 @lshr_6(i8 %b) nounwind {
 ; GBI-LABEL: lshr_6:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    rlca
 ; GBI-NEXT:    rlca
@@ -765,7 +765,7 @@ define i8 @lshr_6(i8 %b) nounwind {
 
 define i8 @lshr_7(i8 %b) nounwind {
 ; GBI-LABEL: lshr_7:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    rlca
 ; GBI-NEXT:    and $01
@@ -776,7 +776,7 @@ define i8 @lshr_7(i8 %b) nounwind {
 
 define i16 @sub_2(i16 %hl) nounwind {
 ; GBI-LABEL: sub_2:
-; GBI:       ; %bb.0:
+; GBI:       # %bb.0:
 ; GBI-NEXT:    dec hl
 ; GBI-NEXT:    dec hl
 ; GBI-NEXT:    ret
