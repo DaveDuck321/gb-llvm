@@ -1417,12 +1417,12 @@ bool PeepholeOptimizer::foldImmediate(
       continue;
     DenseMap<Register, MachineInstr *>::iterator II = ImmDefMIs.find(Reg);
     assert(II != ImmDefMIs.end() && "couldn't find immediate definition");
-    if (TII->foldImmediate(MI, *II->second, Reg, MRI)) {
+    if (TII->foldImmediate(MI, *II->second, Reg, MRI, Deleted)) {
       ++NumImmFold;
       // foldImmediate can delete ImmDefMI if MI was its only user. If ImmDefMI
       // is not deleted, and we happened to get a same MI, we can delete MI and
       // replace its users.
-      if (MRI->getVRegDef(Reg) &&
+      if (!Deleted && MRI->getVRegDef(Reg) &&
           MI.isIdenticalTo(*II->second, MachineInstr::IgnoreVRegDefs)) {
         Register DstReg = MI.getOperand(0).getReg();
         if (DstReg.isVirtual() &&

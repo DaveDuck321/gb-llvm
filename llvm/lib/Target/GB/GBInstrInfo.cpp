@@ -389,7 +389,8 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
 #define DEBUG_TYPE "gb-folding"
 
 bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
-                                Register Reg, MachineRegisterInfo *MRI) const {
+                                Register Reg, MachineRegisterInfo *MRI,
+                                bool &IsDeleted) const {
   auto *MBB = UseMI.getParent();
   auto MBBI = UseMI.getIterator();
   auto DL = UseMI.getDebugLoc();
@@ -433,11 +434,11 @@ bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
         ->addOperand(*Imm);
     break;
   }
-  UseMI.eraseFromParent();
   DefMI.eraseFromParent();
+  UseMI.eraseFromParent();
 
-  LLVM_DEBUG(dbgs() << "Fold accepted: "; UseMI.print(dbgs()));
-  LLVM_DEBUG(UseMI.getParent()->print(dbgs()));
+  LLVM_DEBUG(dbgs() << "Fold accepted: "; MBB->print(dbgs()));
+  IsDeleted = true;
   return true;
 }
 

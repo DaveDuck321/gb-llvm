@@ -1800,7 +1800,8 @@ public:
   /// block. The caller may assume that it will not be erased by this
   /// function otherwise.
   virtual bool foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
-                             Register Reg, MachineRegisterInfo *MRI) const {
+                             Register Reg, MachineRegisterInfo *MRI,
+                             bool &IsDeleted) const {
     return false;
   }
 
