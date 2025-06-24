@@ -615,6 +615,14 @@ public:
     llvm_unreachable("target did not implement");
   }
 
+  /// Updates \p CurrentMI in place with a branch instruction able to jump at
+  /// least \p BranchOffset bytes.
+  /// \returns true if any change has been made to \p CurrentMI
+  virtual bool tightenBranchIfPossible(MachineInstr &CurrentMI,
+                                       int64_t BranchOffset) const {
+    llvm_unreachable("target did not implement");
+  }
+
   /// \returns The block that branch instruction \p MI jumps to.
   virtual MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const {
     llvm_unreachable("target did not implement");

@@ -110,22 +110,22 @@ define i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    xor b
 ; GBI-O3-NEXT:    bit 7, a
-; GBI-O3-NEXT:    jp nz, .LBB7_1
-; GBI-O3-NEXT:  # %bb.2: # %begin
+; GBI-O3-NEXT:    jr nz, .LBB7_3
+; GBI-O3-NEXT:  # %bb.1: # %begin
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp nz, .LBB7_3
-; GBI-O3-NEXT:  .LBB7_4: # %begin
+; GBI-O3-NEXT:    jr nz, .LBB7_4
+; GBI-O3-NEXT:  .LBB7_2: # %begin
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB7_1:
+; GBI-O3-NEXT:  .LBB7_3:
 ; GBI-O3-NEXT:    ld e, h
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp z, .LBB7_4
-; GBI-O3-NEXT:  .LBB7_3: # %begin
+; GBI-O3-NEXT:    jr z, .LBB7_2
+; GBI-O3-NEXT:  .LBB7_4: # %begin
 ; GBI-O3-NEXT:    ld d, e
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
@@ -146,22 +146,22 @@ define i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor h
 ; GBI-O3-NEXT:    bit 7, a
-; GBI-O3-NEXT:    jp nz, .LBB8_1
-; GBI-O3-NEXT:  # %bb.2: # %begin
+; GBI-O3-NEXT:    jr nz, .LBB8_3
+; GBI-O3-NEXT:  # %bb.1: # %begin
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp nz, .LBB8_3
-; GBI-O3-NEXT:  .LBB8_4: # %begin
+; GBI-O3-NEXT:    jr nz, .LBB8_4
+; GBI-O3-NEXT:  .LBB8_2: # %begin
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB8_1:
+; GBI-O3-NEXT:  .LBB8_3:
 ; GBI-O3-NEXT:    ld e, b
 ; GBI-O3-NEXT:    rlc e
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp z, .LBB8_4
-; GBI-O3-NEXT:  .LBB8_3: # %begin
+; GBI-O3-NEXT:    jr z, .LBB8_2
+; GBI-O3-NEXT:  .LBB8_4: # %begin
 ; GBI-O3-NEXT:    ld d, e
 ; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ret
@@ -202,7 +202,7 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    rl d
 ; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jp z, .LBB9_2
+; GBI-O3-NEXT:    jr z, .LBB9_2
 ; GBI-O3-NEXT:  # %bb.1:
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 3
@@ -210,11 +210,11 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:  .LBB9_2:
 ; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jp nz, .LBB9_3
-; GBI-O3-NEXT:  # %bb.4:
+; GBI-O3-NEXT:    jr nz, .LBB9_4
+; GBI-O3-NEXT:  # %bb.3:
 ; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    jp .LBB9_5
-; GBI-O3-NEXT:  .LBB9_3:
+; GBI-O3-NEXT:    jr .LBB9_5
+; GBI-O3-NEXT:  .LBB9_4:
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:  .LBB9_5:
 ; GBI-O3-NEXT:    push hl

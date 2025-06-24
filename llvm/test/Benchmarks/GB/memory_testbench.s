@@ -22,8 +22,8 @@ main:
     ld hl, sp + 16 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1143
-# EXPECT-CYCLE-Oz: 1574
+# EXPECT-CYCLE-O3: 1041
+# EXPECT-CYCLE-Oz: 1370
 # EXPECT: a=ee
     debugtrap
 
@@ -36,8 +36,8 @@ main:
     ld hl, sp + 88 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1143
-# EXPECT-CYCLE-Oz: 1574
+# EXPECT-CYCLE-O3: 1041
+# EXPECT-CYCLE-Oz: 1370
 # EXPECT: a=01
     debugtrap
 
@@ -51,8 +51,8 @@ main:
     ld hl, sp + 73 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1474
-# EXPECT-CYCLE-Oz: 1880
+# EXPECT-CYCLE-O3: 1372
+# EXPECT-CYCLE-Oz: 1676
 # EXPECT: a=ee
     debugtrap
 
@@ -62,8 +62,8 @@ main:
     ld hl, sp, 0
     call _Z8g_strlenKPA_h
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1124
-# EXPECT-CYCLE-Oz: 1124
+# EXPECT-CYCLE-O3: 1024
+# EXPECT-CYCLE-Oz: 1024
 # EXPECT: hl=0063
     debugtrap
 

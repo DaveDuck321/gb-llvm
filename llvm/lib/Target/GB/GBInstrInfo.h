@@ -45,6 +45,16 @@ struct GBInstrInfo final : public GBGenInstrInfo {
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
 
+  unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
+
+  bool isBranchOffsetInRange(unsigned BranchOpc,
+                             int64_t BrOffset) const override;
+
+  MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;
+
+  bool tightenBranchIfPossible(MachineInstr &CurrentMI,
+                               int64_t BranchOffset) const override;
+
   bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      SmallVectorImpl<MachineOperand> &Cond,

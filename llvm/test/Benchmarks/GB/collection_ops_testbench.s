@@ -40,8 +40,8 @@ main:
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 46
-# EXPECT-CYCLE-Oz: 46
+# EXPECT-CYCLE-O3: 44
+# EXPECT-CYCLE-Oz: 44
 # EXPECT: a=00
     debugtrap
 
@@ -51,8 +51,8 @@ main:
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 43
-# EXPECT-CYCLE-Oz: 43
+# EXPECT-CYCLE-O3: 42
+# EXPECT-CYCLE-Oz: 42
 # EXPECT: a=01
     debugtrap
 
@@ -64,8 +64,8 @@ main:
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 276
-# EXPECT-CYCLE-Oz: 286
+# EXPECT-CYCLE-O3: 268
+# EXPECT-CYCLE-Oz: 278
 # EXPECT: a=01
     debugtrap
 

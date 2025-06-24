@@ -12,16 +12,16 @@ main:
     ld b, 7
     ld c, 30
     call multiply_i8
-# EXPECT-CYCLE-O3: 103
-# EXPECT-CYCLE-Oz: 101
+# EXPECT-CYCLE-O3: 92
+# EXPECT-CYCLE-Oz: 91
 # EXPECT: a=d2
     debugtrap
 
     ld b, 50
     ld c, 4
     call multiply_i8
-# EXPECT-CYCLE-O3: 163
-# EXPECT-CYCLE-Oz: 167
+# EXPECT-CYCLE-O3: 146
+# EXPECT-CYCLE-Oz: 148
 # EXPECT: a=c8
     debugtrap
 
@@ -30,16 +30,16 @@ main:
     ld b, 30
     ld c, 7
     call builtin_multiply
-# EXPECT-CYCLE-O3: 106
-# EXPECT-CYCLE-Oz: 106
+# EXPECT-CYCLE-O3: 96
+# EXPECT-CYCLE-Oz: 96
 # EXPECT: a=d2
     debugtrap
 
     ld hl, 51
     ld bc, 63
     call multiply_i16
-# EXPECT-CYCLE-O3: 767
-# EXPECT-CYCLE-Oz: 410
+# EXPECT-CYCLE-O3: 747
+# EXPECT-CYCLE-Oz: 391
 # EXPECT: hl=0c8d
     debugtrap
 
@@ -47,23 +47,23 @@ main:
     ld hl, 3600
     ld bc, 8
     call multiply_i16
-# EXPECT-CYCLE-O3: 1485
-# EXPECT-CYCLE-Oz: 770
+# EXPECT-CYCLE-O3: 1443
+# EXPECT-CYCLE-Oz: 733
 # EXPECT: hl=7080
     debugtrap
 
     ld hl, 3600
     call floating_point_add
-# EXPECT-CYCLE-O3: 4223
-# EXPECT-CYCLE-Oz: 4223
+# EXPECT-CYCLE-O3: 4178
+# EXPECT-CYCLE-Oz: 4178
 # EXPECT: hl=0e59
     debugtrap
 
 
     ld hl, 50
     call floating_point_mul
-# EXPECT-CYCLE-O3: 20776
-# EXPECT-CYCLE-Oz: 20776
+# EXPECT-CYCLE-O3: 20573
+# EXPECT-CYCLE-Oz: 20573
 # FIXME: 02fe
 # EXPECT-FAILING: hl=0302
     debugtrap

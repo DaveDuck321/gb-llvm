@@ -16,6 +16,7 @@ add_public_tablegen_target(GBCommonTableGen)
 
 add_llvm_target(GBCodeGen
     GBAsmPrinter.cpp
+    GBBranchRelaxation.cpp
     GBFrameLowering.cpp
     GBInstrInfo.cpp
     GBInstructionRelaxation.cpp

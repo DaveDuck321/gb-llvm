@@ -1,7 +1,6 @@
 #include "GBInstrInfo.h"
 #include "GB.h"
 #include "GBRegisterInfo.h"
-#include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -15,6 +14,8 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+
+#include <optional>
 
 #define GET_INSTRINFO_CTOR_DTOR
 #include "GBGenInstrInfo.inc"
@@ -170,6 +171,73 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
   llvm_unreachable("Could not load reg to stack slot!");
+}
+
+unsigned GBInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+  if (MI.isMetaInstruction()) {
+    return 0;
+  }
+
+  if (MI.isPseudo()) {
+    llvm_unreachable("Analysis requires size of pseudo instruction");
+    return 4;
+  }
+  return MI.getDesc().getSize();
+}
+
+bool GBInstrInfo::isBranchOffsetInRange(unsigned BranchOpc,
+                                        int64_t BrOffset) const {
+  switch (BranchOpc) {
+  case GB::JR:
+  case GB::JR_COND:
+    return isInt<8>(BrOffset);
+  case GB::JP:
+  case GB::JP_COND:
+    return true;
+  default:
+    LLVM_DEBUG(dbgs() << BranchOpc << "\n");
+    llvm_unreachable("Unrecognised BranchOpc");
+  }
+}
+
+MachineBasicBlock *
+GBInstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  case GB::JR:
+  case GB::JP:
+    return MI.getOperand(0).getMBB();
+  case GB::JR_COND:
+  case GB::JP_COND:
+    return MI.getOperand(1).getMBB();
+  default:
+    LLVM_DEBUG(MI.print(dbgs()));
+    llvm_unreachable("Unrecognised MI");
+  }
+}
+
+bool GBInstrInfo::tightenBranchIfPossible(MachineInstr &CurrentMI,
+                                          int64_t BranchOffset) const {
+  auto TighterMI = [&]() -> std::optional<unsigned> {
+    switch (CurrentMI.getOpcode()) {
+    case GB::JR:
+    case GB::JR_COND:
+      return std::nullopt;
+    case GB::JP:
+      return GB::JR;
+    case GB::JP_COND:
+      return GB::JR_COND;
+    default:
+      llvm_unreachable("Unrecognised MI");
+    }
+  }();
+
+  if (not TighterMI.has_value() ||
+      not isBranchOffsetInRange(*TighterMI, BranchOffset)) {
+    return false;
+  }
+
+  CurrentMI.setDesc(get(*TighterMI));
+  return true;
 }
 
 bool GBInstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,

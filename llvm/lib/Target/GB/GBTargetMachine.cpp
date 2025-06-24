@@ -65,6 +65,7 @@ public:
 
   bool addInstSelector() override;
   void addPreSched2() override;
+  void addPreEmitPass() override;
 };
 } // namespace
 
@@ -86,4 +87,8 @@ void GBPassConfig::addPreSched2() {
 
   // Relax again to catch anything generated in previous passes
   addPass(createGBInstructionRelaxation(getGBTargetMachine(), getOptLevel()));
+}
+
+void GBPassConfig::addPreEmitPass() {
+  addPass(createGBBranchRelaxation(getGBTargetMachine(), getOptLevel()));
 }

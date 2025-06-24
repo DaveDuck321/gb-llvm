@@ -21,7 +21,7 @@ define void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    or $01
 ; GBI-NEXT:    ld l, a
-; GBI-NEXT:    jp .LBB0_1
+; GBI-NEXT:    jr .LBB0_1
 entry:
   %0 = load i8, ptr @_ZL8scroll_y, align 1
   br label %for.cond
