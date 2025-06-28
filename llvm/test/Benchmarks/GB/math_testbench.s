@@ -54,8 +54,8 @@ main:
 
     ld hl, 3600
     call floating_point_add
-# EXPECT-CYCLE-O3: 4178
-# EXPECT-CYCLE-Oz: 4178
+# EXPECT-CYCLE-O3: 4177
+# EXPECT-CYCLE-Oz: 4177
 # EXPECT: hl=0e59
     debugtrap
 

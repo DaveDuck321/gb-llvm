@@ -178,9 +178,14 @@ unsigned GBInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     return 0;
   }
 
+  if (MI.isInlineAsm()) {
+    // Default conservatively to the largest possible instruction size
+    return 3;
+  }
+
   if (MI.isPseudo()) {
     llvm_unreachable("Analysis requires size of pseudo instruction");
-    return 4;
+    return 3;
   }
   return MI.getDesc().getSize();
 }

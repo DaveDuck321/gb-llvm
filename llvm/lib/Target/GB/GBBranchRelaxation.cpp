@@ -119,12 +119,13 @@ void GBBranchRelaxation::checkBranchesAreLegal() {
         continue;
       }
 
+      int64_t InstrSize = TII->getInstSizeInBytes(MI);
       auto *Target = TII->getBranchDestBlock(MI);
       int64_t TargetOffset = BlockInfo[Target->getNumber()].Offset;
-      int64_t ThisOffset = ThisMBBOffset + OffsetInBB;
+      int64_t ThisOffset = ThisMBBOffset + OffsetInBB + InstrSize;
       int64_t BranchOffset = TargetOffset - ThisOffset;
       assert(TII->isBranchOffsetInRange(MI.getOpcode(), BranchOffset));
-      OffsetInBB += TII->getInstSizeInBytes(MI);
+      OffsetInBB += InstrSize;
     }
     assert(BlockInfo[MBB.getNumber()].Size == OffsetInBB);
   }
@@ -142,12 +143,13 @@ bool GBBranchRelaxation::tightenBranches() {
         continue;
       }
 
+      int64_t SizeBefore = TII->getInstSizeInBytes(MI);
+
       auto *TargetBlock = TII->getBranchDestBlock(MI);
       int64_t TargetOffset = BlockInfo[TargetBlock->getNumber()].Offset;
-      int64_t ThisOffset = ThisMBBOffset + OffsetInBB;
+      int64_t ThisOffset = ThisMBBOffset + OffsetInBB + SizeBefore;
       int64_t BranchPCRelativeOffset = TargetOffset - ThisOffset;
 
-      int64_t SizeBefore = TII->getInstSizeInBytes(MI);
       bool DidUpdate = TII->tightenBranchIfPossible(MI, BranchPCRelativeOffset);
       int64_t SizeAfter = TII->getInstSizeInBytes(MI);
 
