@@ -1,4 +1,5 @@
 #include "GB.h"
+#include "MCTargetDesc/GBMCExpr.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -12,6 +13,11 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "gb-mcinstlower"
+
+static MCOperand createGBExpression(const MCExpr *Expr, MCContext &Ctx) {
+  return MCOperand::createExpr(
+      GBMCExpr::create(Expr, GBMCExpr::SPECIFIER_NONE, Ctx));
+}
 
 void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                        AsmPrinter &AP) {
@@ -34,8 +40,9 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
     case MachineOperand::MO_RegisterMask:
       continue;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::createExpr(
-          MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));
+      MCOp = createGBExpression(
+          MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext),
+          AP.OutContext);
       break;
     case MachineOperand::MO_GlobalAddress: {
       MCExpr const *Expr =
@@ -45,18 +52,22 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
             Expr, MCConstantExpr::create(MO.getOffset(), AP.OutContext),
             AP.OutContext);
       }
-      MCOp = MCOperand::createExpr(Expr);
+      MCOp = createGBExpression(Expr, AP.OutContext);
       break;
     }
     case MachineOperand::MO_BlockAddress:
       assert(MO.getOffset() == 0);
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
-          AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP.OutContext));
+      MCOp = createGBExpression(
+          MCSymbolRefExpr::create(
+              AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP.OutContext),
+          AP.OutContext);
       break;
     case MachineOperand::MO_ExternalSymbol:
       assert(MO.getOffset() == 0);
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
-          AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP.OutContext));
+      MCOp = createGBExpression(
+          MCSymbolRefExpr::create(
+              AP.GetExternalSymbolSymbol(MO.getSymbolName()), AP.OutContext),
+          AP.OutContext);
       break;
     case MachineOperand::MO_Immediate:
       MCOp = MCOperand::createImm(MO.getImm());

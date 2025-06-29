@@ -5,7 +5,7 @@
 # RUN:      | FileCheck -check-prefixes=CHECK-FIXED %s
 # RUN: llvm-mc %s -triple=gb -filetype=obj \
 # RUN:      | llvm-readelf -r - \
-# RUN:      | FileCheck -check-prefixes=CHECK-RELOCATIONS %s
+# RUN:      | FileCheck -check-prefixes=CHECK-RELOC-TYPE,CHECK-RELOC-OFFSET,CHECK-RELOC-NAME %s
 
 # Check that fixups work within a single file
 
@@ -20,6 +20,9 @@ ldh a, (io)
 jr nz, jump_label_end
 ld a, (memory)
 
+add %lo memory
+adc %hi memory
+
 jump_label_end:
 
 .set VAL8, 66
@@ -28,12 +31,13 @@ jump_label_end:
 .set io, 0xEE
 .set memory, 0xEEE1
 
-# CHECK-FIXUP: fixup A - offset: 1, value: VAL8, kind: FK_Data_1
-# CHECK-FIXUP: fixup A - offset: 1, value: jump_label_start-1, kind: FK_PCRel_1
-# CHECK-FIXUP: fixup A - offset: 1, value: VAL16, kind: FK_Data_2
+# CHECK-FIXUP: fixup A - offset: 1, value: +VAL8, kind: FK_Data_1
+# CHECK-FIXUP: fixup A - offset: 1, value: +jump_label_start-1, kind: FK_PCRel_1
+# CHECK-FIXUP: fixup A - offset: 1, value: +VAL16, kind: FK_Data_2
 # CHECK-FIXUP: fixup A - offset: 1, value: +SP_REL8, kind: FK_Data_1
-# CHECK-FIXUP: fixup A - offset: 1, value: io, kind: FK_Data_1
-# CHECK-FIXUP: fixup A - offset: 1, value: memory, kind: FK_Data_2
+# CHECK-FIXUP: fixup A - offset: 1, value: +io, kind: FK_Data_1
+# CHECK-FIXUP: fixup A - offset: 1, value: %lo +memory, kind: GB_FIXUP_LO_16
+# CHECK-FIXUP: fixup A - offset: 1, value: %hi +memory, kind: GB_FIXUP_HI_16
 
 
 # CHECK-FIXED: <jump_label_start>
@@ -45,4 +49,14 @@ jump_label_end:
 # CHECK-FIXED: ldh a, ($ee)
 # CHECK-FIXED: ld a, ($eee1)
 
-# CHECK-RELOCATIONS: There are no relocations in this file.
+# I dislike this but it looks like only the linker can relocate these
+# CHECK-FIXED: add $00
+# CHECK-FIXED: adc $00
+
+# CHECK-RELOC-OFFSET: 00000013
+# CHECK-RELOC-TYPE: R_GB_LO_16
+# CHECK-RELOC-NAME: eee1
+
+# CHECK-RELOC-OFFSET: 00000015
+# CHECK-RELOC-TYPE: R_GB_HI_16
+# CHECK-RELOC-NAME: eee1

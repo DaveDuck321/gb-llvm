@@ -1,4 +1,5 @@
 #include "GBInstrInfo.h"
+#include "MCTargetDesc/GBMCExpr.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "TargetInfo/GBTargetInfo.h"
 
@@ -56,7 +57,7 @@ class GBOperand : public MCParsedAsmOperand {
   };
 
   struct Imm {
-    const MCExpr *Expr;
+    const GBMCExpr *Expr;
   };
 
   struct Flag {
@@ -177,7 +178,7 @@ public:
     return Op;
   }
 
-  static auto createImm(const MCExpr *Expr, SMLoc S, SMLoc E) {
+  static auto createImm(const GBMCExpr *Expr, SMLoc S, SMLoc E) {
     auto Op = std::make_unique<GBOperand>();
     Op->Data = Imm{Expr};
     Op->StartLoc = S;
@@ -226,8 +227,12 @@ private:
   bool parseNextOperand(StringRef Name, OperandVector &Operands);
 
   ParseStatus tryParseFlag(OperandVector &Operands);
-  ParseStatus tryParseImmediate(OperandVector &Operands,
-                                std::optional<int> Sign = std::nullopt);
+  ParseStatus
+  tryParseGBImmediate(OperandVector &Operands,
+                      std::optional<int> Sign = std::nullopt,
+                      GBMCExpr::SymbolSpecifier Specifier =
+                          GBMCExpr::SymbolSpecifier::SPECIFIER_NONE);
+  ParseStatus tryParseImmediate(OperandVector &Operands);
   ParseStatus tryParseInsideParens(OperandVector &Operands);
   ParseStatus tryParseOperand(OperandVector &Operands);
   ParseStatus tryParseRegister(OperandVector &Operands);
@@ -298,8 +303,10 @@ ParseStatus GBAsmParser::tryParseImmediate(const MCExpr *&Expr, SMLoc &StartLoc,
   return ParseStatus::Success;
 }
 
-ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands,
-                                           std::optional<int> Sign) {
+ParseStatus
+GBAsmParser::tryParseGBImmediate(OperandVector &Operands,
+                                 std::optional<int> Sign,
+                                 GBMCExpr::SymbolSpecifier Specifier) {
   switch (getLexer().getKind()) {
   default:
     return ParseStatus::NoMatch;
@@ -325,17 +332,43 @@ ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands,
   }
 
   SMLoc StartLoc, EndLoc;
-  if (const MCExpr * Expr;
+  if (const MCExpr *Expr;
       tryParseImmediate(Expr, StartLoc, EndLoc).isSuccess()) {
     if (Sign.has_value()) {
       Expr = MCUnaryExpr::create(Sign.value() == 1 ? MCUnaryExpr::Plus
                                                    : MCUnaryExpr::Minus,
                                  Expr, getContext());
     }
-    Operands.push_back(GBOperand::createImm(Expr, StartLoc, EndLoc));
+    GBMCExpr const *GBExpr = GBMCExpr::create(Expr, Specifier, getContext());
+    Operands.push_back(GBOperand::createImm(GBExpr, StartLoc, EndLoc));
     return ParseStatus::Success;
   }
   return ParseStatus::NoMatch;
+}
+
+ParseStatus GBAsmParser::tryParseImmediate(OperandVector &Operands) {
+  // Called by tablegen
+  GBMCExpr::SymbolSpecifier Specifier = GBMCExpr::SPECIFIER_NONE;
+
+  // Detect %lo and %hi specifiers
+  auto &Lexer = getLexer();
+  if (Lexer.getKind() == AsmToken::Percent) {
+    Lexer.Lex(); // Eat the %
+    if (not Lexer.is(AsmToken::Identifier)) {
+      return ParseStatus::Failure;
+    }
+
+    auto Identifier = Lexer.getTok().getIdentifier();
+    if (Identifier.compare_insensitive("lo") == 0) {
+      Specifier = GBMCExpr::SPECIFIER_LO_16;
+    } else if (Identifier.compare_insensitive("hi") == 0) {
+      Specifier = GBMCExpr::SPECIFIER_HI_16;
+    } else {
+      return ParseStatus::Failure;
+    }
+    Lexer.Lex(); // Eat the "hi" or "lo"
+  }
+  return tryParseGBImmediate(Operands, /*Sign=*/1, Specifier);
 }
 
 ParseStatus GBAsmParser::tryParseFlag(OperandVector &Operands) {
@@ -381,7 +414,7 @@ bool GBAsmParser::parseInstruction(ParseInstructionInfo &Info, StringRef Name,
       } else if (Lexer.is(AsmToken::Plus) || Lexer.is(AsmToken::Minus)) {
         const auto Sign = Lexer.is(AsmToken::Plus) ? 1 : -1;
         Lexer.Lex();
-        if (tryParseImmediate(Operands, Sign).isSuccess()) {
+        if (tryParseGBImmediate(Operands, Sign).isSuccess()) {
           continue;
         }
         return Error(Lexer.getLoc(), "expected an immediate");

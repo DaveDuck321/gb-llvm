@@ -1,4 +1,5 @@
 #include "GBFixupKinds.h"
+#include "GBMCExpr.h"
 #include "GBMCTargetDesc.h"
 
 #include "llvm/ADT/Statistic.h"
@@ -10,6 +11,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -80,20 +82,49 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   }
 
   if (MO.isExpr()) {
-    const MCExpr *Expr = MO.getExpr();
-    assert(Expr->getKind() == MCExpr::Binary ||
-           Expr->getKind() == MCExpr::SymbolRef ||
-           Expr->getKind() == MCExpr::Unary);
+    const GBMCExpr *GBExpr = dyn_cast<GBMCExpr>(MO.getExpr());
+    assert(GBExpr != nullptr);
+    const MCExpr *SubExpr = GBExpr->getSubExpr();
+    assert(SubExpr->getKind() == MCExpr::Binary ||
+           SubExpr->getKind() == MCExpr::SymbolRef ||
+           SubExpr->getKind() == MCExpr::Unary);
 
     const auto &Desc = MCII.get(MI.getOpcode());
-    const auto Kind = GB::FixupKindMap[Desc.TSFlags & GB::FixupTSMask];
+    const auto GBCategory =
+        (GB::GBFixupCategory)(Desc.TSFlags & GB::FixupTSMask);
+    const auto Kind = [&]() -> unsigned {
+      switch (GBCategory) {
+      case GB::FIXUP_CATEGORY_NONE:
+        assert(GBExpr->getSpecifier() == GBMCExpr::SPECIFIER_NONE);
+        return MCFixupKind::FK_NONE;
+      case GB::FIXUP_CATEGORY_DATA_1: {
+        switch (GBExpr->getSpecifier()) {
+        case GBMCExpr::SPECIFIER_NONE:
+          return MCFixupKind::FK_Data_1;
+        case GBMCExpr::SPECIFIER_LO_16:
+          return GB::FixupKind::FIXUP_LO_16;
+        case GBMCExpr::SPECIFIER_HI_16:
+          return GB::FixupKind::FIXUP_HI_16;
+        }
+      }
+      case GB::FIXUP_CATEGORY_DATA_2:
+        assert(GBExpr->getSpecifier() == GBMCExpr::SPECIFIER_NONE);
+        return MCFixupKind::FK_Data_2;
+      case GB::FIXUP_CATEGORY_PCREL_1:
+        assert(GBExpr->getSpecifier() == GBMCExpr::SPECIFIER_NONE);
+        return MCFixupKind::FK_PCRel_1;
+      }
+    }();
 
     if (Kind == MCFixupKind::FK_PCRel_1) {
-      Expr = MCBinaryExpr::createSub(Expr, MCConstantExpr::create(1, Ctx), Ctx);
+      SubExpr =
+          MCBinaryExpr::createSub(SubExpr, MCConstantExpr::create(1, Ctx), Ctx);
+      GBExpr = GBMCExpr::create(SubExpr, GBMCExpr::SPECIFIER_NONE, Ctx);
     }
 
     // Offset = 1 to skip opcode byte
-    Fixups.push_back(MCFixup::create(1, Expr, (MCFixupKind)Kind, MI.getLoc()));
+    Fixups.push_back(
+        MCFixup::create(1, GBExpr, (MCFixupKind)Kind, MI.getLoc()));
     return 0;
   }
 

@@ -1,10 +1,10 @@
 // Fixup types
-// Sync with GBFixupKinds.h
-class FixupKind<bits<3> kind> { bits<3> Kind = kind; }
-def FixupNone    : FixupKind<0>;
-def FixupData8   : FixupKind<1>;
-def FixupData16  : FixupKind<2>;
-def FixupPCRel8  : FixupKind<3>;
+// Sync with GBFixupCategorys.h
+class FixupCategory<bits<3> kind> { bits<3> Kind = kind; }
+def FixupNone   : FixupCategory<0>;
+def FixupData8  : FixupCategory<1>;
+def FixupData16 : FixupCategory<2>;
+def FixupPCRel8 : FixupCategory<3>;
 
 // Operand types
 class GBAsmImmOperand<string name> : AsmOperandClass {
@@ -63,7 +63,7 @@ def flag : Operand<i2> {
 
 // Instruction formats
 class GBInstr<string mnemonic, string argstr, bits<8> opcode,
-              dag outs, dag ins, FixupKind fixup> : Instruction {
+              dag outs, dag ins, FixupCategory fixup> : Instruction {
     bits<24> Inst;
     let Inst{7 - 0} = opcode;
 
@@ -204,7 +204,7 @@ class _GB_IR16S16Sequence<string format, bits<8> opcode>
 }
 
 // TOOD GB: combine these
-class _GB_SimpleImm8<string format, bits<8> opcode, GBImm immType, FixupKind fixup>
+class _GB_SimpleImm8<string format, bits<8> opcode, GBImm immType, FixupCategory fixup>
   : GBInstr<format, "", opcode, (outs), (ins immType:$imm), fixup>
 {
   bits<8> imm;
@@ -309,7 +309,7 @@ multiclass GBCBGPR8S1Imm3F<string mnemonic, bits<8> opcode>
   }
 }
 
-class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs, FixupKind fixup>
+class _GB_FlagSequence<string mnemonic, string arg2, bits<8> opcode, dag inputs, FixupCategory fixup>
   : GBInstr<mnemonic, "$flag" # arg2, opcode, (outs), !con((ins flag:$flag), inputs), fixup>
 {
   bits<2> flag;

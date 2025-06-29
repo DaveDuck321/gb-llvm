@@ -6,14 +6,20 @@
 #include <cstdint>
 
 namespace llvm::GB {
-// Must be synced with tablegen
-static inline constexpr uint64_t FixupTSMask = 0b11;
-static inline constexpr unsigned FixupKindMap[] = {
-    FK_NONE,
-    FK_Data_1,
-    FK_Data_2,
-    FK_PCRel_1,
+enum FixupKind {
+  FIXUP_HI_16 = FirstTargetFixupKind,
+  FIXUP_LO_16,
 };
+
+// Must be synced with tablegen
+enum GBFixupCategory {
+  FIXUP_CATEGORY_NONE = 0,
+  FIXUP_CATEGORY_DATA_1 = 1,
+  FIXUP_CATEGORY_DATA_2 = 2,
+  FIXUP_CATEGORY_PCREL_1 = 3,
+};
+
+static inline constexpr uint64_t FixupTSMask = 0b11;
 } // namespace llvm::GB
 
 #endif

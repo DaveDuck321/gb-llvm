@@ -42,6 +42,8 @@ RelExpr GB::getRelExpr(RelType type, const Symbol &s,
 int64_t GB::getImplicitAddend(const uint8_t *buf, RelType type) const {
   switch (type) {
   case R_GB_8:
+  case R_GB_HI_16:
+  case R_GB_LO_16:
     return *buf;
   case R_GB_PCREL_8:
     return SignExtend64<8>(*buf);
@@ -60,6 +62,15 @@ void GB::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   case R_GB_8:
     checkIntUInt(ctx, loc, val, 8, rel);
     *loc = val;
+    break;
+  case R_GB_HI_16:
+    checkIntUInt(ctx, loc, val >> 8U, 8, rel);
+    *loc = (val >> 8U);
+    break;
+  case R_GB_LO_16:
+    checkIntUInt(ctx, loc, val, 16, rel);
+    checkIntUInt(ctx, loc, val & 0xFFU, 8, rel);
+    *loc = (val & 0xFFU);
     break;
   case R_GB_PCREL_8:
     checkInt(ctx, loc, val, 8, rel);

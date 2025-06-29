@@ -27,6 +27,8 @@ public:
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
 
+  MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override;
+
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsResolved,
@@ -43,6 +45,16 @@ public:
 std::unique_ptr<MCObjectTargetWriter>
 GBAsmBackend::createObjectTargetWriter() const {
   return createGBELFObjectWriter();
+}
+
+MCFixupKindInfo GBAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
+  switch ((unsigned)Kind) {
+  case GB::FIXUP_LO_16:
+    return {"GB_FIXUP_LO_16", 0, 8, 0};
+  case GB::FIXUP_HI_16:
+    return {"GB_FIXUP_HI_16", 0, 8, 0};
+  }
+  return MCAsmBackend::getFixupKindInfo(Kind);
 }
 
 void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
@@ -65,26 +77,44 @@ void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
     case FK_Data_1:
     case FK_Data_2:
       return false;
+    case GB::FIXUP_HI_16:
+    case GB::FIXUP_LO_16:
+      return false;
     // For dwarf information
     case FK_Data_4:
       return false;
     }
   }();
 
+  const size_t NumBytes = Info.TargetSize / 8;
+  const size_t Offset = Fixup.getOffset();
+  assert(Offset + NumBytes <= Data.size());
+
+  switch ((unsigned)Kind) {
+  case GB::FIXUP_HI_16:
+    assert(isUIntN(16, Value));
+    Value >>= 8;
+    break;
+  case GB::FIXUP_LO_16:
+    assert(isUIntN(16, Value));
+    Value &= 0xffu;
+    break;
+  default:
+    break; // Else we're a basic relocation, do not transform
+  }
+
   if ((IsSigned && !isIntN(Info.TargetSize, Value)) ||
       (!IsSigned && !isUIntN(Info.TargetSize, Value))) {
     Ctx.reportError(Fixup.getLoc(), "fixup value out of range");
   }
-
-  const size_t NumBytes = Info.TargetSize / 8;
-  const size_t Offset = Fixup.getOffset();
-  assert(Offset + NumBytes <= Data.size());
 
   for (unsigned I = 0; I < NumBytes; I++) {
     assert(Data[Offset + I] == 0);
     Data[Offset + I] = static_cast<uint8_t>(Value & 0xffu);
     Value >>= 8;
   }
+
+  assert(IsSigned || Value == 0ul);
 }
 
 bool GBAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,

@@ -3,6 +3,7 @@ add_llvm_component_library(LLVMGBDesc
     GBELFObjectWriter.cpp
     GBInstPrinter.cpp
     GBMCCodeEmitter.cpp
+    GBMCExpr.cpp
     GBMCTargetDesc.cpp
 
     LINK_COMPONENTS

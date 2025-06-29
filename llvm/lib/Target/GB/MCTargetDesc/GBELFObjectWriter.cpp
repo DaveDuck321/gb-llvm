@@ -50,6 +50,12 @@ unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
   case FK_Data_4:
     assert(not IsPCRel);
     return ELF::R_GB_DWARF_32;
+  case GB::FIXUP_HI_16:
+    assert(not IsPCRel);
+    return ELF::R_GB_HI_16;
+  case GB::FIXUP_LO_16:
+    assert(not IsPCRel);
+    return ELF::R_GB_LO_16;
   }
 }
 
