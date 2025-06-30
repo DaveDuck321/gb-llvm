@@ -72,11 +72,10 @@ define i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    ld b, $00
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    sub c
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    sub b
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
   %2 = sext i1 %1 to i8
@@ -225,12 +224,11 @@ define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld e, $00
 ; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    add (hl)
 ; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, e
+; GBI-NEXT:    ld a, $00
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ret

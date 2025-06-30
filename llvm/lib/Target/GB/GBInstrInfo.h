@@ -1,6 +1,7 @@
 #ifndef LLVM_LIB_TARGET_GB_GBINSTRINFO_H
 #define LLVM_LIB_TARGET_GB_GBINSTRINFO_H
 
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
@@ -71,6 +72,11 @@ struct GBInstrInfo final : public GBGenInstrInfo {
   bool
   reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
+  bool foldAddressImmediate(MachineInstr &UseMI,
+                            MachineOperand &DefMIImmOperand, Register Reg,
+                            MachineRegisterInfo *MRI) const;
+  bool fold8BitImmediate(MachineInstr &UseMI, MachineOperand &DefMIImmOperand,
+                         Register Reg, MachineRegisterInfo *MRI) const;
   bool foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI, Register Reg,
                      MachineRegisterInfo *MRI, bool &IsDelted) const override;
 

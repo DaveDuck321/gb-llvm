@@ -63,6 +63,7 @@ public:
     return getTM<GBTargetMachine>();
   }
 
+  void addMachineSSAOptimization() override;
   bool addInstSelector() override;
   void addPreSched2() override;
   void addPreEmitPass() override;
@@ -71,6 +72,13 @@ public:
 
 TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new GBPassConfig(*this, PM);
+}
+
+void GBPassConfig::addMachineSSAOptimization() {
+  if (TM->getOptLevel() != CodeGenOptLevel::None) {
+    addPass(createGBFoldImmediates(getGBTargetMachine(), getOptLevel()));
+  }
+  TargetPassConfig::addMachineSSAOptimization();
 }
 
 bool GBPassConfig::addInstSelector() {

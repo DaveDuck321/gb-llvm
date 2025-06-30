@@ -33,11 +33,10 @@ define i8 @sext8_i1(i1 %0) {
 ; GBI-O3-LABEL: sext8_i1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    ret
   %res = sext i1 %0 to i8
   ret i8 %res
@@ -47,11 +46,10 @@ define i16 @sext16_i1(i1 %0) {
 ; GBI-O3-LABEL: sext16_i1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, l
 ; GBI-O3-NEXT:    ret

@@ -1,5 +1,6 @@
 #include "GBInstrInfo.h"
 #include "GB.h"
+#include "GBMOFlags.hpp"
 #include "GBRegisterInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -8,10 +9,10 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Register.h"
-#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCRegister.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -461,19 +462,124 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "gb-folding"
 
-bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
-                                Register Reg, MachineRegisterInfo *MRI,
-                                bool &IsDeleted) const {
+bool GBInstrInfo::foldAddressImmediate(MachineInstr &UseMI, MachineOperand &Imm,
+                                       Register Reg,
+                                       MachineRegisterInfo *MRI) const {
   auto *MBB = UseMI.getParent();
   auto MBBI = UseMI.getIterator();
   auto DL = UseMI.getDebugLoc();
 
-  LLVM_DEBUG(dbgs() << "foldImmediate: \n"; dbgs() << "  def=";
-             DefMI.print(dbgs()); dbgs() << "  use="; UseMI.print(dbgs()));
   if (not MRI->hasOneNonDBGUse(Reg)) {
-    LLVM_DEBUG(dbgs() << "Fold rejected: has more than one use\n");
     return false;
   }
+
+  switch (UseMI.getOpcode()) {
+  default:
+    LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "
+                      << UseMI.getOpcode() << "\n");
+    return false;
+  case GB::LD_r_iGPR16:
+    BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iImm))
+        .addDef(GB::A, getImplRegState(true))
+        ->addOperand(Imm);
+
+    BuildMI(*MBB, MBBI, DL, get(GB::COPY), UseMI.getOperand(0).getReg())
+        .addReg(GB::A, getKillRegState(true));
+
+    break;
+  case GB::LD_iGPR16_A:
+    BuildMI(*MBB, MBBI, DL, get(GB::LD_iImm_A))
+        .addReg(GB::A, getImplRegState(true))
+        ->addOperand(Imm);
+    break;
+  }
+  assert(Imm.isImm() || Imm.isSymbol() || Imm.isGlobal());
+  return true;
+}
+
+bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
+                                    MachineOperand &DefMIImmOperand,
+                                    Register Reg,
+                                    MachineRegisterInfo *MRI) const {
+  auto *MBB = UseMI.getParent();
+  auto MBBI = UseMI.getIterator();
+  auto DL = UseMI.getDebugLoc();
+
+  unsigned FoldedOpcode = 0;
+  MachineOperand Operand = DefMIImmOperand;
+  switch (UseMI.getOpcode()) {
+  default:
+    LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "
+                      << UseMI.getOpcode() << " ";
+               UseMI.print(dbgs()));
+    return false;
+  case GB::COPY: {
+    auto UseOp = UseMI.getOperand(1);
+    auto SubReg = UseOp.getSubReg();
+
+    FoldedOpcode = GB::LDI8_r;
+    assert(UseOp.getReg() == Reg);
+
+    if (MRI->getRegClassOrNull(Reg) != &GB::GPR8RegClass) {
+      if (SubReg == 1) {
+        setGBFlag(Operand, GBMOFlag::LOWER_PART);
+      } else if (SubReg == 2) {
+        setGBFlag(Operand, GBMOFlag::UPPER_PART);
+      } else {
+        LLVM_DEBUG(
+            dbgs() << "Fold failed: cannot fold into 16-bit register assignment"
+                   << UseMI.getOpcode() << " ";
+            UseMI.print(dbgs()));
+        return false;
+      }
+    } else {
+      assert(SubReg == 0);
+    }
+    BuildMI(*MBB, MBBI, DL, get(FoldedOpcode))
+        .addDef(UseMI.getOperand(0).getReg())
+        ->addOperand(Operand);
+    return true;
+  }
+  case GB::ADD_r:
+    FoldedOpcode = GB::ADDI;
+    break;
+  case GB::ADC_r:
+    FoldedOpcode = GB::ADCI;
+    break;
+  case GB::SUB_r:
+    FoldedOpcode = GB::SUBI;
+    break;
+  case GB::SBC_r:
+    FoldedOpcode = GB::SBCI;
+    break;
+  case GB::AND_r:
+    FoldedOpcode = GB::ANDI;
+    break;
+  case GB::XOR_r:
+    FoldedOpcode = GB::XORI;
+    break;
+  case GB::OR_r:
+    FoldedOpcode = GB::ORI;
+    break;
+  }
+
+  BuildMI(*MBB, MBBI, DL, get(FoldedOpcode))
+      .addDef(GB::A, getImplRegState(true))
+      ->addOperand(Operand);
+
+  return true;
+}
+
+bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
+                                Register Reg, MachineRegisterInfo *MRI,
+                                bool &IsDeleted) const {
+  auto *MBB = UseMI.getParent();
+
+  LLVM_DEBUG(dbgs() << "foldImmediate: \n"; dbgs() << "  def=";
+             DefMI.print(dbgs()); dbgs() << "  use="; UseMI.print(dbgs()));
+
+  // TODO: maybe try aborting this if it has too many uses
+  auto HasOneUse = MRI->hasOneNonDBGUse(Reg);
 
   MachineOperand *Imm = nullptr;
   switch (DefMI.getOpcode()) {
@@ -484,30 +590,28 @@ bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   case GB::LDI16:
     Imm = &DefMI.getOperand(1);
     break;
+  case GB::LDI8_r:
+    Imm = &DefMI.getOperand(1);
+    break;
   }
-  assert(Imm->isImm() || Imm->isSymbol() || Imm->isGlobal());
 
   switch (UseMI.getOpcode()) {
-  default:
-    LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "
-                      << UseMI.getOpcode() << "\n");
-    return false;
   case GB::LD_r_iGPR16:
-    BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iImm))
-        .addDef(GB::A, getImplRegState(true))
-        ->addOperand(*Imm);
-
-    BuildMI(*MBB, MBBI, DL, get(GB::COPY), UseMI.getOperand(0).getReg())
-        .addReg(GB::A, getKillRegState(true));
-
-    break;
   case GB::LD_iGPR16_A:
-    BuildMI(*MBB, MBBI, DL, get(GB::LD_iImm_A))
-        .addReg(GB::A, getImplRegState(true))
-        ->addOperand(*Imm);
+    if (not foldAddressImmediate(UseMI, *Imm, Reg, MRI)) {
+      return false;
+    }
+    break;
+  default:
+    if (not fold8BitImmediate(UseMI, *Imm, Reg, MRI)) {
+      return false;
+    }
     break;
   }
-  DefMI.eraseFromParent();
+
+  if (HasOneUse) {
+    DefMI.eraseFromParent();
+  }
   UseMI.eraseFromParent();
 
   LLVM_DEBUG(dbgs() << "Fold accepted: "; MBB->print(dbgs()));
