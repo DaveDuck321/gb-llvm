@@ -22,6 +22,7 @@
 // and Embedded Architectures and Compilers", 8 (4),
 // <10.1145/2086696.2086706>. <hal-00647369>
 //
+#include "llvm/CodeGen/RDFLiveness.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -33,7 +34,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/RDFGraph.h"
-#include "llvm/CodeGen/RDFLiveness.h"
 #include "llvm/CodeGen/RDFRegisters.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/MC/LaneBitmask.h"
@@ -849,8 +849,8 @@ void Liveness::computeLiveIns() {
         for (NodeAddr<PhiUseNode *> T : DFG.getRelatedRefs(PA, PUA))
           SeenUses.insert(T.Id);
       } // for U : phi uses
-    }   // for P : Phis
-  }     // for B : Blocks
+    } // for P : Phis
+  } // for B : Blocks
 
   if (Trace) {
     dbgs() << "Phi live-on-exit map:\n";
@@ -938,15 +938,20 @@ void Liveness::resetKills(MachineBasicBlock *B) {
 
     MI.clearKillInfo();
     for (auto &Op : MI.all_defs()) {
-      // An implicit def of a super-register may not necessarily start a
-      // live range of it, since an implicit use could be used to keep parts
-      // of it live. Instead of analyzing the implicit operands, ignore
-      // implicit defs.
-      if (Op.isImplicit())
-        continue;
       Register R = Op.getReg();
       if (!R.isPhysical())
         continue;
+
+      // An implicit def of a super-register may not necessarily start a
+      // live range of it, since an implicit use could be used to keep parts
+      // of it live.
+      bool UsesAnySubReg = false;
+      for (MCPhysReg SR : TRI.subregs(R)) {
+        UsesAnySubReg |= MI.readsRegister(SR, nullptr);
+      }
+      if (Op.isImplicit() && UsesAnySubReg)
+        continue;
+
       for (MCPhysReg SR : TRI.subregs_inclusive(R))
         Live.reset(SR);
     }
@@ -957,8 +962,8 @@ void Liveness::resetKills(MachineBasicBlock *B) {
       if (!R.isPhysical())
         continue;
       bool IsLive = false;
-      for (MCRegAliasIterator AR(R, &TRI, true); AR.isValid(); ++AR) {
-        if (!Live[(*AR).id()])
+      for (MCPhysReg SR : TRI.subregs_inclusive(R)) {
+        if (!Live[SR])
           continue;
         IsLive = true;
         break;

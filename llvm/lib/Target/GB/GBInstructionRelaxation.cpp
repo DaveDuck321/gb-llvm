@@ -1,13 +1,17 @@
 #include "GB.h"
+#include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineDominanceFrontier.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/RDFLiveness.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -15,6 +19,7 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCRegister.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -33,6 +38,8 @@ public:
                           CodeGenOptLevel OptLevel);
 
   StringRef getPassName() const override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -87,6 +94,12 @@ GBInstructionRelaxation::GBInstructionRelaxation(GBTargetMachine &TargetMachine,
 
 StringRef GBInstructionRelaxation::getPassName() const {
   return "GB Instruction Relaxation";
+}
+
+void GBInstructionRelaxation::getAnalysisUsage(AnalysisUsage &AU) const {
+  MachineFunctionPass::getAnalysisUsage(AU);
+  AU.addRequired<MachineDominatorTreeWrapperPass>();
+  AU.addRequired<MachineDominanceFrontier>();
 }
 
 bool GBInstructionRelaxation::mergeLoadImmStore(MachineFunction &MF,
@@ -299,7 +312,13 @@ bool GBInstructionRelaxation::relaxRotatesThroughA(MachineFunction &MF) {
       }
 
       if (MI.getOpcode() == GB::RL_r && MI.getOperand(0).getReg() == GB::A) {
-        BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLA));
+        assert(MI.getOperand(1).getReg() == GB::A);
+        auto Added = BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(GB::RLA));
+
+        // We may shift the f flag into a bool value. Here A might be undefined
+        assert(Added->getOperand(2).getReg() == GB::A);
+        Added->getOperand(2).setIsUndef(MI.getOperand(1).isUndef());
+
         MI.eraseFromParent();
 
         MadeChanges = true;
@@ -339,6 +358,18 @@ bool GBInstructionRelaxation::runOnMachineFunction(MachineFunction &MF) {
 
   LLVM_DEBUG(dbgs() << "******* GBInstructionRelaxation ****** \n";
              MF.print(dbgs()));
+
+  auto &Subtarget = MF.getSubtarget<GBSubtarget>();
+  auto *InstrInfo = Subtarget.getInstrInfo();
+  auto *RegisterInfo = Subtarget.getRegisterInfo();
+
+  // Update the liveness annotations to include kills
+  const auto &MDF = getAnalysis<MachineDominanceFrontier>();
+  auto *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+
+  rdf::DataFlowGraph Graph(MF, *InstrInfo, *RegisterInfo, *MDT, MDF);
+  rdf::Liveness Liveness(MF.getRegInfo(), Graph);
+  Liveness.resetKills();
 
   bool MadeChanges = false;
   MadeChanges |= mergeLoadStoreIncrementIntoLDI(MF);

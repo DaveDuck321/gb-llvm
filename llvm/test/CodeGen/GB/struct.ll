@@ -88,8 +88,7 @@ define %type.Player @get_player(i8 %0, i8 %1) {
 ; GBI-O3-NEXT:    ld a, $64
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, $0a
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (hl), $0a
 ; GBI-O3-NEXT:    ret
 begin:
   %2 = insertvalue %type.Rect undef, i8 %0, 0
