@@ -6,6 +6,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -35,6 +36,8 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
+  bool mergeLoadImmStore(MachineFunction &MF);
+  bool mergeLoadImmStore(MachineFunction &MF, MachineBasicBlock &MBB);
   bool mergeLoadStoreIncrementIntoLDI(MachineFunction &MF);
   bool mergeLoadStoreIncrementIntoLDI(MachineFunction &MF,
                                       MachineBasicBlock &MBB);
@@ -48,7 +51,8 @@ auto definesTargetReg(const MachineInstr &MI, Register Reg,
   auto Upper = TRI.getSubReg(Reg, 1);
   auto Lower = TRI.getSubReg(Reg, 2);
 
-  return MI.definesRegister(Lower, &TRI) || MI.definesRegister(Upper, &TRI);
+  return MI.definesRegister(Reg, &TRI) || MI.definesRegister(Lower, &TRI) ||
+         MI.definesRegister(Upper, &TRI);
 }
 
 bool usesTargetReg(const MachineInstr &MI, Register Reg,
@@ -62,7 +66,8 @@ bool usesTargetReg(const MachineInstr &MI, Register Reg,
     return true;
   }
 
-  return MI.readsRegister(Lower, &TRI) || MI.readsRegister(Upper, &TRI);
+  return MI.readsRegister(Reg, &TRI) || MI.readsRegister(Lower, &TRI) ||
+         MI.readsRegister(Upper, &TRI);
 }
 
 bool killsTargetReg(const MachineInstr &MI, Register Reg,
@@ -70,7 +75,8 @@ bool killsTargetReg(const MachineInstr &MI, Register Reg,
   auto Upper = TRI.getSubReg(Reg, 1);
   auto Lower = TRI.getSubReg(Reg, 2);
 
-  return MI.killsRegister(Lower, &TRI) || MI.killsRegister(Upper, &TRI);
+  return MI.killsRegister(Reg, &TRI) || MI.killsRegister(Lower, &TRI) ||
+         MI.killsRegister(Upper, &TRI);
 }
 
 } // namespace
@@ -81,6 +87,61 @@ GBInstructionRelaxation::GBInstructionRelaxation(GBTargetMachine &TargetMachine,
 
 StringRef GBInstructionRelaxation::getPassName() const {
   return "GB Instruction Relaxation";
+}
+
+bool GBInstructionRelaxation::mergeLoadImmStore(MachineFunction &MF,
+                                                MachineBasicBlock &MBB) {
+  const auto &TRI = *MF.getSubtarget().getRegisterInfo();
+  const auto &TII = *MF.getSubtarget().getInstrInfo();
+
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBB)) {
+      if (MI.getOpcode() != GB::LDI8_r) {
+        continue;
+      }
+
+      // Look ahead, is the next use `ld (hl), reg`?
+      Register Target = MI.getOperand(0).getReg();
+      MachineInstr *LD_iHL_r = nullptr;
+      for (auto MBBI = ++MachineBasicBlock::iterator{MI}; MBBI != MBB.end();
+           ++MBBI) {
+        MachineInstr &NextMI = *MBBI;
+        if (NextMI.getOpcode() == GB::LD_iHL_r &&
+            usesTargetReg(NextMI, Target, TRI) &&
+            killsTargetReg(NextMI, Target, TRI)) {
+          LD_iHL_r = &NextMI;
+          break;
+        }
+
+        if (usesTargetReg(NextMI, Target, TRI) ||
+            killsTargetReg(NextMI, Target, TRI)) {
+          break;
+        }
+      }
+
+      if (LD_iHL_r != nullptr) {
+        BuildMI(MBB, *LD_iHL_r, MI.getDebugLoc(), TII.get(GB::LDI8_iHL))
+            .add(MI.getOperand(1))
+            .addReg(GB::HL,
+                    getImplRegState(true) |
+                        getKillRegState(LD_iHL_r->killsRegister(GB::HL, &TRI)));
+        MI.eraseFromParent();
+        LD_iHL_r->eraseFromParent();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool GBInstructionRelaxation::mergeLoadImmStore(MachineFunction &MF) {
+  bool MadeChanges = false;
+  for (MachineBasicBlock &MBB : MF) {
+    while (mergeLoadImmStore(MF, MBB)) {
+      MadeChanges = true;
+    }
+  }
+  return MadeChanges;
 }
 
 bool GBInstructionRelaxation::mergeLoadStoreIncrementIntoLDI(
@@ -276,12 +337,20 @@ bool GBInstructionRelaxation::runOnMachineFunction(MachineFunction &MF) {
     return false;
   }
 
+  LLVM_DEBUG(dbgs() << "******* GBInstructionRelaxation ****** \n";
+             MF.print(dbgs()));
+
   bool MadeChanges = false;
   MadeChanges |= mergeLoadStoreIncrementIntoLDI(MF);
   MadeChanges |= relaxRotatesThroughA(MF);
   MadeChanges |= simplifyCp00(MF);
   while (foldRedundantCopies(MF)) {
     MadeChanges = true;
+  }
+  MadeChanges |= mergeLoadImmStore(MF);
+
+  if (MadeChanges) {
+    LLVM_DEBUG(MF.print(dbgs()));
   }
   return MadeChanges;
 }

@@ -436,20 +436,23 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   }
   case GB::LD_iGPR16_A: {
     Register PtrReg = MI.getOperand(0).getReg();
+    Register SrcReg = MI.getOperand(1).getReg();
     bool DidKillPtr = MI.killsRegister(PtrReg, TRI);
+    bool DidKillSrc = MI.killsRegister(SrcReg, TRI);
 
     switch (PtrReg) {
     default:
       llvm_unreachable("Unexpected register");
     case GB::HL:
       BuildMI(*MBB, MBBI, DL, get(GB::LD_iHL_r))
-          .addReg(GB::A)
+          .addReg(GB::A, getKillRegState(DidKillSrc))
           .addReg(GB::HL, getImplRegState(true) | getKillRegState(DidKillPtr));
       break;
     case GB::BC:
     case GB::DE:
       BuildMI(*MBB, MBBI, DL, get(GB::LD_iR16_A))
-          .addReg(PtrReg, getKillRegState(DidKillPtr));
+          .addReg(PtrReg, getKillRegState(DidKillPtr))
+          .addReg(GB::A, getImplRegState(true) | getKillRegState(DidKillSrc));
       break;
     }
     MI.eraseFromParent();

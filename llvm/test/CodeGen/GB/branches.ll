@@ -417,10 +417,10 @@ define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-NEXT:  # %bb.3: # %entry
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp $04
-; GBI-O3-NEXT:    jr nz, .LBB18_10
+; GBI-O3-NEXT:    jr nz, .LBB18_11
 ; GBI-O3-NEXT:  # %bb.4: # %bb4
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    jr .LBB18_10
 ; GBI-O3-NEXT:  .LBB18_5: # %entry
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp $01
@@ -428,16 +428,18 @@ define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-NEXT:  # %bb.6: # %entry
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp $02
-; GBI-O3-NEXT:    jr nz, .LBB18_10
+; GBI-O3-NEXT:    jr nz, .LBB18_11
 ; GBI-O3-NEXT:  # %bb.7: # %bb2
-; GBI-O3-NEXT:    ld (hl), $03
-; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:    ld a, $03
+; GBI-O3-NEXT:    jr .LBB18_10
 ; GBI-O3-NEXT:  .LBB18_8: # %bb1
-; GBI-O3-NEXT:    ld (hl), $04
-; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:    ld a, $04
+; GBI-O3-NEXT:    jr .LBB18_10
 ; GBI-O3-NEXT:  .LBB18_9: # %bb3
-; GBI-O3-NEXT:    ld (hl), $02
+; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:  .LBB18_10: # %exit
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:  .LBB18_11: # %exit
 ; GBI-O3-NEXT:    ret
 entry:
   switch i8 %in, label %exit [

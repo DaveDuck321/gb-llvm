@@ -369,7 +369,6 @@ def : Pat<(extload GPR16:$rs), (LD_r_iGPR16 GPR16:$rs)>;
 
 def : Pat<(store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
 def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
-def : Pat<(store imm8:$imm, HL), (LDI8_iHL imm8:$imm)>;
 
 let mayLoad = true, Uses = [SP] in {
   def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs IntReg16:$r), (ins simm8:$i)>;

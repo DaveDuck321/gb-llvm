@@ -122,13 +122,12 @@ define i8 @call_argument3() nounwind {
 define i32 @large_return() nounwind {
 ; GBI-O3-LABEL: large_return:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), $00
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld (hl), $00
+; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    ret
   ret i32 1
 }
