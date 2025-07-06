@@ -12,7 +12,7 @@
 
 #include "AVRMCCodeEmitter.h"
 
-#include "MCTargetDesc/AVRMCExpr.h"
+#include "MCTargetDesc/AVRMCAsmInfo.h"
 #include "MCTargetDesc/AVRMCTargetDesc.h"
 
 #include "llvm/ADT/APFloat.h"
@@ -110,8 +110,7 @@ AVRMCCodeEmitter::encodeRelCondBrTarget(const MCInst &MI, unsigned OpNo,
   const MCOperand &MO = MI.getOperand(OpNo);
 
   if (MO.isExpr()) {
-    Fixups.push_back(
-        MCFixup::create(0, MO.getExpr(), MCFixupKind(Fixup), MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, MO.getExpr(), MCFixupKind(Fixup)));
     return 0;
   }
 
@@ -156,8 +155,8 @@ unsigned AVRMCCodeEmitter::encodeMemri(const MCInst &MI, unsigned OpNo,
     OffsetBits = OffsetOp.getImm();
   } else if (OffsetOp.isExpr()) {
     OffsetBits = 0;
-    Fixups.push_back(MCFixup::create(0, OffsetOp.getExpr(),
-                                     MCFixupKind(AVR::fixup_6), MI.getLoc()));
+    Fixups.push_back(
+        MCFixup::create(0, OffsetOp.getExpr(), MCFixupKind(AVR::fixup_6)));
   } else {
     llvm_unreachable("Invalid value for offset");
   }
@@ -191,8 +190,7 @@ unsigned AVRMCCodeEmitter::encodeImm(const MCInst &MI, unsigned OpNo,
     }
 
     MCFixupKind FixupKind = static_cast<MCFixupKind>(Fixup);
-    Fixups.push_back(
-        MCFixup::create(Offset, MO.getExpr(), FixupKind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(Offset, MO.getExpr(), FixupKind));
 
     return 0;
   }
@@ -208,7 +206,7 @@ unsigned AVRMCCodeEmitter::encodeCallTarget(const MCInst &MI, unsigned OpNo,
 
   if (MO.isExpr()) {
     MCFixupKind FixupKind = static_cast<MCFixupKind>(AVR::fixup_call);
-    Fixups.push_back(MCFixup::create(0, MO.getExpr(), FixupKind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, MO.getExpr(), FixupKind));
     return 0;
   }
 
@@ -230,7 +228,7 @@ unsigned AVRMCCodeEmitter::getExprOpValue(const MCExpr *Expr,
     Kind = Expr->getKind();
   }
 
-  if (Kind == MCExpr::Target) {
+  if (Kind == MCExpr::Specifier) {
     AVRMCExpr const *AVRExpr = cast<AVRMCExpr>(Expr);
     int64_t Result;
     if (AVRExpr->evaluateAsConstant(Result)) {

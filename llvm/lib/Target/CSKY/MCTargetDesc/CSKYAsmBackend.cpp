@@ -165,8 +165,7 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   }
 }
 
-bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCAssembler &,
-                                                  const MCFixup &Fixup,
+bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCFixup &Fixup,
                                                   const MCValue &,
                                                   uint64_t Value,
                                                   bool Resolved) const {
@@ -189,15 +188,18 @@ bool CSKYAsmBackend::fixupNeedsRelaxationAdvanced(const MCAssembler &,
   }
 }
 
-void CSKYAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+void CSKYAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                                 const MCValue &Target,
                                 MutableArrayRef<char> Data, uint64_t Value,
-                                bool IsResolved,
-                                const MCSubtargetInfo *STI) const {
+                                bool IsResolved) {
+  if (IsResolved && shouldForceRelocation(Fixup, Target))
+    IsResolved = false;
+  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
+
   MCFixupKind Kind = Fixup.getKind();
   if (mc::isRelocation(Kind))
     return;
-  MCContext &Ctx = Asm.getContext();
+  MCContext &Ctx = getContext();
   MCFixupKindInfo Info = getFixupKindInfo(Kind);
   if (!Value)
     return; // Doesn't change encoding.
@@ -251,10 +253,8 @@ bool CSKYAsmBackend::mayNeedRelaxation(const MCInst &Inst,
   }
 }
 
-bool CSKYAsmBackend::shouldForceRelocation(const MCAssembler &Asm,
-                                           const MCFixup &Fixup,
-                                           const MCValue &Target,
-                                           const MCSubtargetInfo * /*STI*/) {
+bool CSKYAsmBackend::shouldForceRelocation(const MCFixup &Fixup,
+                                           const MCValue &Target /*STI*/) {
   if (Target.getSpecifier())
     return true;
   switch (Fixup.getTargetKind()) {

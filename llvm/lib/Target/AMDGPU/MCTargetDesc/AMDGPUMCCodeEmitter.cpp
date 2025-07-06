@@ -255,13 +255,9 @@ AMDGPUMCCodeEmitter::getLitEncoding(const MCOperand &MO,
                                     const MCSubtargetInfo &STI) const {
   int64_t Imm;
   if (MO.isExpr()) {
-    const auto *C = dyn_cast<MCConstantExpr>(MO.getExpr());
-    if (!C)
+    if (!MO.getExpr()->evaluateAsAbsolute(Imm))
       return 255;
-
-    Imm = C->getValue();
   } else {
-
     assert(!MO.isDFPImm());
 
     if (!MO.isImm())
@@ -273,15 +269,12 @@ AMDGPUMCCodeEmitter::getLitEncoding(const MCOperand &MO,
   switch (OpInfo.OperandType) {
   case AMDGPU::OPERAND_REG_IMM_INT32:
   case AMDGPU::OPERAND_REG_IMM_FP32:
-  case AMDGPU::OPERAND_REG_IMM_FP32_DEFERRED:
   case AMDGPU::OPERAND_REG_INLINE_C_INT32:
   case AMDGPU::OPERAND_REG_INLINE_C_FP32:
   case AMDGPU::OPERAND_REG_INLINE_AC_INT32:
   case AMDGPU::OPERAND_REG_INLINE_AC_FP32:
   case AMDGPU::OPERAND_REG_IMM_V2INT32:
   case AMDGPU::OPERAND_REG_IMM_V2FP32:
-  case AMDGPU::OPERAND_REG_INLINE_C_V2INT32:
-  case AMDGPU::OPERAND_REG_INLINE_C_V2FP32:
   case AMDGPU::OPERAND_INLINE_SPLIT_BARRIER_INT32:
     return getLit32Encoding(static_cast<uint32_t>(Imm), STI);
 
@@ -294,40 +287,32 @@ AMDGPUMCCodeEmitter::getLitEncoding(const MCOperand &MO,
 
   case AMDGPU::OPERAND_REG_IMM_INT16:
   case AMDGPU::OPERAND_REG_INLINE_C_INT16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_INT16:
     return getLit16IntEncoding(static_cast<uint32_t>(Imm), STI);
 
   case AMDGPU::OPERAND_REG_IMM_FP16:
-  case AMDGPU::OPERAND_REG_IMM_FP16_DEFERRED:
   case AMDGPU::OPERAND_REG_INLINE_C_FP16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_FP16:
     // FIXME Is this correct? What do inline immediates do on SI for f16 src
     // which does not have f16 support?
     return getLit16Encoding(static_cast<uint16_t>(Imm), STI);
 
   case AMDGPU::OPERAND_REG_IMM_BF16:
-  case AMDGPU::OPERAND_REG_IMM_BF16_DEFERRED:
   case AMDGPU::OPERAND_REG_INLINE_C_BF16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_BF16:
     // We don't actually need to check Inv2Pi here because BF16 instructions can
     // only be emitted for targets that already support the feature.
     return getLitBF16Encoding(static_cast<uint16_t>(Imm));
 
   case AMDGPU::OPERAND_REG_IMM_V2INT16:
   case AMDGPU::OPERAND_REG_INLINE_C_V2INT16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_V2INT16:
     return AMDGPU::getInlineEncodingV2I16(static_cast<uint32_t>(Imm))
         .value_or(255);
 
   case AMDGPU::OPERAND_REG_IMM_V2FP16:
   case AMDGPU::OPERAND_REG_INLINE_C_V2FP16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_V2FP16:
     return AMDGPU::getInlineEncodingV2F16(static_cast<uint32_t>(Imm))
         .value_or(255);
 
   case AMDGPU::OPERAND_REG_IMM_V2BF16:
   case AMDGPU::OPERAND_REG_INLINE_C_V2BF16:
-  case AMDGPU::OPERAND_REG_INLINE_AC_V2BF16:
     return AMDGPU::getInlineEncodingV2BF16(static_cast<uint32_t>(Imm))
         .value_or(255);
 
@@ -461,7 +446,7 @@ void AMDGPUMCCodeEmitter::getSOPPBrEncoding(const MCInst &MI, unsigned OpNo,
   if (MO.isExpr()) {
     const MCExpr *Expr = MO.getExpr();
     MCFixupKind Kind = (MCFixupKind)AMDGPU::fixup_si_sopp_br;
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, Kind));
     Op = APInt::getZero(96);
   } else {
     getMachineOpValue(MI, MO, Op, Fixups, STI);
@@ -558,6 +543,7 @@ static bool needsPCRel(const MCExpr *Expr) {
   }
   case MCExpr::Unary:
     return needsPCRel(cast<MCUnaryExpr>(Expr)->getSubExpr());
+  case MCExpr::Specifier:
   case MCExpr::Target:
   case MCExpr::Constant:
     return false;
@@ -676,7 +662,7 @@ void AMDGPUMCCodeEmitter::getMachineOpValueCommon(
     uint32_t Offset = Desc.getSize();
     assert(Offset == 4 || Offset == 8);
 
-    Fixups.push_back(MCFixup::create(Offset, MO.getExpr(), Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(Offset, MO.getExpr(), Kind));
   }
 
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());

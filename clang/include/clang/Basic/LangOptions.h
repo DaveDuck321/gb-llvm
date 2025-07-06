@@ -24,6 +24,7 @@
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/FloatingPointMode.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/BinaryFormat/DXContainer.h"
 #include "llvm/TargetParser/Triple.h"
 #include <optional>
 #include <string>
@@ -75,23 +76,6 @@ public:
   using Visibility = clang::Visibility;
   using RoundingMode = llvm::RoundingMode;
   using CFBranchLabelSchemeKind = clang::CFBranchLabelSchemeKind;
-
-  LangOptionsBase() = default;
-
-#if defined(__clang__) && defined( __has_warning)
-#if __has_warning("-Wpreferred-type-bitfield-enum-conversion")
-// FIXME: Remove this once the warning is fixed, https://llvm.org/PR137600
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpreferred-type-bitfield-enum-conversion"
-#endif
-#endif
-  LangOptionsBase(const LangOptionsBase&) = default;
-  LangOptionsBase& operator=(const LangOptionsBase&) = default;
-#if defined(__clang__) && defined( __has_warning)
-#if __has_warning("-Wpreferred-type-bitfield-enum-conversion")
-#pragma clang diagnostic pop
-#endif
-#endif
 
   enum GCMode { NonGC, GCOnly, HybridGC };
   enum StackProtectorMode { SSPOff, SSPOn, SSPStrong, SSPReq };
@@ -321,10 +305,7 @@ public:
   };
 
   /// Possible float expression evaluation method choices.
-  enum FPEvalMethodKind {
-    /// The evaluation method cannot be determined or is inconsistent for this
-    /// target.
-    FEM_Indeterminable = -1,
+  enum FPEvalMethodKind : unsigned {
     /// Use the declared type for fp arithmetic.
     FEM_Source = 0,
     /// Use the type double for fp arithmetic.
@@ -643,6 +624,10 @@ public:
   // implementation on real-world examples.
   std::string OpenACCMacroOverride;
 
+  /// The HLSL root signature version for dxil.
+  llvm::dxbc::RootSignatureVersion HLSLRootSigVer =
+      llvm::dxbc::RootSignatureVersion::V1_1;
+
   // Indicates if the wasm-opt binary must be ignored in the case of a
   // WebAssembly target.
   bool NoWasmOpt = false;
@@ -876,7 +861,7 @@ public:
   // Define a fake option named "First" so that we have a PREVIOUS even for the
   // real first option.
   static constexpr storage_type FirstShift = 0, FirstWidth = 0;
-#define OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                    \
+#define FP_OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                 \
   static constexpr storage_type NAME##Shift =                                  \
       PREVIOUS##Shift + PREVIOUS##Width;                                       \
   static constexpr storage_type NAME##Width = WIDTH;                           \
@@ -885,7 +870,7 @@ public:
 #include "clang/Basic/FPOptions.def"
 
   static constexpr storage_type TotalWidth = 0
-#define OPTION(NAME, TYPE, WIDTH, PREVIOUS) +WIDTH
+#define FP_OPTION(NAME, TYPE, WIDTH, PREVIOUS) +WIDTH
 #include "clang/Basic/FPOptions.def"
       ;
   static_assert(TotalWidth <= StorageBitSize, "Too short type for FPOptions");
@@ -994,7 +979,7 @@ public:
   // We can define most of the accessors automatically:
   // TODO: consider enforcing the assertion that value fits within bits
   // statically.
-#define OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                    \
+#define FP_OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                 \
   TYPE get##NAME() const {                                                     \
     return static_cast<TYPE>((Value & NAME##Mask) >> NAME##Shift);             \
   }                                                                            \
@@ -1105,7 +1090,7 @@ public:
   }
   bool operator!=(FPOptionsOverride other) const { return !(*this == other); }
 
-#define OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                    \
+#define FP_OPTION(NAME, TYPE, WIDTH, PREVIOUS)                                 \
   bool has##NAME##Override() const {                                           \
     return OverrideMask & FPOptions::NAME##Mask;                               \
   }                                                                            \

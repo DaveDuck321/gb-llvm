@@ -13,7 +13,7 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
-#include "MCTargetDesc/ARMMCExpr.h"
+#include "MCTargetDesc/ARMMCAsmInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
@@ -321,7 +321,7 @@ public:
       const MCExpr *Expr = MO.getExpr();
       // Fixups resolve to plain values that need to be encoded.
       MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_mod_imm);
-      Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+      Fixups.push_back(MCFixup::create(0, Expr, Kind));
       return 0;
     }
 
@@ -340,7 +340,7 @@ public:
       const MCExpr *Expr = MO.getExpr();
       // Fixups resolve to plain values that need to be encoded.
       MCFixupKind Kind = MCFixupKind(ARM::fixup_t2_so_imm);
-      Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+      Fixups.push_back(MCFixup::create(0, Expr, Kind));
       return 0;
     }
     unsigned SoImm = MO.getImm();
@@ -616,7 +616,7 @@ static uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   assert(MO.isExpr() && "Unexpected branch target type!");
   const MCExpr *Expr = MO.getExpr();
   MCFixupKind Kind = MCFixupKind(FixupKind);
-  Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+  Fixups.push_back(MCFixup::create(0, Expr, Kind));
 
   // All of the information is in the fixup.
   return 0;
@@ -979,7 +979,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
       Reg = CTX.getRegisterInfo()->getEncodingValue(MO.getReg());
       isAdd = false; // 'U' bit is set as part of the fixup.
       MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_ldst_abs_12);
-      Fixups.push_back(MCFixup::create(0, MO1.getExpr(), Kind, MI.getLoc()));
+      Fixups.push_back(MCFixup::create(0, MO1.getExpr(), Kind));
     }
   } else if (MO.isExpr()) {
     Reg = CTX.getRegisterInfo()->getEncodingValue(ARM::PC); // Rn is PC.
@@ -989,7 +989,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
       Kind = MCFixupKind(ARM::fixup_t2_ldst_pcrel_12);
     else
       Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
-    Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind));
 
     ++MCNumCPRelocations;
   } else {
@@ -1114,7 +1114,7 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
     MCFixupKind Kind = MCFixupKind(ARM::fixup_t2_pcrel_10);
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
   } else
@@ -1191,8 +1191,8 @@ uint32_t ARMMCCodeEmitter::getHiLoImmOpValue(const MCInst &MI, unsigned OpIdx,
   // :lower0_7: assembly prefixes.
   const MCExpr *E = MO.getExpr();
   MCFixupKind Kind;
-  if (E->getKind() == MCExpr::Target) {
-    const ARMMCExpr *ARM16Expr = cast<ARMMCExpr>(E);
+  if (E->getKind() == MCExpr::Specifier) {
+    auto *ARM16Expr = cast<MCSpecifierExpr>(E);
     E = ARM16Expr->getSubExpr();
 
     if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(E)) {
@@ -1201,18 +1201,18 @@ uint32_t ARMMCCodeEmitter::getHiLoImmOpValue(const MCInst &MI, unsigned OpIdx,
         report_fatal_error("constant value truncated (limited to 32-bit)");
 
       switch (ARM16Expr->getSpecifier()) {
-      case ARMMCExpr::VK_HI16:
+      case ARM::S_HI16:
         return (int32_t(Value) & 0xffff0000) >> 16;
-      case ARMMCExpr::VK_LO16:
+      case ARM::S_LO16:
         return (int32_t(Value) & 0x0000ffff);
 
-      case ARMMCExpr::VK_HI_8_15:
+      case ARM::S_HI_8_15:
         return (int32_t(Value) & 0xff000000) >> 24;
-      case ARMMCExpr::VK_HI_0_7:
+      case ARM::S_HI_0_7:
         return (int32_t(Value) & 0x00ff0000) >> 16;
-      case ARMMCExpr::VK_LO_8_15:
+      case ARM::S_LO_8_15:
         return (int32_t(Value) & 0x0000ff00) >> 8;
-      case ARMMCExpr::VK_LO_0_7:
+      case ARM::S_LO_0_7:
         return (int32_t(Value) & 0x000000ff);
 
       default: llvm_unreachable("Unsupported ARMFixup");
@@ -1221,37 +1221,37 @@ uint32_t ARMMCCodeEmitter::getHiLoImmOpValue(const MCInst &MI, unsigned OpIdx,
 
     switch (ARM16Expr->getSpecifier()) {
     default: llvm_unreachable("Unsupported ARMFixup");
-    case ARMMCExpr::VK_HI16:
+    case ARM::S_HI16:
       Kind = MCFixupKind(isThumb(STI) ? ARM::fixup_t2_movt_hi16
                                       : ARM::fixup_arm_movt_hi16);
       break;
-    case ARMMCExpr::VK_LO16:
+    case ARM::S_LO16:
       Kind = MCFixupKind(isThumb(STI) ? ARM::fixup_t2_movw_lo16
                                       : ARM::fixup_arm_movw_lo16);
       break;
-    case ARMMCExpr::VK_HI_8_15:
+    case ARM::S_HI_8_15:
       if (!isThumb(STI))
         llvm_unreachable(":upper_8_15: not supported in Arm state");
       Kind = MCFixupKind(ARM::fixup_arm_thumb_upper_8_15);
       break;
-    case ARMMCExpr::VK_HI_0_7:
+    case ARM::S_HI_0_7:
       if (!isThumb(STI))
         llvm_unreachable(":upper_0_7: not supported in Arm state");
       Kind = MCFixupKind(ARM::fixup_arm_thumb_upper_0_7);
       break;
-    case ARMMCExpr::VK_LO_8_15:
+    case ARM::S_LO_8_15:
       if (!isThumb(STI))
         llvm_unreachable(":lower_8_15: not supported in Arm state");
       Kind = MCFixupKind(ARM::fixup_arm_thumb_lower_8_15);
       break;
-    case ARMMCExpr::VK_LO_0_7:
+    case ARM::S_LO_0_7:
       if (!isThumb(STI))
         llvm_unreachable(":lower_0_7: not supported in Arm state");
       Kind = MCFixupKind(ARM::fixup_arm_thumb_lower_0_7);
       break;
     }
 
-    Fixups.push_back(MCFixup::create(0, E, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, E, Kind));
     return 0;
   }
   // If the expression doesn't have :upper16:, :lower16: on it, it's just a
@@ -1373,7 +1373,7 @@ getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
     MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_10_unscaled);
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
     return (Rn << 9) | (1 << 13);
@@ -1455,7 +1455,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
       Kind = MCFixupKind(ARM::fixup_t2_pcrel_10);
     else
       Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
   } else {
@@ -1495,7 +1495,7 @@ getAddrMode5FP16OpValue(const MCInst &MI, unsigned OpIdx,
       Kind = MCFixupKind(ARM::fixup_t2_pcrel_9);
     else
       Kind = MCFixupKind(ARM::fixup_arm_pcrel_9);
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
   } else {
@@ -1950,7 +1950,7 @@ ARMMCCodeEmitter::getBFAfterTargetOpValue(const MCInst &MI, unsigned OpIdx,
     const MCExpr *DiffExpr = MCBinaryExpr::createSub(
         MO.getExpr(), BranchMO.getExpr(), CTX);
     MCFixupKind Kind = MCFixupKind(ARM::fixup_bfcsel_else_target);
-    Fixups.push_back(llvm::MCFixup::create(0, DiffExpr, Kind, MI.getLoc()));
+    Fixups.push_back(llvm::MCFixup::create(0, DiffExpr, Kind));
     return 0;
   }
 

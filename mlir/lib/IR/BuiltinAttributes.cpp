@@ -18,8 +18,6 @@
 #include "mlir/IR/SymbolTable.h"
 #include "mlir/IR/Types.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/Sequence.h"
-#include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include <optional>
@@ -255,6 +253,15 @@ LogicalResult StridedLayoutAttr::verifyLayout(
   if (shape.size() != getStrides().size())
     return emitError() << "expected the number of strides to match the rank";
 
+  return success();
+}
+
+LogicalResult
+StridedLayoutAttr::getStridesAndOffset(ArrayRef<int64_t>,
+                                       SmallVectorImpl<int64_t> &strides,
+                                       int64_t &offset) const {
+  llvm::append_range(strides, getStrides());
+  offset = getOffset();
   return success();
 }
 

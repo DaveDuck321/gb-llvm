@@ -368,14 +368,24 @@ AVRAsmBackend::createObjectTargetWriter() const {
   return createAVRELFObjectWriter(MCELFObjectTargetWriter::getOSABI(OSType));
 }
 
-void AVRAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+void AVRAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                                const MCValue &Target,
                                MutableArrayRef<char> Data, uint64_t Value,
-                               bool IsResolved,
-                               const MCSubtargetInfo *STI) const {
+                               bool IsResolved) {
+  // AVR sets the fixup value to bypass the assembly time overflow with a
+  // relocation.
+  if (IsResolved) {
+    auto TargetVal = MCValue::get(Target.getAddSym(), Target.getSubSym(), Value,
+                                  Target.getSpecifier());
+    if (forceRelocation(F, Fixup, TargetVal))
+      IsResolved = false;
+  }
+  if (!IsResolved)
+    Asm->getWriter().recordRelocation(F, Fixup, Target, Value);
+
   if (mc::isRelocation(Fixup.getKind()))
     return;
-  adjustFixupValue(Fixup, Target, Value, &Asm.getContext());
+  adjustFixupValue(Fixup, Target, Value, &getContext());
   if (Value == 0)
     return; // Doesn't change encoding.
 
@@ -498,10 +508,8 @@ bool AVRAsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
   return true;
 }
 
-bool AVRAsmBackend::shouldForceRelocation(const MCAssembler &Asm,
-                                          const MCFixup &Fixup,
-                                          const MCValue &Target,
-                                          const MCSubtargetInfo *STI) {
+bool AVRAsmBackend::forceRelocation(const MCFragment &F, const MCFixup &Fixup,
+                                    const MCValue &Target) {
   switch ((unsigned)Fixup.getKind()) {
   default:
     return false;
@@ -516,7 +524,8 @@ bool AVRAsmBackend::shouldForceRelocation(const MCAssembler &Asm,
     // Note that trying to actually link that relocation *would* fail, but the
     // hopes are that the module we're currently compiling won't be actually
     // linked to the final binary.
-    return !adjust::adjustRelativeBranch(Size, Fixup, Offset, STI);
+    return !adjust::adjustRelativeBranch(Size, Fixup, Offset,
+                                         getContext().getSubtargetInfo());
   }
 
   case AVR::fixup_call:
