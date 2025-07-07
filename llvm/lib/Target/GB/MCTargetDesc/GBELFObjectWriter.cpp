@@ -21,14 +21,14 @@ public:
 
   ~GBELFObjectWriter() override = default;
 
-  unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
-                        const MCFixup &Fixup, bool IsPCRel) const override;
+  unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
+                        bool IsPCRel) const override;
 };
 
 } // namespace
 
-unsigned GBELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
-                                         const MCFixup &Fixup,
+unsigned GBELFObjectWriter::getRelocType(const MCFixup &Fixup,
+                                         const MCValue &Target,
                                          bool IsPCRel) const {
   unsigned Kind = Fixup.getTargetKind();
   if (mc::isRelocation(Fixup.getKind())) {

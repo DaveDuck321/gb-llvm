@@ -36,7 +36,8 @@ GBTargetInfo::GBTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
   Int16Type = SignedInt;
   Char32Type = UnsignedLong;
   SigAtomicType = SignedChar;
-  resetDataLayout("e-S16-p:16:16-i8:8-i16:16-a:0-m:e-n8:16");
+  resetDataLayout(
+      "e-S16-p:16:16-i8:8-i16:16-i32:16-i64:16-f32:16-f64:16-a:0-m:e-n8:16");
 }
 
 void GBTargetInfo::getTargetDefines(const LangOptions &Opts,

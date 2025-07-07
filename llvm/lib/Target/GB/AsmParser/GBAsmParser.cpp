@@ -4,11 +4,12 @@
 #include "TargetInfo/GBTargetInfo.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmMacro.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCRegister.h"
@@ -69,12 +70,13 @@ class GBOperand : public MCParsedAsmOperand {
   };
 
   class Printer {
+    const MCAsmInfo &MAI;
     raw_ostream &OS;
 
   public:
-    Printer(raw_ostream &OS) : OS(OS) {}
+    Printer(const MCAsmInfo &MAI, raw_ostream &OS) : MAI(MAI), OS(OS) {}
     void operator()(const Reg &Op) { OS << "<register " << Op.RegNum << ">"; }
-    void operator()(const Imm &Op) { OS << *Op.Expr; }
+    void operator()(const Imm &Op) { MAI.printExpr(OS, *Op.Expr); }
     void operator()(const Flag &Flag) { OS << Flag.Flag; }
     void operator()(const Token &Token) { OS << "'" << Token.Val << "'"; }
   };
@@ -129,7 +131,9 @@ public:
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
 
-  void print(raw_ostream &OS) const override { std::visit(Printer{OS}, Data); };
+  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
+    std::visit(Printer{MAI, OS}, Data);
+  };
 
   // Used by tablegen
   StringRef getToken() const { return std::get<Token>(Data).Val; };

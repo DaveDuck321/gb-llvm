@@ -5,7 +5,7 @@
 # RUN:      | FileCheck -check-prefixes=CHECK-FIXED %s
 # RUN: llvm-mc %s -triple=gb -filetype=obj \
 # RUN:      | llvm-readelf -r - \
-# RUN:      | FileCheck -check-prefixes=CHECK-RELOC-TYPE,CHECK-RELOC-OFFSET,CHECK-RELOC-NAME %s
+# RUN:      | FileCheck -check-prefixes=CHECK-RELOC %s
 
 # Check that fixups work within a single file
 
@@ -48,15 +48,7 @@ jump_label_end:
 # CHECK-FIXED: ldh ($ee), a
 # CHECK-FIXED: ldh a, ($ee)
 # CHECK-FIXED: ld a, ($eee1)
+# CHECK-FIXED: add $e1
+# CHECK-FIXED: adc $ee
 
-# I dislike this but it looks like only the linker can relocate these
-# CHECK-FIXED: add $00
-# CHECK-FIXED: adc $00
-
-# CHECK-RELOC-OFFSET: 00000013
-# CHECK-RELOC-TYPE: R_GB_LO_16
-# CHECK-RELOC-NAME: eee1
-
-# CHECK-RELOC-OFFSET: 00000015
-# CHECK-RELOC-TYPE: R_GB_HI_16
-# CHECK-RELOC-NAME: eee1
+# CHECK-RELOC: There are no relocations in this file

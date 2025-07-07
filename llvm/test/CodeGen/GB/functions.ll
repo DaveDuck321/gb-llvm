@@ -135,7 +135,7 @@ define i32 @large_return() nounwind {
 define i32 @call_large_return() nounwind {
 ; GBI-O3-LABEL: call_large_return:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    add sp, -10
+; GBI-O3-NEXT:    add sp, -8
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
@@ -183,7 +183,7 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    add sp, 10
+; GBI-O3-NEXT:    add sp, 8
 ; GBI-O3-NEXT:    ret
   %val = call i32 @large_return()
   ret i32 %val

@@ -1,4 +1,5 @@
 #include "GBMCExpr.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCValue.h"
@@ -22,7 +23,7 @@ void GBMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   default:
     break;
   }
-  Expr->print(OS, MAI);
+  MAI->printExpr(OS, *Expr);
 }
 
 bool GBMCExpr::evaluateAsRelocatableImpl(MCValue &Res,

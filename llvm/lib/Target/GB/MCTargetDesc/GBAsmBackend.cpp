@@ -29,10 +29,9 @@ public:
 
   MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override;
 
-  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
-                  const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsResolved,
-                  const MCSubtargetInfo *STI) const override;
+  void applyFixup(const MCFragment &, const MCFixup &, const MCValue &,
+                  MutableArrayRef<char> Data, uint64_t FixupValue,
+                  bool IsResolved) override;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value) const override;
@@ -57,16 +56,16 @@ MCFixupKindInfo GBAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   return MCAsmBackend::getFixupKindInfo(Kind);
 }
 
-void GBAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+void GBAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                               const MCValue &Target, MutableArrayRef<char> Data,
-                              uint64_t Value, bool IsResolved,
-                              const MCSubtargetInfo *STI) const {
+                              uint64_t Value, bool IsResolved) {
   // TODO: what does IsResolved do? Should I read it?
-  auto &Ctx = Asm.getContext();
+  auto &Ctx = getContext();
   const auto Kind = Fixup.getKind();
   const auto &Info = getFixupKindInfo(Kind);
 
   assert(Info.TargetOffset == 0);
+  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
 
   const bool IsSigned = [Kind] {
     switch ((unsigned)Kind) {

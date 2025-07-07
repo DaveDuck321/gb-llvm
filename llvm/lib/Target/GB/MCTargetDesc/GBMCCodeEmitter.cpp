@@ -89,6 +89,7 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
            SubExpr->getKind() == MCExpr::SymbolRef ||
            SubExpr->getKind() == MCExpr::Unary);
 
+    bool IsPCRel = false;
     const auto &Desc = MCII.get(MI.getOpcode());
     const auto GBCategory =
         (GB::GBFixupCategory)(Desc.TSFlags & GB::FixupTSMask);
@@ -111,6 +112,7 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
         assert(GBExpr->getSpecifier() == GBMCExpr::SPECIFIER_NONE);
         return MCFixupKind::FK_Data_2;
       case GB::FIXUP_CATEGORY_PCREL_1:
+        IsPCRel = true;
         assert(GBExpr->getSpecifier() == GBMCExpr::SPECIFIER_NONE);
         return MCFixupKind::FK_PCRel_1;
       }
@@ -123,8 +125,7 @@ unsigned GBMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     }
 
     // Offset = 1 to skip opcode byte
-    Fixups.push_back(
-        MCFixup::create(1, GBExpr, (MCFixupKind)Kind, MI.getLoc()));
+    Fixups.push_back(MCFixup::create(1, GBExpr, (MCFixupKind)Kind, IsPCRel));
     return 0;
   }
 

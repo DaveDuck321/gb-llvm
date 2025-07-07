@@ -18,9 +18,10 @@ using namespace llvm;
 
 #include "GBGenAsmWriter.inc"
 
-static bool printIfExpression(const MCOperand &Operand, raw_ostream &OS) {
+static bool printIfExpression(const MCAsmInfo &MAI, const MCOperand &Operand,
+                              raw_ostream &OS) {
   if (Operand.isExpr()) {
-    OS << *Operand.getExpr();
+    MAI.printExpr(OS, *Operand.getExpr());
     return true;
   }
   return false;
@@ -47,7 +48,7 @@ void GBInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printU3ImmOperand(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  if (not printIfExpression(Operand, OS)) {
+  if (not printIfExpression(MAI, Operand, OS)) {
     assert(Operand.isImm());
     OS << Operand.getImm();
   }
@@ -56,7 +57,7 @@ void GBInstPrinter::printU3ImmOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printS8ImmOperand(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  if (not printIfExpression(Operand, OS)) {
+  if (not printIfExpression(MAI, Operand, OS)) {
     assert(Operand.isImm());
     OS << Operand.getImm();
   }
@@ -65,7 +66,7 @@ void GBInstPrinter::printS8ImmOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  if (not printIfExpression(Operand, OS)) {
+  if (not printIfExpression(MAI, Operand, OS)) {
     assert(Operand.isImm());
     OS << "$";
     llvm::write_hex(OS, (uint8_t)Operand.getImm(), HexPrintStyle::Lower, 2);
@@ -75,7 +76,7 @@ void GBInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
 void GBInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &OS) const {
   const auto &Operand = MI->getOperand(OpNo);
-  if (not printIfExpression(Operand, OS)) {
+  if (not printIfExpression(MAI, Operand, OS)) {
     assert(Operand.isImm());
     OS << "$";
     llvm::write_hex(OS, (uint16_t)Operand.getImm(), HexPrintStyle::Lower, 4);
@@ -111,7 +112,7 @@ void GBInstPrinter::printPCRelS8ImmOperand(const MCInst *MI, uint64_t Addr,
                                            raw_ostream &OS) const {
   // TODO GB: should I even use Addr?
   const auto &Operand = MI->getOperand(OpNo);
-  if (not printIfExpression(Operand, OS)) {
+  if (not printIfExpression(MAI, Operand, OS)) {
     assert(Operand.isImm());
     OS << Operand.getImm();
   }
