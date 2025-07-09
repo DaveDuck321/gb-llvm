@@ -1388,8 +1388,7 @@ bool PeepholeOptimizer::isMoveImmediate(
   if (!Reg.isVirtual())
     return false;
 
-  int64_t ImmVal;
-  if (!MI.isMoveImmediate() && !TII->getConstValDefinedInReg(MI, Reg, ImmVal))
+  if (!MI.isMoveImmediate())
     return false;
 
   ImmDefMIs.insert(std::make_pair(Reg, &MI));
@@ -1691,6 +1690,7 @@ bool PeepholeOptimizer::run(MachineFunction &MF) {
 
   for (MachineBasicBlock &MBB : MF) {
     bool SeenMoveImm = false;
+    LLVM_DEBUG(dbgs() << "Peephole MBB: "; MBB.print(dbgs()); dbgs() << "\n");
 
     // During this forward scan, at some point it needs to answer the question
     // "given a pointer to an MI in the current BB, is it located before or

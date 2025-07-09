@@ -462,6 +462,26 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   return false;
 }
 
+bool GBInstrInfo::getConstValDefinedInReg(const MachineInstr &MI,
+                                          const Register Reg,
+                                          int64_t &ImmVal) const {
+  MachineFunction const *MF = MI.getParent()->getParent();
+  TargetRegisterInfo const *TRI = MF->getRegInfo().getTargetRegisterInfo();
+  switch (MI.getOpcode()) {
+  default:
+    return false;
+  case GB::LDI16:
+  case GB::LDI8_r:
+    if (not MI.getOperand(1).isImm()) {
+      return false;
+    }
+
+    assert(MI.definesRegister(Reg, TRI));
+    ImmVal = MI.getOperand(1).getImm();
+    return true;
+  }
+}
+
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "gb-folding"
 
@@ -530,8 +550,9 @@ bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
         setGBFlag(Operand, GBMOFlag::UPPER_PART);
       } else {
         LLVM_DEBUG(
-            dbgs() << "Fold failed: cannot fold into 16-bit register assignment"
-                   << UseMI.getOpcode() << " ";
+            dbgs()
+                << "Fold failed: cannot fold into 16-bit register assignment: "
+                << UseMI.getOpcode() << " ";
             UseMI.print(dbgs()));
         return false;
       }

@@ -72,6 +72,9 @@ struct GBInstrInfo final : public GBGenInstrInfo {
   bool
   reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
+  bool getConstValDefinedInReg(const MachineInstr &MI, const Register Reg,
+                               int64_t &ImmVal) const override;
+
   bool foldAddressImmediate(MachineInstr &UseMI,
                             MachineOperand &DefMIImmOperand, Register Reg,
                             MachineRegisterInfo *MRI) const;
