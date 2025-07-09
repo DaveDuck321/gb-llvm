@@ -6,6 +6,7 @@
 
 #include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -31,6 +32,8 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
+
+  bool shouldAssumeDSOLocal(const GlobalValue *GV) const override;
 
   const GBSubtarget *getGBSubtargetImpl(const Function &) const {
     return &Subtarget;

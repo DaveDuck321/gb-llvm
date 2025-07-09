@@ -53,6 +53,13 @@ GBTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(std::make_unique<GBTTIImpl>(this, F));
 }
 
+bool GBTargetMachine::shouldAssumeDSOLocal(const GlobalValue *GV) const {
+  if (RM == Reloc::Static) {
+    return true;
+  }
+  return TargetMachine::shouldAssumeDSOLocal(GV);
+}
+
 namespace {
 class GBPassConfig : public TargetPassConfig {
 public:

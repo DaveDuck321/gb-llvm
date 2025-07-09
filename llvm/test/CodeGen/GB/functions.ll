@@ -244,12 +244,10 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
  define i8 @call_untyped_fn() {
 ; GBI-O3-LABEL: call_untyped_fn:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld bc, untyped_fn_symbol
-; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld a, (untyped_fn_symbol+1)
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, (untyped_fn_symbol)
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    call (hl)
 ; GBI-O3-NEXT:    ret
   %1 = load ptr, ptr @untyped_fn_symbol

@@ -265,7 +265,7 @@ public:
 
   bool isPositionIndependent() const;
 
-  bool shouldAssumeDSOLocal(const GlobalValue *GV) const;
+  virtual bool shouldAssumeDSOLocal(const GlobalValue *GV) const;
 
   /// Returns true if this target uses emulated TLS.
   bool useEmulatedTLS() const;

@@ -7,17 +7,15 @@
 define i8 @test_addresses() nounwind {
 ; GBI-O3-LABEL: test_addresses:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld bc, addr
-; GBI-O3-NEXT:    ld d, b
-; GBI-O3-NEXT:    ld e, c
-; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld bc, addr+1
 ; GBI-O3-NEXT:    ld a, %hi .Ltmp0
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld a, %lo .Ltmp0
 ; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld de, addr
+; GBI-O3-NEXT:    ld a, %lo .Ltmp0
+; GBI-O3-NEXT:    ld (de), a
 ; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    jp (hl)
 ; GBI-O3-NEXT:  .Ltmp0: # Block address taken
@@ -37,12 +35,10 @@ block:
 define i16 @load_i16_global() nounwind {
 ; GBI-O3-LABEL: load_i16_global:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld bc, val16
-; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld a, (val16+1)
 ; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, (val16)
+; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ret
   %1 = load i16, ptr @val16
   ret i16 %1
@@ -60,26 +56,16 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld de, G+1
 ; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld a, %lo G
-; GBI-O3-NEXT:    add $12
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, %hi G
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld de, G+18
 ; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld a, %lo G
-; GBI-O3-NEXT:    add $13
-; GBI-O3-NEXT:    ld e, a
-; GBI-O3-NEXT:    ld a, %hi G
-; GBI-O3-NEXT:    adc $00
-; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld de, G+19
 ; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    ld (de), a
