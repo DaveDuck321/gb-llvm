@@ -208,8 +208,15 @@ def imm8 : ImmLeaf<i8, [{return isInt<8>(Imm);}]>;
 def imm16 : ImmLeaf<i16, [{return isInt<16>(Imm);}]>;
 def io_imm16 : ImmLeaf<i16, [{return isInt<16>(Imm) && (Imm & 0xff00U) == 0xff00U;}]>;
 
-def to_lower_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant(N->getZExtValue() & 0xFF, SDLoc(N), MVT::i8); }]>;
 def to_upper_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant((N->getZExtValue() >> 8) & 0xFF, SDLoc(N), MVT::i8); }]>;
+def to_lower_imm : SDNodeXForm<imm, [{ return CurDAG->getTargetConstant(N->getZExtValue() & 0xFF, SDLoc(N), MVT::i8); }]>;
+
+// Sync with GBMOFlags.hpp
+def to_upper_global : SDNodeXForm<tglobaladdr, [{ return CurDAG->getTargetGlobalAddress(N->getGlobal(), SDLoc(N), MVT::i8, N->getOffset(), 1); }]>;
+def to_lower_global : SDNodeXForm<tglobaladdr, [{ return CurDAG->getTargetGlobalAddress(N->getGlobal(), SDLoc(N), MVT::i8, N->getOffset(), 2); }]>;
+
+def to_upper_symbol : SDNodeXForm<texternalsym, [{ return CurDAG->getTargetExternalSymbol(N->getSymbol(), MVT::i8, 1); }]>;
+def to_lower_symbol : SDNodeXForm<texternalsym, [{ return CurDAG->getTargetExternalSymbol(N->getSymbol(), MVT::i8, 2); }]>;
 
 // Combine and split
 def SDT_GBCOMBINE : SDTypeProfile<1, 2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
@@ -299,7 +306,13 @@ def : Pat<(BR_CC_NODE SETNE,  bb:$imm), (JP_COND GBFLAG_NZ.Encoding, bb:$imm)>;
 // Constants for pattern matching
 def : Pat<(imm8:$imm), (LDI8_r imm8:$imm)>;
 def : Pat<(imm16:$imm), (LDI16 imm16:$imm)>;
-def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 imm16:$imm)>;
+def : Pat<(LOWER_NODE (ADDR_WRAPPER tglobaladdr:$imm)), (LDI8_r (to_lower_global $imm))>;
+def : Pat<(UPPER_NODE (ADDR_WRAPPER tglobaladdr:$imm)), (LDI8_r (to_upper_global $imm))>;
+def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 $imm)>;
+def : Pat<(LOWER_NODE (ADDR_WRAPPER texternalsym:$imm)), (LDI8_r (to_lower_symbol $imm))>;
+def : Pat<(UPPER_NODE (ADDR_WRAPPER texternalsym:$imm)), (LDI8_r (to_upper_symbol $imm))>;
+def : Pat<(ADDR_WRAPPER texternalsym:$imm), (LDI16 $imm)>;
+
 def : Pat<(ADDR_WRAPPER tblockaddress:$imm), (LDI16 imm16:$imm)>;
 
 // Frame index.
@@ -364,11 +377,11 @@ let mayStore = true, Uses = [A] in {
 }
 
 def : Pat<(load io_imm16:$imm), (LDH_A_iImm (to_lower_imm $imm))>;
-def : Pat<(load GPR16:$rs), (LD_r_iGPR16 GPR16:$rs)>;
-def : Pat<(extload GPR16:$rs), (LD_r_iGPR16 GPR16:$rs)>;
+def : Pat<(load IntReg16:$rs), (LD_r_iGPR16 IntReg16:$rs)>;
+def : Pat<(extload IntReg16:$rs), (LD_r_iGPR16 IntReg16:$rs)>;
 
 def : Pat<(store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
-def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
+def : Pat<(store A, IntReg16:$rs), (LD_iGPR16_A IntReg16:$rs)>;
 
 let mayLoad = true, Uses = [SP] in {
   def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs IntReg16:$r), (ins simm8:$i)>;

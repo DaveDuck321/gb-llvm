@@ -12,7 +12,6 @@ define void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-NEXT:    ld a, (_ZL8scroll_y)
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld de, $0000
-; GBI-NEXT:    ld c, $01
 ; GBI-NEXT:    ld h, d
 ; GBI-NEXT:    ld l, e
 ; GBI-NEXT:  .LBB0_1: # %for.cond
@@ -20,7 +19,7 @@ define void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ld (de), a
 ; GBI-NEXT:    ld a, l
-; GBI-NEXT:    or c
+; GBI-NEXT:    or $01
 ; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    jr .LBB0_1
 entry:
@@ -32,5 +31,66 @@ for.cond:                                         ; preds = %for.cond, %entry
   %cmp.not = icmp eq i16 %__begin1.0.idx, 0
   store i8 %0, ptr null, align 1
   %__begin1.0.add = or i16 %__begin1.0.idx, 1
+  br label %for.cond
+}
+
+
+%struct.Coord = type { i8, i8 }
+%"struct.libgb::Array.1" = type { [4 x %struct.Coord] }
+
+@_ZN12FallingPiece10m_positionE = external dso_local global %struct.Coord
+@_ZL10wall_kicks = external constant %"struct.libgb::Array.1"
+
+define void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
+; GBI-LABEL: _ZN12FallingPiece20try_rotate_clockwiseEv:
+; GBI:       # %bb.0: # %entry
+; GBI-NEXT:    add sp, -4
+; GBI-NEXT:    ld b, h
+; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld hl, sp, 0
+; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    ld (hl), b
+; GBI-NEXT:  .LBB1_1: # %for.cond
+; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    ld hl, sp, 0
+; GBI-NEXT:    ld e, (hl)
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld d, (hl)
+; GBI-NEXT:    ld a, e
+; GBI-NEXT:    add %lo _ZL10wall_kicks
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld a, d
+; GBI-NEXT:    adc %hi _ZL10wall_kicks
+; GBI-NEXT:    ld b, a
+; GBI-NEXT:    ld d, b
+; GBI-NEXT:    ld e, c
+; GBI-NEXT:    inc de
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld d, h
+; GBI-NEXT:    ld e, l
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld a, (_ZN12FallingPiece10m_positionE+1)
+; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld l, c
+; GBI-NEXT:    or (hl)
+; GBI-NEXT:    ld (de), a
+; GBI-NEXT:    ld hl, $0000
+; GBI-NEXT:    ld b, $00
+; GBI-NEXT:    call $0000
+; GBI-NEXT:    jr .LBB1_1
+entry:
+  %agg.tmp5 = alloca %struct.Coord, align 2
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.cond, %entry
+  %__begin1.0.ptr = getelementptr i8, ptr @_ZL10wall_kicks, i16 %__begin1.0.idx
+  %0 = load i16, ptr %__begin1.0.ptr, align 1
+  %1 = load i8, ptr getelementptr inbounds nuw (i8, ptr @_ZN12FallingPiece10m_positionE, i16 1), align 1
+  %target_coord.sroa.6.0.insert.ext = zext i8 %1 to i16
+  %target_coord.sroa.0.0.insert.insert = or i16 %target_coord.sroa.6.0.insert.ext, %0
+  store i16 %target_coord.sroa.0.0.insert.insert, ptr %agg.tmp5, align 2
+  %call6 = tail call i1 null(ptr null, i8 0)
   br label %for.cond
 }

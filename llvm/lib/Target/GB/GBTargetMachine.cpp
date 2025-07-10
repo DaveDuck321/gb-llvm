@@ -82,10 +82,13 @@ TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void GBPassConfig::addMachineSSAOptimization() {
+  TargetPassConfig::addMachineSSAOptimization();
+
+  // Run after LICM and fold immediates back into loops
+  // TODO: We will undo this if there are registers available after allocation
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     addPass(createGBFoldImmediates(getGBTargetMachine(), getOptLevel()));
   }
-  TargetPassConfig::addMachineSSAOptimization();
 }
 
 bool GBPassConfig::addInstSelector() {

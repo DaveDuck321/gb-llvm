@@ -100,6 +100,7 @@ void GBInstructionRelaxation::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<MachineDominatorTreeWrapperPass>();
   AU.addRequired<MachineDominanceFrontier>();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 bool GBInstructionRelaxation::mergeLoadImmStore(MachineFunction &MF,

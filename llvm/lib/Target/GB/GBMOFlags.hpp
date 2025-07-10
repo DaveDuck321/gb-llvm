@@ -3,6 +3,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 
 namespace llvm {
+// Sync with tablegen to_*_global
 enum class GBMOFlag : unsigned {
   NONE = 0,
   UPPER_PART = 1,

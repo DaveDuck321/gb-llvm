@@ -211,17 +211,13 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:  .LBB9_2:
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    bit 0, d
-; GBI-O3-NEXT:    jr nz, .LBB9_4
+; GBI-O3-NEXT:    jr z, .LBB9_4
 ; GBI-O3-NEXT:  # %bb.3:
-; GBI-O3-NEXT:    push hl
-; GBI-O3-NEXT:    ld hl, sp, 3
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    jr .LBB9_5
+; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:  .LBB9_4:
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    ld hl, sp, 3
-; GBI-O3-NEXT:    ld (hl), $01
-; GBI-O3-NEXT:  .LBB9_5:
+; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, h
@@ -250,8 +246,7 @@ define i32 @add32(i32 %in) nounwind {
 ; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    pop af
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld b, $00
-; GBI-O3-NEXT:    adc b
+; GBI-O3-NEXT:    adc $00
 ; GBI-O3-NEXT:    ld (de), a
 ; GBI-O3-NEXT:    ld hl, sp, 3
 ; GBI-O3-NEXT:    ld a, (hl)
