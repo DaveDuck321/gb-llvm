@@ -137,6 +137,7 @@ add_clang_library(clangCodeGen
   Targets/BPF.cpp
   Targets/CSKY.cpp
   Targets/DirectX.cpp
+  Targets/GB.cpp
   Targets/Hexagon.cpp
   Targets/Lanai.cpp
   Targets/LoongArch.cpp
