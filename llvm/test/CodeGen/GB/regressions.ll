@@ -12,15 +12,13 @@ define void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-NEXT:    ld a, (_ZL8scroll_y)
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld de, $0000
-; GBI-NEXT:    ld h, d
-; GBI-NEXT:    ld l, e
 ; GBI-NEXT:  .LBB0_1: # %for.cond
 ; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    ld (de), a
-; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld ($0000), a
+; GBI-NEXT:    ld a, e
 ; GBI-NEXT:    or $01
-; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld e, a
 ; GBI-NEXT:    jr .LBB0_1
 entry:
   %0 = load i8, ptr @_ZL8scroll_y, align 1

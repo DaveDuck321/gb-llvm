@@ -492,10 +492,6 @@ bool GBInstrInfo::foldAddressImmediate(MachineInstr &UseMI, MachineOperand &Imm,
   auto MBBI = UseMI.getIterator();
   auto DL = UseMI.getDebugLoc();
 
-  if (not MRI->hasOneNonDBGUse(Reg)) {
-    return false;
-  }
-
   switch (UseMI.getOpcode()) {
   default:
     LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "

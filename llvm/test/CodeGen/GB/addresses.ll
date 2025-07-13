@@ -7,15 +7,13 @@
 define i8 @test_addresses() nounwind {
 ; GBI-O3-LABEL: test_addresses:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld bc, addr+1
 ; GBI-O3-NEXT:    ld a, %hi .Ltmp0
-; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld de, addr
+; GBI-O3-NEXT:    ld (addr+1), a
 ; GBI-O3-NEXT:    ld a, %lo .Ltmp0
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld (addr), a
+; GBI-O3-NEXT:    ld a, (addr+1)
 ; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld a, (addr)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    jp (hl)
 ; GBI-O3-NEXT:  .Ltmp0: # Block address taken
@@ -51,24 +49,20 @@ define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    ld de, G
-; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld a, (G)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld de, G+1
-; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld (G), a
+; GBI-O3-NEXT:    ld a, (G+1)
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld de, G+18
-; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld (G+1), a
+; GBI-O3-NEXT:    ld a, (G+18)
 ; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ld (de), a
-; GBI-O3-NEXT:    ld de, G+19
-; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld (G+18), a
+; GBI-O3-NEXT:    ld a, (G+19)
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    ld (G+19), a
 ; GBI-O3-NEXT:    ret
   %1 = load volatile i16, ptr @G
   store i16 %a, ptr @G
