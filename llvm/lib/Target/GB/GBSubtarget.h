@@ -27,6 +27,8 @@ public:
   GBSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
               const TargetMachine &TM);
 
+  bool enableSubRegLiveness() const override { return true; }
+
   const GBInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const GBFrameLowering *getFrameLowering() const override {
     return &FrameLowering;

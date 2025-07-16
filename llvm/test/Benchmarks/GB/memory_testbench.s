@@ -23,7 +23,7 @@ main:
     ld a, (hl)
 # EXPECT: Debug trap!
 # EXPECT-CYCLE-O3: 1041
-# EXPECT-CYCLE-Oz: 1370
+# EXPECT-CYCLE-Oz: 1292
 # EXPECT: a=ee
     debugtrap
 
@@ -37,7 +37,7 @@ main:
     ld a, (hl)
 # EXPECT: Debug trap!
 # EXPECT-CYCLE-O3: 1041
-# EXPECT-CYCLE-Oz: 1370
+# EXPECT-CYCLE-Oz: 1292
 # EXPECT: a=01
     debugtrap
 
@@ -52,7 +52,7 @@ main:
     ld a, (hl)
 # EXPECT: Debug trap!
 # EXPECT-CYCLE-O3: 1372
-# EXPECT-CYCLE-Oz: 1676
+# EXPECT-CYCLE-Oz: 1430
 # EXPECT: a=ee
     debugtrap
 

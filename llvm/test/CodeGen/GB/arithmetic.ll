@@ -183,11 +183,10 @@ define i16 @add16(i16 %a) nounwind {
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $14
-; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ret
   %1 = add i16 %a, 20
   ret i16 %1

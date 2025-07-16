@@ -51,7 +51,7 @@ define i16 @sext16_i1(i1 %0) {
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    sub b
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ret
   %res = sext i1 %0 to i16
   ret i16 %res
@@ -61,7 +61,7 @@ define i16 @sext16_i8(i8 %0) {
 ; GBI-O3-LABEL: sext16_i8:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld l, b
-; GBI-O3-NEXT:    ld h, l
+; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    sra h
 ; GBI-O3-NEXT:    sra h

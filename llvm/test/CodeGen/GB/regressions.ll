@@ -51,13 +51,12 @@ define void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
 ; GBI-NEXT:  .LBB1_1: # %for.cond
 ; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    ld hl, sp, 0
-; GBI-NEXT:    ld e, (hl)
+; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld d, (hl)
-; GBI-NEXT:    ld a, e
+; GBI-NEXT:    ld b, (hl)
 ; GBI-NEXT:    add %lo _ZL10wall_kicks
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, d
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    adc %hi _ZL10wall_kicks
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld d, b

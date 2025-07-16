@@ -217,15 +217,14 @@ define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld a, (bc)
-; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $07
-; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld a, d
-; GBI-NEXT:    ld l, c
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    add (hl)
 ; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    ld a, $00
