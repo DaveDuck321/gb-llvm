@@ -473,6 +473,7 @@ protected:
   /// and rewriting. \returns true if any passes were added.
   virtual bool addRegAssignAndRewriteFast();
   virtual bool addRegAssignAndRewriteOptimized();
+  virtual void addLatePreRegAlloc() {}
 };
 
 LLVM_ABI void registerCodeGenCallback(PassInstrumentationCallbacks &PIC,

@@ -19,6 +19,7 @@ FunctionPass *createGBPushPopCombine(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBInstructionRelaxation(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBBranchRelaxation(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBFoldImmediates(GBTargetMachine &, CodeGenOptLevel);
+FunctionPass *createGBEarlyLowerIntoStack(GBTargetMachine &);
 
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);

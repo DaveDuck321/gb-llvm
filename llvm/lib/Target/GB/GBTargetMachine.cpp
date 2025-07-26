@@ -70,6 +70,7 @@ public:
     return getTM<GBTargetMachine>();
   }
 
+  void addLatePreRegAlloc() override;
   void addMachineSSAOptimization() override;
   bool addInstSelector() override;
   void addPreSched2() override;
@@ -79,6 +80,14 @@ public:
 
 TargetPassConfig *GBTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new GBPassConfig(*this, PM);
+}
+
+void GBPassConfig::addLatePreRegAlloc() {
+  TargetPassConfig::addLatePreRegAlloc();
+
+  if (TM->getOptLevel() != CodeGenOptLevel::None) {
+    addPass(createGBEarlyLowerIntoStack(getGBTargetMachine()));
+  }
 }
 
 void GBPassConfig::addMachineSSAOptimization() {

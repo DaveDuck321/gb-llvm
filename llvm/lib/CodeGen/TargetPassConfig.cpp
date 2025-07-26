@@ -1426,6 +1426,10 @@ bool TargetPassConfig::addRegAssignAndRewriteFast() {
 }
 
 bool TargetPassConfig::addRegAssignAndRewriteOptimized() {
+  // Allow the target to run custom passes after phi elimination and interval
+  // coalescing but before full register allocation.
+  addLatePreRegAlloc();
+
   // Add the selected register allocation pass.
   addPass(createRegAllocPass(true));
 
