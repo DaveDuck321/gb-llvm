@@ -30,7 +30,7 @@ define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument0_i16:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %0 to i8
   ret i8 %res
@@ -39,7 +39,7 @@ define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument1_i16:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %1 to i8
   ret i8 %res
@@ -79,8 +79,8 @@ define i8 @call_argument2() nounwind {
 define i8 @call_argument1_i16() nounwind {
 ; GBI-O3-LABEL: call_argument1_i16:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld hl, $0000
-; GBI-O3-NEXT:    ld bc, $0001
+; GBI-O3-NEXT:    ld bc, $0000
+; GBI-O3-NEXT:    ld de, $0001
 ; GBI-O3-NEXT:    call argument1_i16
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument1_i16(i16 0, i16 1)
@@ -92,14 +92,14 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld (hl), b # 1-byte Folded Spill
 ; GBI-O3-NEXT:    ld b, $00
 ; GBI-O3-NEXT:    ld c, $01
 ; GBI-O3-NEXT:    ld d, $02
 ; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument2
 ; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, (hl) # 1-byte Folded Reload
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
@@ -123,11 +123,14 @@ define i32 @large_return() nounwind {
 ; GBI-O3-LABEL: large_return:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, $01
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (bc), a
+; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (bc), a
+; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    ld (bc), a
+; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    ld (bc), a
 ; GBI-O3-NEXT:    ret
   ret i32 1
 }
@@ -135,22 +138,20 @@ define i32 @large_return() nounwind {
 define i32 @call_large_return() nounwind {
 ; GBI-O3-LABEL: call_large_return:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    add sp, -8
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    add sp, -12
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld hl, sp, 8
 ; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld hl, sp, 6
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call large_return
-; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld hl, sp, 6
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld d, (hl)
@@ -163,27 +164,34 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    inc bc
 ; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld (hl), a # 1-byte Folded Spill
+; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld (hl), a # 1-byte Folded Spill
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld e, (hl)
 ; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, d
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld a, (hl) # 1-byte Folded Reload
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld hl, sp, 3
+; GBI-O3-NEXT:    ld a, (hl) # 1-byte Folded Reload
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    inc de
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    add sp, 8
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    add sp, 12
 ; GBI-O3-NEXT:    ret
   %val = call i32 @large_return()
   ret i32 %val
@@ -201,16 +209,16 @@ define i16 @test_spill_arg16(i16 %0) nounwind {
 ; GBI-O3-LABEL: test_spill_arg16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    call empty16
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i16 @empty16()
@@ -230,10 +238,10 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
 ; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld (hl), b # 1-byte Folded Spill
 ; GBI-O3-NEXT:    call empty8
 ; GBI-O3-NEXT:    ld hl, sp, 1
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, (hl) # 1-byte Folded Reload
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %val = call i8 @empty8(i8 %0)
@@ -267,7 +275,7 @@ define i1 @tail_caller(ptr %0) {
 define i1 @tail_callee(ptr %0) {
 ; GBI-O3-LABEL: tail_callee:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    add $f9
 ; GBI-O3-NEXT:    cp $01
 ; GBI-O3-NEXT:    rla
@@ -281,18 +289,16 @@ define ptr @call_with_save(ptr %0) {
 ; GBI-O3-LABEL: call_with_save:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call tail_callee
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %2 = tail call i1 @tail_callee(ptr %0)
@@ -302,7 +308,7 @@ define ptr @call_with_save(ptr %0) {
 define internal fastcc i1 @fastcc_callee(ptr %0) {
 ; GBI-O3-LABEL: fastcc_callee:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, (hl)
+; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    add $f9
 ; GBI-O3-NEXT:    cp $01
 ; GBI-O3-NEXT:    rla
@@ -316,18 +322,16 @@ define ptr @call_fastcc(ptr %0) {
 ; GBI-O3-LABEL: call_fastcc:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call fastcc_callee
 ; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld c, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
   %2 = tail call fastcc i1 @fastcc_callee(ptr %0)

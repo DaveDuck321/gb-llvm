@@ -123,6 +123,36 @@ public:
     // Let's return our preferred size
     return TypeSize::getFixed(8);
   }
+
+  // unsigned getInliningThresholdMultiplier() const override { return 1; }
+  // unsigned getInliningCostBenefitAnalysisSavingsMultiplier() const override {
+  //   return 1;
+  // }
+
+  // unsigned getInliningCostBenefitAnalysisProfitableMultiplier() const override {
+  //   return 1000;
+  // }
+
+  // int getInliningLastCallToStaticBonus() const override {
+  //   // This is the value of InlineConstants::LastCallToStaticBonus before it was
+  //   // removed along with the introduction of this function.
+  //   return 0;
+  // }
+
+  // unsigned adjustInliningThreshold(const CallBase *CB) const override {
+  //   return 0;
+  // }
+
+  // unsigned getCallerAllocaCost(const CallBase *CB,
+  //                              const AllocaInst *AI) const override {
+  //   return 0;
+  // };
+
+  // InstructionCost getMemcpyCost(const Instruction *I) const override {
+  //   return TTI::TCC_Expensive;
+  // }
+
+  //uint64_t getMaxMemIntrinsicInlineSizeThreshold() const override { return 8; }
 };
 
 } // end namespace llvm

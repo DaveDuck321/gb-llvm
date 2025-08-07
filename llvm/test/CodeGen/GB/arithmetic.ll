@@ -37,6 +37,8 @@ define i8 @add_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: add_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
 ; GBI-NEXT:    add (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %hl
@@ -78,6 +80,8 @@ define i8 @sub_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: sub_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
 ; GBI-NEXT:    sub (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %hl
@@ -109,6 +113,8 @@ define i8 @and_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: and_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
 ; GBI-NEXT:    and (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %hl
@@ -140,6 +146,8 @@ define i8 @xor_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: xor_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
 ; GBI-NEXT:    xor (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %hl
@@ -171,6 +179,8 @@ define i8 @or_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: or_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld h, d
+; GBI-NEXT:    ld l, e
 ; GBI-NEXT:    or (hl)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %hl
@@ -181,10 +191,10 @@ define i8 @or_hl(i8 %b, ptr %hl) nounwind {
 define i16 @add16(i16 %a) nounwind {
 ; GBI-LABEL: add16:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    add $14
 ; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, h
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ret
@@ -478,9 +488,8 @@ declare i16 @llvm.bswap.i16(i16)
 define i16 @byte_swap(i16 %hl) {
 ; GBI-LABEL: byte_swap:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld c, h
-; GBI-NEXT:    ld h, l
-; GBI-NEXT:    ld l, c
+; GBI-NEXT:    ld l, b
+; GBI-NEXT:    ld h, c
 ; GBI-NEXT:    ret
   %1 = call i16 @llvm.bswap.i16(i16 %hl)
   ret i16 %1
@@ -776,8 +785,10 @@ define i8 @lshr_7(i8 %b) nounwind {
 define i16 @sub_2(i16 %hl) nounwind {
 ; GBI-LABEL: sub_2:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    dec hl
-; GBI-NEXT:    dec hl
+; GBI-NEXT:    dec bc
+; GBI-NEXT:    dec bc
+; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    ret
   %1 = sub i16 %hl, 2
   ret i16 %1

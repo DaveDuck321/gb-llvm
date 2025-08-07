@@ -5,7 +5,7 @@
 define i8 @trunc_i32(i32 %0) {
 ; GBI-O3-LABEL: trunc_i32:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   %res = trunc i32 %0 to i8
   ret i8 %res
@@ -14,7 +14,7 @@ define i8 @trunc_i32(i32 %0) {
 define i8 @trunc_i16(i16 %0) {
 ; GBI-O3-LABEL: trunc_i16:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ret
   %res = trunc i16 %0 to i8
   ret i8 %res

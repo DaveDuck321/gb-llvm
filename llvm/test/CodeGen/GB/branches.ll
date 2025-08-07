@@ -438,7 +438,7 @@ define void @jt(i8 %in, ptr %out) {
 ; GBI-O3-NEXT:  .LBB18_9: # %bb3
 ; GBI-O3-NEXT:    ld a, $02
 ; GBI-O3-NEXT:  .LBB18_10: # %exit
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld (de), a
 ; GBI-O3-NEXT:  .LBB18_11: # %exit
 ; GBI-O3-NEXT:    ret
 entry:
@@ -467,6 +467,8 @@ exit:
 define i8 @indirectbr(ptr %target) nounwind {
 ; GBI-O3-LABEL: indirectbr:
 ; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    jp (hl)
 ; GBI-O3-NEXT:  .LBB19_1: # %test_label1
 ; GBI-O3-NEXT:    ld a, $01

@@ -5,7 +5,7 @@
 define i8 @load8(ptr %a) nounwind {
 ; GBI-LABEL: load8:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld a, (bc)
 ; GBI-NEXT:    ret
   %1 = load i8, ptr %a
   ret i8 %1
@@ -14,10 +14,11 @@ define i8 @load8(ptr %a) nounwind {
 define i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ldi a, (hl)
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld h, (hl)
-; GBI-NEXT:    ld l, c
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    inc bc
+; GBI-NEXT:    ld a, (bc)
+; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ret
   %1 = load i16, ptr %a
   ret i16 %1
@@ -26,8 +27,8 @@ define i16 @load16(ptr %a) nounwind {
 define void @store8(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store8:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld a, d
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret
   store i8 %b, ptr %a
   ret void
@@ -36,13 +37,13 @@ define void @store8(ptr %a, i8 %b) nounwind {
 define void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld d, h
-; GBI-NEXT:    ld e, l
-; GBI-NEXT:    inc de
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    ld (de), a
-; GBI-NEXT:    ld a, c
+; GBI-NEXT:    ld h, b
+; GBI-NEXT:    ld l, c
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld a, e
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
   ret void
@@ -51,9 +52,9 @@ define void @store16(ptr %a, i16 %b) nounwind {
 define void @store1(ptr %a, i1 %b) nounwind {
 ; GBI-LABEL: store1:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret
   store i1 %b, ptr %a
   ret void
@@ -62,7 +63,7 @@ define void @store1(ptr %a, i1 %b) nounwind {
 define i1 @load1(ptr %a) nounwind {
 ; GBI-LABEL: load1:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld a, (bc)
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
   ret i1 %1
@@ -71,7 +72,7 @@ define i1 @load1(ptr %a) nounwind {
 define i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld a, (bc)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld a, $00
@@ -85,7 +86,7 @@ define i8 @load_sext(ptr %a) nounwind {
 define i8 @load_zext(ptr %a) nounwind {
 ; GBI-LABEL: load_zext:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, (hl)
+; GBI-NEXT:    ld a, (bc)
 ; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
@@ -96,9 +97,9 @@ define i8 @load_zext(ptr %a) nounwind {
 define void @store_trunc(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store_trunc:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    and $01
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld (bc), a
 ; GBI-NEXT:    ret
   %1 = trunc i8 %b to i1
   store i1 %1, ptr %a, align 1
@@ -195,9 +196,9 @@ entry:
 define void @store_global(i16 %arg) {
 ; GBI-LABEL: store_global:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    ld a, h
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ld (ext+1), a
-; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    ld (ext), a
 ; GBI-NEXT:    ret
 entry:
@@ -210,21 +211,21 @@ entry:
 define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
 ; GBI-LABEL: _Z3barN5libgb5ArrayIcLj16EEE:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    add $09
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, h
+; GBI-NEXT:    ld e, a
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, (bc)
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    add $07
 ; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, h
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    adc $00
 ; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    add (hl)
 ; GBI-NEXT:    ld l, a
 ; GBI-NEXT:    ld a, $00

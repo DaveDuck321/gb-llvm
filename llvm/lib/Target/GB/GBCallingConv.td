@@ -8,7 +8,7 @@ def RetCC_GB : CallingConv<[
 
 def CC_GB : CallingConv<[
     CCIfType<[ i8 ], CCAssignToReg<[ B, C, D, E ]>>,
-    CCIfType<[ i16 ], CCAssignToReg<[ HL, BC, DE ]>>,
+    CCIfType<[ i16 ], CCAssignToReg<[ BC, DE ]>>,
     CCAssignToStack<0, 0>,
 ]>;
 

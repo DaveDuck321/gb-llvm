@@ -2655,6 +2655,7 @@ MCRegister RAGreedy::selectOrSplitImpl(const LiveInterval &VirtReg,
     // the live range splitting done by spilling correctly.
     // We would need a deep integration with the spiller to do the
     // right thing here. Anyway, that is still good for early testing.
+    // TODO GB: the live interval preservation here is bugged
     ExtraInfo->setStage(VirtReg, RS_Memory);
     LLVM_DEBUG(dbgs() << "Do as if this register is in memory\n");
     NewVRegs.push_back(VirtReg.reg());

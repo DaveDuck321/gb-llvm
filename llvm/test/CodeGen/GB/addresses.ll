@@ -47,8 +47,6 @@ define i16 @load_i16_global() nounwind {
 define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld a, (G)
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld a, c

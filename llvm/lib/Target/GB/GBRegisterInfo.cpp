@@ -101,5 +101,7 @@ Register GBRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 
 bool GBRegisterInfo::shouldUseDeferredSpillingForVirtReg(
     const MachineFunction &MF, const LiveInterval &VirtReg) const {
-  return true;
+  // TODO GB: the live interval preservation here is bugged
+  // Re-enable for *slightly* better codegen
+  return false;
 }

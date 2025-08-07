@@ -2,6 +2,8 @@
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/stack_thrashing.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/stack_thrashing.ll -O3 -gb-debug-early-lower-everything \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global _start
 _start:

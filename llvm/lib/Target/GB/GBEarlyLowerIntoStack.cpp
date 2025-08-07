@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Alignment.h"
@@ -33,14 +34,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "gb-early-stack-lowering"
 
-// TODO: this needs to also work for function calls
-// TODO: if there is no def, we can reuse a region's stack slot without saving
-// it again
-
 static cl::opt<bool>
-    GBEnableEarlyLowingIntoStack("gb-enable-early-lowing-into-stack",
-                                 cl::Hidden,
-                                 cl::desc("Enables GBEarlyLowerIntoStack"));
+    GBDisableEarlyLowingIntoStack("gb-disable-early-lowing-into-stack",
+                                  cl::Hidden,
+                                  cl::desc("Disables GBEarlyLowerIntoStack"));
 
 static cl::opt<bool> GBDebugEarlyLowingEverything(
     "gb-debug-early-lower-everything", cl::Hidden,
@@ -97,6 +94,10 @@ struct ReloadableRegionInfo {
   SlotIndex End;
   LiveInterval *Interval;
   LaneBitmask SubRegLaneMask;
+  std::vector<ReloadableRegionInfo *> CollidingSaveRestores;
+  std::vector<ReloadableRegionInfo *> OverlappingWithStart;
+  std::vector<ReloadableRegionInfo *> OverlappingWithEnd;
+  std::vector<ReloadableRegionInfo *> TiedOverlaps;
   bool CanFoldWithPrevious;
   bool IsSelected;
 
@@ -129,6 +130,7 @@ struct LiveThroughInfo {
     }
   };
   llvm::SmallVector<BBInfo, 4> BlocksInfo;
+  std::set<SlotIndex> SlotsWithNoRegion;
   LiveInterval *Interval;
   LaneBitmask SubRegLaneMask;
   bool IsSelected;
@@ -147,22 +149,41 @@ struct LiveThroughInfo {
 };
 
 struct OverlapsAtIndex {
-  unsigned OverlapsFull16Bit = 0;
-  unsigned OverlapsHigh16 = 0;
-  unsigned OverlapsLow16 = 0;
-  unsigned Overlaps8 = 0;
-  unsigned InstructionCost = 0;
+  int OverlapsFull16Bit = 0;
+  int OverlapsHigh16 = 0;
+  int OverlapsLow16 = 0;
+  int Overlaps8 = 0;
+  int InstructionCost = 0;
 
-  constexpr auto operator+=(OverlapsAtIndex const &Other) -> OverlapsAtIndex & {
+  void checkPositive() {
+    assert(OverlapsFull16Bit >= 0);
+    assert(OverlapsHigh16 >= 0);
+    assert(OverlapsLow16 >= 0);
+    assert(Overlaps8 >= 0);
+    assert(InstructionCost >= 0);
+  }
+
+  OverlapsAtIndex &operator+=(OverlapsAtIndex const &Other) {
     OverlapsFull16Bit += Other.OverlapsFull16Bit;
     OverlapsHigh16 += Other.OverlapsHigh16;
     OverlapsLow16 += Other.OverlapsLow16;
     Overlaps8 += Other.Overlaps8;
     InstructionCost += Other.InstructionCost;
+    checkPositive();
     return *this;
   }
 
-  constexpr auto getOverusage() const -> int {
+  OverlapsAtIndex &operator-=(OverlapsAtIndex const &Other) {
+    OverlapsFull16Bit -= Other.OverlapsFull16Bit;
+    OverlapsHigh16 -= Other.OverlapsHigh16;
+    OverlapsLow16 -= Other.OverlapsLow16;
+    Overlaps8 -= Other.Overlaps8;
+    InstructionCost -= Other.InstructionCost;
+    checkPositive();
+    return *this;
+  }
+
+  constexpr int getOverusage() const {
     int Physical16BitUsage = OverlapsFull16Bit;
 
     // High and Low subregs will form 16-bit regs. But only between themselves.
@@ -216,6 +237,10 @@ class GBEarlyLowerIntoStack : public MachineFunctionPass {
   std::vector<ReloadableRegionInfo *> RemainingReloadableRegions;
   std::vector<LiveThroughInfo *> RemainingLiveThroughs;
 
+  std::map<SlotIndex, OverlapsAtIndex> CachedOverlaps;
+
+  double CachedCost = 0.0; // TODO: cache as int type instead
+
 public:
   GBEarlyLowerIntoStack() : MachineFunctionPass(ID) {}
 
@@ -246,14 +271,25 @@ public:
 
   void clearState();
   void populateIntervals();
+  void precomputeOverlaps();
+  void calculateCostFromScratch();
   void populateValidIntervalsIntoWorklist();
 
-  bool shouldStoreAtStart(ReloadableRegionInfo *Region) const;
+  template <bool isIncremental = true>
+  void setSelect(ReloadableRegionInfo *, bool IsSelect,
+                 bool PrintDebug = false);
 
-  OverlapsAtIndex countOverlaps(SlotIndex, bool PrintDebug = false) const;
+  bool shouldStoreAtStart(ReloadableRegionInfo *) const;
+
+  OverlapsAtIndex countOverlaps(ReloadableRegionInfo *, SlotIndex,
+                                bool PrintDebug = false) const;
+  OverlapsAtIndex countOverlaps(LiveThroughInfo *, SlotIndex,
+                                bool PrintDebug = false) const;
+  OverlapsAtIndex countStaticOverlaps(SlotIndex, bool PrintDebug = false) const;
+
   std::pair<OverlapsAtIndex, OverlapsAtIndex>
   countOverlaps(ReloadableRegionInfo *) const;
-  double calculateCurrentOverusageCost(bool PrintDebug = false);
+
   bool debugForceLowerNextRegionOrInterval();
   bool lowerNextRegionOrInterval();
 
@@ -443,6 +479,9 @@ void GBEarlyLowerIntoStack::clearState() {
 
   RemainingReloadableRegions.clear();
   RemainingLiveThroughs.clear();
+
+  CachedOverlaps.clear();
+  CachedCost = 0.0;
 }
 
 void GBEarlyLowerIntoStack::populateIntervals() {
@@ -525,7 +564,11 @@ void GBEarlyLowerIntoStack::populateIntervals() {
                   LIS->getInstructionIndex(MI),
                   Interval,
                   Lane,
-                  /*HasPreviousRegion=*/HasPreviousRegion && !PreviousWrites,
+                  {},
+                  {},
+                  {},
+                  {},
+                  /*CanFoldWithPrevious=*/HasPreviousRegion && !PreviousWrites,
                   /*IsSelected=*/false,
               };
               ReloadableRegions.push_back(Info);
@@ -564,6 +607,7 @@ void GBEarlyLowerIntoStack::populateIntervals() {
       if (not BBInfos.empty()) {
         LiveThroughs.push_back(LiveThroughInfo{
             std::move(BBInfos),
+            {},
             Interval,
             Lane,
             false,
@@ -571,6 +615,102 @@ void GBEarlyLowerIntoStack::populateIntervals() {
       }
     }
   }
+}
+
+void GBEarlyLowerIntoStack::precomputeOverlaps() {
+  // Live throughs cache the slots that contribute to overlaps (overlaps inside
+  // the first region are not counted here).
+  for (auto &LiveThrough : LiveThroughs) {
+    auto SubRegLaneMask = LiveThrough.SubRegLaneMask;
+
+    auto Index = LiveThrough.Interval->beginIndex();
+    auto End = LiveThrough.Interval->endIndex();
+    for (; Index != End; Index = Index.getNextIndex()) {
+      // Record the index iff the region analysis doesn't considered this index.
+      bool IsAlreadyCounted = false;
+      for (const auto &Region : ReloadableRegions) {
+        if ((Region.SubRegLaneMask & SubRegLaneMask).none()) {
+          continue;
+        }
+
+        if (Region.Start < Index && Region.End >= Index) {
+          IsAlreadyCounted = true;
+          break;
+        }
+      }
+
+      if (!IsAlreadyCounted) {
+        LiveThrough.SlotsWithNoRegion.emplace(Index);
+      }
+    }
+  }
+
+  // Regions cache the regions whose stack save/ restore may overlap with their
+  // save/ restore
+  for (auto &Target : ReloadableRegions) {
+    for (auto &Other : ReloadableRegions) {
+      if (&Other == &Target) {
+        // We only consider live-through registers from anything placed before
+        // us
+        break;
+      }
+
+      if (Other.Start == Target.Start || Other.End == Target.End) {
+        // We overlap with the register used in by Other
+        Target.CollidingSaveRestores.push_back(&Other);
+      }
+    }
+  }
+
+  // Regions also cache the regions that may overlap with their save/ restore
+  for (auto &Target : ReloadableRegions) {
+    auto TargetStart = Target.Start.getBoundaryIndex();
+    auto TargetEnd = Target.End.getBoundaryIndex();
+    for (auto &Other : ReloadableRegions) {
+      bool EitherSelected = false;
+      if (Other.Start < TargetStart && Other.End >= TargetStart) {
+        Target.OverlappingWithStart.push_back(&Other);
+        EitherSelected = true;
+      }
+
+      if (Other.Start < TargetEnd && Other.End >= TargetEnd) {
+        Target.OverlappingWithEnd.push_back(&Other);
+        EitherSelected = true;
+      }
+
+      if (EitherSelected) {
+        Target.TiedOverlaps.push_back(&Other);
+      }
+    }
+  }
+}
+
+void GBEarlyLowerIntoStack::calculateCostFromScratch() {
+  CachedOverlaps.clear();
+  CachedCost = 0.0;
+
+  const double RefFreq = MBFI->getEntryFreq().getFrequency();
+
+  for (auto &Region : ReloadableRegions) {
+    setSelect</*isIncremental=*/false>(&Region, Region.IsSelected);
+  }
+
+  // TODO: everything else
+
+  // TODO: is this really all the slots?
+  for (auto &[Slot, Overlaps] : CachedOverlaps) {
+    Overlaps += countStaticOverlaps(Slot);
+  }
+
+  for (auto const &[Slot, Overlaps] : CachedOverlaps) {
+    const auto *MBB = LIS->getMBBFromIndex(Slot);
+    double ThisFreq = MBFI->getBlockFreq(MBB).getFrequency();
+    double RelativeFreq = ThisFreq / RefFreq;
+
+    CachedCost += RelativeFreq * Overlaps.getOverusage();
+    LLVM_DEBUG(dbgs() << Slot << ": "; Overlaps.print(dbgs()); dbgs() << "\n";);
+  }
+  LLVM_DEBUG(dbgs() << "CachedCost: " << CachedCost << "\n");
 }
 
 void GBEarlyLowerIntoStack::populateValidIntervalsIntoWorklist() {
@@ -610,6 +750,61 @@ void GBEarlyLowerIntoStack::populateValidIntervalsIntoWorklist() {
   }
 }
 
+template <bool isIncremental>
+void GBEarlyLowerIntoStack::setSelect(ReloadableRegionInfo *Region,
+                                      bool IsSelect, bool PrintDebug) {
+  assert(Region->IsSelected != IsSelect || isIncremental);
+
+  auto Slot = Region->Start;
+  auto End = Region->End;
+
+  const double RefFreq = MBFI->getEntryFreq().getFrequency();
+  const auto *MBB = LIS->getMBBFromIndex(Slot);
+  double ThisFreq = MBFI->getBlockFreq(MBB).getFrequency();
+  double RelativeFreq = ThisFreq / RefFreq;
+
+  // Update index overlaps
+  for (; Slot != End; Slot = Slot.getNextIndex()) {
+    auto &SlotOverlaps = CachedOverlaps[Slot];
+    if (PrintDebug) {
+      LLVM_DEBUG(dbgs() << Slot << "\n"
+                        << " Before: ";
+                 SlotOverlaps.print(dbgs()); dbgs() << "\n";);
+    }
+
+    if constexpr (isIncremental) {
+      Region->IsSelected = !IsSelect;
+      auto OverlapsBefore = countOverlaps(Region, Slot);
+      CachedCost -= RelativeFreq *
+                    SlotOverlaps.getOverusage(); // TODO: rounding error here
+      SlotOverlaps -= OverlapsBefore;
+    }
+
+    Region->IsSelected = IsSelect;
+    auto OverlapsAfter = countOverlaps(Region, Slot);
+    SlotOverlaps += OverlapsAfter;
+    if constexpr (isIncremental) {
+      CachedCost += RelativeFreq *
+                    SlotOverlaps.getOverusage(); // TODO: rounding error here
+    }
+
+    if (PrintDebug) {
+      LLVM_DEBUG(dbgs() << " After: "; SlotOverlaps.print(dbgs());
+                 dbgs() << "\n\n";);
+    }
+  }
+
+  // Update overlaps that don't correspond to indicies (such as newly added save/ restores)
+  Region->IsSelected = !IsSelect;
+  auto EndOverlapsBefore = countOverlaps(Region);
+
+  // TODO: everything else
+  Region->IsSelected = IsSelect;
+  if (PrintDebug) {
+    LLVM_DEBUG(dbgs() << "CachedCost: " << CachedCost << "\n");
+  }
+}
+
 bool GBEarlyLowerIntoStack::shouldStoreAtStart(
     ReloadableRegionInfo *Region) const {
   assert(&ReloadableRegions[Region->Index] == Region);
@@ -618,48 +813,42 @@ bool GBEarlyLowerIntoStack::shouldStoreAtStart(
            ReloadableRegions[Region->Index - 1].IsSelected);
 }
 
-OverlapsAtIndex GBEarlyLowerIntoStack::countOverlaps(SlotIndex Index,
-                                                     bool PrintDebug) const {
+OverlapsAtIndex
+GBEarlyLowerIntoStack::countOverlaps(ReloadableRegionInfo *Region,
+                                     SlotIndex Index, bool PrintDebug) const {
   OverlapsAtIndex Result = {};
-
-  // Count overlaps with BB-local regions
-  for (const auto &Region : ReloadableRegions) {
-    if (not Region.IsSelected) {
-      // Unselected regions simply count towards their register class
-      if (Region.Start < Index && Region.End >= Index) {
-        incrementOverlaps(Result, Region.Interval->reg(),
-                          Region.SubRegLaneMask);
-      }
-    }
+  if (Region->IsSelected) {
+    return Result;
   }
 
-  // Count overlaps with LiveThroughs
-  for (const auto &LiveThrough : LiveThroughs) {
-    if (not LiveThrough.IsSelected) {
-      // Selected interval has not been lowered
-      if (LiveThrough.Interval->liveAt(Index)) {
-        // Increment the counters iff the region analysis hasn't considered
-        // this index.
-        bool IsAlreadyCounted = false;
-        for (const auto &Region : ReloadableRegions) {
-          if ((Region.SubRegLaneMask & LiveThrough.SubRegLaneMask).none()) {
-            continue;
-          }
+  // Unselected regions simply count towards their register class
+  if (Region->Start < Index && Region->End >= Index) {
+    incrementOverlaps(Result, Region->Interval->reg(), Region->SubRegLaneMask);
+  }
+  return Result;
+}
 
-          if (Region.Start < Index && Region.End >= Index) {
-            IsAlreadyCounted = true;
-            break;
-          }
-        }
-
-        if (!IsAlreadyCounted) {
-          incrementOverlaps(Result, LiveThrough.Interval->reg(),
-                            LiveThrough.SubRegLaneMask);
-        }
-      }
-    }
+OverlapsAtIndex
+GBEarlyLowerIntoStack::countOverlaps(LiveThroughInfo *LiveThrough,
+                                     SlotIndex Index, bool PrintDebug) const {
+  OverlapsAtIndex Result = {};
+  if (LiveThrough->IsSelected) {
+    return Result;
   }
 
+  // Increment the counters iff the region analysis hasn't considered this
+  // index.
+  if (LiveThrough->SlotsWithNoRegion.count(Index) != 0) {
+    incrementOverlaps(Result, LiveThrough->Interval->reg(),
+                      LiveThrough->SubRegLaneMask);
+  }
+  return Result;
+}
+
+OverlapsAtIndex
+GBEarlyLowerIntoStack::countStaticOverlaps(SlotIndex Index,
+                                           bool PrintDebug) const {
+  OverlapsAtIndex Result = {};
   auto *MI = LIS->getInstructionFromIndex(Index);
 
   // Count overlaps due to dead registers (which don't have an interval)
@@ -676,10 +865,6 @@ OverlapsAtIndex GBEarlyLowerIntoStack::countOverlaps(SlotIndex Index,
       }
     }
   }
-
-  if (PrintDebug) {
-    LLVM_DEBUG(dbgs() << Index << ": "; Result.print(dbgs()); dbgs() << "\n");
-  }
   return Result;
 }
 
@@ -692,7 +877,6 @@ GBEarlyLowerIntoStack::countOverlaps(ReloadableRegionInfo *Target) const {
 
   // At the very least we always contribute the register we load and HL
   bool StoreIsLowered = shouldStoreAtStart(Target);
-
   if (StoreIsLowered) {
     incrementOverlaps(Result.first, Target->Interval->reg(),
                       Target->SubRegLaneMask);
@@ -703,75 +887,42 @@ GBEarlyLowerIntoStack::countOverlaps(ReloadableRegionInfo *Target) const {
                     Target->SubRegLaneMask);
   Result.second.OverlapsFull16Bit += 1;
 
-  bool IsPreTarget = true;
-  for (const auto &Other : ReloadableRegions) {
-    if (&Other == Target) {
-      // We only consider live-through registers form anything placed before us
-      IsPreTarget = false;
+  for (const auto *Other : Target->CollidingSaveRestores) {
+    if (!Other->IsSelected) {
       continue;
     }
 
-    if (Other.IsSelected) {
-      if (not IsPreTarget) {
-        continue;
-      }
+    if (Other->Start == Target->Start && StoreIsLowered) {
+      // We overlap with the register used in by Other
+      incrementOverlaps(Result.first, Other->Interval->reg(),
+                        Other->SubRegLaneMask);
+    }
 
-      if (Other.Start == Target->Start && StoreIsLowered) {
-        // We overlap with the register used in by Other
-        incrementOverlaps(Result.first, Other.Interval->reg(),
-                          Other.SubRegLaneMask);
-      }
-
-      if (Other.End == Target->End) {
-        // We overlap with the register defined in by Other
-        incrementOverlaps(Result.second, Other.Interval->reg(),
-                          Other.SubRegLaneMask);
-      }
+    if (Other->End == Target->End) {
+      // We overlap with the register defined in by Other
+      incrementOverlaps(Result.second, Other->Interval->reg(),
+                        Other->SubRegLaneMask);
     }
   }
 
   if (StoreIsLowered) {
-    auto StartOverlaps = countOverlaps(Target->Start.getBoundaryIndex());
-    Result.first += StartOverlaps;
+    for (const auto *MaybeOverlap : Target->OverlappingWithStart) {
+      if (not MaybeOverlap->IsSelected) {
+        continue;
+      }
+      incrementOverlaps(Result.first, MaybeOverlap->Interval->reg(),
+                        MaybeOverlap->SubRegLaneMask);
+    }
   }
 
-  Result.second += countOverlaps(Target->End.getBoundaryIndex());
+  for (const auto *MaybeOverlap : Target->OverlappingWithEnd) {
+    if (not MaybeOverlap->IsSelected) {
+      continue;
+    }
+    incrementOverlaps(Result.second, MaybeOverlap->Interval->reg(),
+                      MaybeOverlap->SubRegLaneMask);
+  }
   return Result;
-}
-
-double GBEarlyLowerIntoStack::calculateCurrentOverusageCost(bool PrintDebug) {
-  // TODO: we can cache this whole routine by only applying incremental
-  // updates
-  double Cost = 0;
-  const double RefFreq = MBFI->getEntryFreq().getFrequency();
-
-  auto *Indicies = LIS->getSlotIndexes();
-  auto Current = Indicies->getZeroIndex();
-  auto End = Indicies->getLastIndex();
-  while (Current != End) {
-    const auto *MBB = LIS->getMBBFromIndex(Current);
-    double ThisFreq = MBFI->getBlockFreq(MBB).getFrequency();
-    double RelativeFreq = ThisFreq / RefFreq;
-
-    auto Overlaps = countOverlaps(Current, PrintDebug);
-    int Overusage = Overlaps.getOverusage();
-    Cost += Overusage * RelativeFreq;
-
-    Current = Current.getNextIndex();
-  }
-
-  for (auto &Region : ReloadableRegions) {
-    const auto *MBB = LIS->getMBBFromIndex(Region.Start);
-    double ThisFreq = MBFI->getBlockFreq(MBB).getFrequency();
-    double RelativeFreq = ThisFreq / RefFreq;
-
-    auto Overlaps = countOverlaps(&Region);
-    int StartOverusage = Overlaps.first.getOverusage();
-    int EndOverusage = Overlaps.second.getOverusage();
-    Cost += (StartOverusage + EndOverusage) * RelativeFreq;
-  }
-
-  return Cost;
 }
 
 bool GBEarlyLowerIntoStack::debugForceLowerNextRegionOrInterval() {
@@ -795,7 +946,7 @@ bool GBEarlyLowerIntoStack::lowerNextRegionOrInterval() {
     return debugForceLowerNextRegionOrInterval();
   }
 
-  double CurrentCost = calculateCurrentOverusageCost(true);
+  double CurrentCost = CachedCost;
   if (CurrentCost == 0.0) {
     // No overuse, exit early
     return false;
@@ -808,8 +959,9 @@ bool GBEarlyLowerIntoStack::lowerNextRegionOrInterval() {
   // TODO: also sort by the cost of the store/ reload sequence
   for (auto *Region : RemainingReloadableRegions) {
     assert(not Region->IsSelected);
-    Region->IsSelected = true;
-    double PotentialCost = calculateCurrentOverusageCost();
+    setSelect(Region, true);
+    double PotentialCost = CachedCost;
+    setSelect(Region, false);
     double Improvement = CurrentCost - PotentialCost;
     if (Improvement > BestImprovement) {
       BestImprovement = Improvement;
@@ -817,20 +969,6 @@ bool GBEarlyLowerIntoStack::lowerNextRegionOrInterval() {
     }
     LLVM_DEBUG(Region->print(dbgs()); dbgs() << " = " << Improvement << "\n";);
     Region->IsSelected = false;
-  }
-
-  for (auto *LiveThrough : RemainingLiveThroughs) {
-    assert(not LiveThrough->IsSelected);
-    LiveThrough->IsSelected = true;
-    double PotentialCost = calculateCurrentOverusageCost();
-    double Improvement = CurrentCost - PotentialCost;
-    if (Improvement > BestImprovement) {
-      BestImprovement = Improvement;
-      Choice = LiveThrough;
-    }
-    LLVM_DEBUG(LiveThrough->print(dbgs());
-               dbgs() << " = " << Improvement << "\n";);
-    LiveThrough->IsSelected = false;
   }
 
   if (BestImprovement < 0.0 || std::holds_alternative<std::monostate>(Choice)) {
@@ -844,7 +982,7 @@ bool GBEarlyLowerIntoStack::lowerNextRegionOrInterval() {
     RemainingReloadableRegions.erase(
         std::find(RemainingReloadableRegions.begin(),
                   RemainingReloadableRegions.end(), *Region));
-    (*Region)->IsSelected = true;
+    setSelect(*Region, true, /*PrintDebug=*/true);
   }
 
   if (auto *LiveThrough = std::get_if<LiveThroughInfo *>(&Choice)) {
@@ -854,6 +992,7 @@ bool GBEarlyLowerIntoStack::lowerNextRegionOrInterval() {
                                           RemainingLiveThroughs.end(),
                                           *LiveThrough));
     (*LiveThrough)->IsSelected = true;
+    llvm_unreachable("here");
   }
 
   return true;
@@ -976,7 +1115,7 @@ bool GBEarlyLowerIntoStack::applyChanges() {
 }
 
 bool GBEarlyLowerIntoStack::runOnMachineFunction(MachineFunction &MF) {
-  if (!GBEnableEarlyLowingIntoStack) {
+  if (GBDisableEarlyLowingIntoStack) {
     return false;
   }
 
@@ -989,12 +1128,15 @@ bool GBEarlyLowerIntoStack::runOnMachineFunction(MachineFunction &MF) {
   TRI = MRI->getTargetRegisterInfo();
   MFI = &MF.getFrameInfo();
 
+  LLVM_DEBUG(
+      dbgs() << "*************** GBEarlyLowerIntoStack *****************\n";
+      LIS->dump(););
+
   clearState();
   populateIntervals();
+  precomputeOverlaps();
   populateValidIntervalsIntoWorklist();
-
-  LLVM_DEBUG(dbgs() << "*************** GBLowerIntoStack *****************\n";
-             LIS->dump(); MF.print(dbgs()));
+  calculateCostFromScratch();
 
   // Dump the intervals
   LLVM_DEBUG(dbgs() << "ReloadableRegions:\n";
@@ -1011,19 +1153,31 @@ bool GBEarlyLowerIntoStack::runOnMachineFunction(MachineFunction &MF) {
   while (lowerNextRegionOrInterval()) {
   }
 
+  // Check the incremental updates have been correctly applied
+  double CostBefore = CachedCost;
+  calculateCostFromScratch();
+  double CostAfter = CachedCost;
+  LLVM_DEBUG(dbgs() << "IncrementCost: " << CostBefore
+                    << ", FreshCost: " << CostAfter << "\n");
+  assert(std::abs(CostBefore - CostAfter) < 0.1);
+
   bool DidApplyChanges = applyChanges();
   if (DidApplyChanges) {
-    LLVM_DEBUG(
-        dbgs() << "*************** After GBLowerIntoStack *****************\n";
-        LIS->dump(); MF.print(dbgs()););
+    LLVM_DEBUG(dbgs() << "*************** After GBEarlyLowerIntoStack "
+                         "*****************\n";
+               LIS->dump(););
 
     // Intervals may now contain multiple connected components.
     // Split them up into their own registers
     redistributeLiveIntervals();
 
     LLVM_DEBUG(dbgs() << "******* After redistributing *************** \n";
-               LIS->dump(); MF.print(dbgs()));
+               LIS->dump(););
+  } else {
+    LLVM_DEBUG(dbgs() << "*************** After GBEarlyLowerIntoStack "
+                         "*****************\n Applied no changes!\n";);
   }
+
   return DidApplyChanges;
 }
 

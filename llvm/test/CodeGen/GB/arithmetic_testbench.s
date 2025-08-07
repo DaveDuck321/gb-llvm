@@ -2,6 +2,8 @@
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/arithmetic.ll -O3 -gb-debug-early-lower-everything \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global __mulqi3
 __mulqi3:
