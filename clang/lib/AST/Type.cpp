@@ -3594,6 +3594,8 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
     return "vectorcall";
   case CC_Win64:
     return "ms_abi";
+  case CC_GB_Interrupt:
+    return "gb_interrupt_cc";
   case CC_X86_64SysV:
     return "sysv_abi";
   case CC_X86RegCall:
@@ -4335,6 +4337,7 @@ bool AttributedType::isCallingConv() const {
   case attr::PreserveNone:
   case attr::RISCVVectorCC:
   case attr::RISCVVLSCC:
+  case attr::GBInterruptCC:
     return true;
   }
   llvm_unreachable("invalid attr kind");

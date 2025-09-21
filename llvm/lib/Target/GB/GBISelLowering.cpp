@@ -496,7 +496,15 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState ArgCCInfo(CLI.CallConv, CLI.IsVarArg, MF, ArgLocs, *DAG.getContext());
-  ArgCCInfo.AnalyzeCallOperands(CLI.Outs, CC_GB);
+
+
+  auto CallingConvFn = [&] {
+    if (CLI.CallConv == CallingConv::GB_Interrupt) {
+      return CC_GB_Interrupt;
+    }
+    return CC_GB;
+  }();
+  ArgCCInfo.AnalyzeCallOperands(CLI.Outs, CallingConvFn);
 
   unsigned NumBytes = ArgCCInfo.getStackSize();
 
@@ -600,8 +608,10 @@ SDValue GBTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
-  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
+  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast,
+                        CallingConv::GB_Interrupt},
                        CallConv)) {
+                        dbgs() << CallConv << "/n";
     report_fatal_error("Unsupported calling convention");
   }
   if (IsVarArg) {
@@ -615,7 +625,14 @@ SDValue GBTargetLowering::LowerFormalArguments(
   // argument
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, CC_GB);
+
+  auto CallingConvFn = [&] {
+    if (CallConv == CallingConv::GB_Interrupt) {
+      return CC_GB_Interrupt;
+    }
+    return CC_GB;
+  }();
+  CCInfo.AnalyzeFormalArguments(Ins, CallingConvFn);
 
   for (unsigned I = 0; I < ArgLocs.size(); I++) {
     auto &VA = ArgLocs[I];
@@ -658,6 +675,11 @@ bool GBTargetLowering::CanLowerReturn(
     const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context,
     const Type *RetTy) const {
   assert(not IsVarArg);
+  if (CallConv == CallingConv::GB_Interrupt) {
+    assert(RetTy->isVoidTy());
+    return true;
+  }
+
   assert(is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
                       CallConv));
 
@@ -1376,7 +1398,8 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<SDValue> &OutsVals,
                               const SDLoc &DL, SelectionDAG &DAG) const {
-  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast},
+  if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast,
+                        CallingConv::GB_Interrupt},
                        CallConv)) {
     report_fatal_error("Unsupported calling convention");
   }

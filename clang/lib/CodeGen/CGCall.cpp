@@ -63,6 +63,8 @@ unsigned CodeGenTypes::ClangCallConvToLLVMCallConv(CallingConv CC) {
     return llvm::CallingConv::X86_ThisCall;
   case CC_Win64:
     return llvm::CallingConv::Win64;
+  case CC_GB_Interrupt:
+    return llvm::CallingConv::GB_Interrupt;
   case CC_X86_64SysV:
     return llvm::CallingConv::X86_64_SysV;
   case CC_AAPCS:
@@ -293,6 +295,9 @@ static CallingConv getCallingConventionForDecl(const ObjCMethodDecl *D,
 
   if (D->hasAttr<SysVABIAttr>())
     return IsTargetDefaultMSABI ? CC_X86_64SysV : CC_C;
+
+  if (D->hasAttr<GBInterruptCCAttr>())
+    return CC_GB_Interrupt;
 
   if (D->hasAttr<PreserveMostAttr>())
     return CC_PreserveMost;

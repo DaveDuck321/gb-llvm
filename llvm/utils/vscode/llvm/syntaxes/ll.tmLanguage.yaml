@@ -297,6 +297,7 @@ patterns:
             \\bweak_odr\\b|\
             \\bwillreturn\\b|\
             \\bwin64cc\\b|\
+            \\bgb_interrupt_cc\\b|\
             \\bwithin\\b|\
             \\bwriteonly\\b|\
             \\bx86_64_sysvcc\\b|\

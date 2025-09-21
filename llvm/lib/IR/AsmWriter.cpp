@@ -378,6 +378,7 @@ static void PrintCallingConv(unsigned cc, raw_ostream &Out) {
   case CallingConv::PTX_Device:    Out << "ptx_device"; break;
   case CallingConv::X86_64_SysV:   Out << "x86_64_sysvcc"; break;
   case CallingConv::Win64:         Out << "win64cc"; break;
+  case CallingConv::GB_Interrupt:  Out << "gb_interrupt_cc"; break;
   case CallingConv::SPIR_FUNC:     Out << "spir_func"; break;
   case CallingConv::SPIR_KERNEL:   Out << "spir_kernel"; break;
   case CallingConv::Swift:         Out << "swiftcc"; break;

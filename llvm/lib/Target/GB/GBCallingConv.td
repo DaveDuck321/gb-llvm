@@ -11,5 +11,7 @@ def CC_GB : CallingConv<[
     CCIfType<[ i16 ], CCAssignToReg<[ HL, BC, DE ]>>,
     CCAssignToStack<0, 0>,
 ]>;
+def CC_GB_Interrupt : CallingConv<[CCAssignToStack<0, 0>]>;
 
-def GB_CSRs : CalleeSavedRegs<(add)>;
+def GB_CC_CSRs : CalleeSavedRegs<(add)>;
+def GB_Interrupt_CC_CSRs : CalleeSavedRegs<(add BC, DE)>;

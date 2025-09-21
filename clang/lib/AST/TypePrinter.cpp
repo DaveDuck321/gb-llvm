@@ -1109,6 +1109,9 @@ void TypePrinter::printFunctionAfter(const FunctionType::ExtInfo &Info,
     case CC_Win64:
       OS << " __attribute__((ms_abi))";
       break;
+    case CC_GB_Interrupt:
+      OS << "__attribute__((gb_interrupt_cc))";
+      break;
     case CC_X86_64SysV:
       OS << " __attribute__((sysv_abi))";
       break;
@@ -2054,6 +2057,7 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case attr::VectorCall: OS << "vectorcall"; break;
   case attr::Pascal: OS << "pascal"; break;
   case attr::MSABI: OS << "ms_abi"; break;
+  case attr::GBInterruptCC: OS << "gb_interrupt_cc"; break;
   case attr::SysVABI: OS << "sysv_abi"; break;
   case attr::RegCall: OS << "regcall"; break;
   case attr::Pcs: {

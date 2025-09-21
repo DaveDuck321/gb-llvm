@@ -34,6 +34,7 @@ public:
   std::string_view getClobbers() const override;
 
   BuiltinVaListKind getBuiltinVaListKind() const override;
+  CallingConvCheckResult checkCallingConvention(CallingConv) const override;
 };
 
 } // namespace targets
