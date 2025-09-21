@@ -347,25 +347,11 @@ declare dso_local void @fn_normal_cc()
 define dso_local gb_interrupt_cc void @fn_int_c() {
 ; GBI-O3-LABEL: fn_int_c:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    add sp, -4
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    push bc
+; GBI-O3-NEXT:    push de
 ; GBI-O3-NEXT:    call fn_normal_cc
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    pop de
+; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    ret
   call void @fn_normal_cc()
   ret void

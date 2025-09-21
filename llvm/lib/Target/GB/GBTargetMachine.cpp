@@ -1,5 +1,6 @@
 #include "GBTargetMachine.h"
 #include "GB.h"
+#include "GBMachineFunctionInfo.h"
 #include "GBSubtarget.h"
 #include "GBTargetTransformInfo.h"
 #include "TargetInfo/GBTargetInfo.h"
@@ -51,6 +52,13 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
 TargetTransformInfo
 GBTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(std::make_unique<GBTTIImpl>(this, F));
+}
+
+MachineFunctionInfo *GBTargetMachine::createMachineFunctionInfo(
+    BumpPtrAllocator &Allocator, const Function &F,
+    const TargetSubtargetInfo *STI) const {
+  return GBMachineFunctionInfo::create<GBMachineFunctionInfo>(Allocator, F,
+                                                              STI);
 }
 
 bool GBTargetMachine::shouldAssumeDSOLocal(const GlobalValue *GV) const {

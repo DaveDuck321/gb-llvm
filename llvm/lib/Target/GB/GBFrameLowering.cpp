@@ -1,13 +1,18 @@
 #include "GBFrameLowering.h"
+#include "GBMachineFunctionInfo.h"
+#include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -24,13 +29,14 @@ void GBFrameLowering::emitPrologue(MachineFunction &MF,
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const GBMachineFunctionInfo *GBFI = MF.getInfo<GBMachineFunctionInfo>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   assert(&MF.front() == &MBB);
   assert(not MFI.hasVarSizedObjects());
 
   MachineBasicBlock::iterator MBBI = MBB.getFirstNonDebugInstr();
 
-  uint64_t StackSize = MFI.getStackSize();
+  uint64_t StackSize = MFI.getStackSize() - GBFI->getCalleeSavedFrameSize();
   if (StackSize == 0) {
     return; // Nothing to do
   }
@@ -72,6 +78,7 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const GBMachineFunctionInfo *GBFI = MF.getInfo<GBMachineFunctionInfo>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   assert(not MFI.hasVarSizedObjects());
 
@@ -81,7 +88,7 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
     DL = MBBI->getDebugLoc();
   }
 
-  uint64_t StackSize = MFI.getStackSize();
+  uint64_t StackSize = MFI.getStackSize() - GBFI->getCalleeSavedFrameSize();
   if (StackSize == 0) {
     return; // Nothing to do
   }
@@ -118,8 +125,9 @@ MachineBasicBlock::iterator GBFrameLowering::eliminateCallFramePseudoInstr(
   const TargetSubtargetInfo &STI = MF.getSubtarget();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
+  GBMachineFunctionInfo *GBFI = MF.getInfo<GBMachineFunctionInfo>();
 
-  int Amount = TII.getFrameSize(*MI);
+  int Amount = TII.getFrameSize(*MI) + GBFI->getCalleeSavedFrameSize();
   if (Amount == 0) {
     return MBB.erase(MI);
   }
@@ -129,4 +137,78 @@ MachineBasicBlock::iterator GBFrameLowering::eliminateCallFramePseudoInstr(
   }
   BuildMI(MBB, MI, DL, TII.get(GB::ADD_SP)).addImm(Amount);
   return MBB.erase(MI);
+}
+
+bool GBFrameLowering::spillCalleeSavedRegisters(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    ArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const {
+  if (CSI.size() == 0) {
+    return false;
+  }
+
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  MachineFunction &MF = *MBB.getParent();
+  GBMachineFunctionInfo *GBFI = MF.getInfo<GBMachineFunctionInfo>();
+  const GBSubtarget &STI = MF.getSubtarget<GBSubtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
+
+  unsigned CalleeFrameSize = 0;
+  for (const auto &Info : CSI) {
+    MCRegister Reg = Info.getReg();
+    assert(Reg.isPhysical());
+    assert(TRI->getRegSizeInBits(*TRI->getMinimalPhysRegClass(Reg)) == 16);
+
+    bool IsNotLiveIn = !MBB.isLiveIn(Reg);
+
+    // A subregister might be live-in (if passed as an argument)
+    if (IsNotLiveIn) {
+      for (const auto &LiveIn : MBB.liveins()) {
+        if (STI.getRegisterInfo()->isSubRegister(Reg, LiveIn.PhysReg)) {
+          IsNotLiveIn = false;
+          MBB.addLiveIn(Reg);
+          break;
+        }
+      }
+    }
+
+    // We're going to reference this register in an instruction, mark it as a
+    // liveIn. Don't mark it twice if its already passed as an argument.
+    if (IsNotLiveIn) {
+      MBB.addLiveIn(Reg);
+    }
+
+    BuildMI(MBB, MI, DL, TII.get(GB::PUSH))
+        .addReg(Reg, getKillRegState(IsNotLiveIn))
+        .setMIFlag(MachineInstr::FrameSetup);
+    CalleeFrameSize += 2;
+  }
+
+  GBFI->setCalleeSavedFrameSize(CalleeFrameSize);
+
+  return true;
+}
+
+bool GBFrameLowering::restoreCalleeSavedRegisters(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    MutableArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const {
+  if (CSI.size() == 0) {
+    return false;
+  }
+
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  MachineFunction &MF = *MBB.getParent();
+  const GBSubtarget &STI = MF.getSubtarget<GBSubtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
+
+  for (const auto &Info : llvm::reverse(CSI)) {
+    MCRegister Reg = Info.getReg();
+    assert(Reg.isPhysical());
+    assert(TRI->getRegSizeInBits(*TRI->getMinimalPhysRegClass(Reg)) == 16);
+
+    BuildMI(MBB, MI, DL, TII.get(GB::POP))
+        .addDef(Reg)
+        .setMIFlag(MachineInstr::FrameDestroy);
+  }
+
+  return true;
 }
