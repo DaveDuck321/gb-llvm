@@ -149,5 +149,7 @@ _call_large_return:
 # EXPECT: a=00
     debugtrap
     pop hl
+
+    call complex_interrupt_cc
 _end:
     trap

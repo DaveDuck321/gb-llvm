@@ -36,6 +36,21 @@ define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
   ret i8 %res
 }
 
+define i32 @argument0_i32(i32 %0) nounwind {
+; GBI-O3-LABEL: argument0_i32:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ret
+  ret i32 %0
+}
+
 define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument1_i16:
 ; GBI-O3:       # %bb.0:
@@ -347,25 +362,11 @@ declare dso_local void @fn_normal_cc()
 define dso_local gb_interrupt_cc void @fn_int_c() {
 ; GBI-O3-LABEL: fn_int_c:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    add sp, -4
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld a, e
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    push bc
+; GBI-O3-NEXT:    push de
 ; GBI-O3-NEXT:    call fn_normal_cc
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, (hl)
-; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    pop de
+; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    ret
   call void @fn_normal_cc()
   ret void
@@ -382,4 +383,23 @@ define i16 @call_interrupt_cc(i16 %arg) {
 ; GBI-O3-NEXT:    ret
   call gb_interrupt_cc void @fn_int_c()
   ret i16 %arg
+}
+
+
+define gb_interrupt_cc void @complex_interrupt_cc() {
+; GBI-O3-LABEL: complex_interrupt_cc:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    push bc
+; GBI-O3-NEXT:    push de
+; GBI-O3-NEXT:    add sp, -4
+; GBI-O3-NEXT:    ld bc, $000a
+; GBI-O3-NEXT:    ld de, $0000
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    call argument0_i32
+; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    pop de
+; GBI-O3-NEXT:    pop bc
+; GBI-O3-NEXT:    ret
+  %a = call i32 @argument0_i32(i32 10)
+  ret void
 }
