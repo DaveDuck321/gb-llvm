@@ -47,22 +47,22 @@ define i16 @load_i16_global() nounwind {
 define i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld a, (G)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld (G), a
 ; GBI-O3-NEXT:    ld a, (G+1)
-; GBI-O3-NEXT:    ld h, a
-; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (G+1), a
 ; GBI-O3-NEXT:    ld a, (G+18)
-; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld (G+18), a
 ; GBI-O3-NEXT:    ld a, (G+19)
-; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (G+19), a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    ret
   %1 = load volatile i16, ptr @G
   store i16 %a, ptr @G

@@ -4,10 +4,12 @@
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global untyped_fn_symbol
+.global fn_normal_cc
 untyped_fn:
     ld a, 0x99
     ret
 
+fn_normal_cc:
 untyped_fn_symbol:
     .short untyped_fn
 

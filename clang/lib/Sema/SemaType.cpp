@@ -144,7 +144,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const ParsedAttr &attr,
   case ParsedAttr::AT_M68kRTD:                                                 \
   case ParsedAttr::AT_PreserveNone:                                            \
   case ParsedAttr::AT_RISCVVectorCC:                                           \
-  case ParsedAttr::AT_RISCVVLSCC
+  case ParsedAttr::AT_RISCVVLSCC:                                              \
+  case ParsedAttr::AT_GBInterruptCC
 
 // Function type attributes.
 #define FUNCTION_TYPE_ATTRS_CASELIST                                           \
@@ -7548,6 +7549,8 @@ static Attr *getCCTypeAttr(ASTContext &Ctx, ParsedAttr &Attr) {
     return createSimpleAttr<IntelOclBiccAttr>(Ctx, Attr);
   case ParsedAttr::AT_MSABI:
     return createSimpleAttr<MSABIAttr>(Ctx, Attr);
+  case ParsedAttr::AT_GBInterruptCC:
+    return createSimpleAttr<GBInterruptCCAttr>(Ctx, Attr);
   case ParsedAttr::AT_SysVABI:
     return createSimpleAttr<SysVABIAttr>(Ctx, Attr);
   case ParsedAttr::AT_PreserveMost:

@@ -967,7 +967,7 @@ def AnalyzerNoReturn : InheritableAttr {
 }
 
 def InferredNoReturn : InheritableAttr {
-  let Spellings = []; 
+  let Spellings = [];
   let SemaHandler = 0;
   let Subjects = SubjectList<[Function], ErrorDiag>;
   let Documentation = [InternalOnly];
@@ -2118,6 +2118,12 @@ def MSABI : DeclOrTypeAttr {
   let Spellings = [GCC<"ms_abi">];
 //  let Subjects = [Function, ObjCMethod];
   let Documentation = [MSABIDocs];
+}
+
+def GBInterruptCC : DeclOrTypeAttr, TargetSpecificAttr<TargetGB> {
+  // Unlike the `interrupt` attribute, this is JUST a calling convention
+  let Spellings = [GCC<"gb_interrupt_cc">];
+  let Documentation = [Undocumented];
 }
 
 def MSP430Interrupt : InheritableAttr, TargetSpecificAttr<TargetMSP430> {

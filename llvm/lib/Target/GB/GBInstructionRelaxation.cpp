@@ -86,6 +86,15 @@ bool killsTargetReg(const MachineInstr &MI, Register Reg,
          MI.killsRegister(Upper, &TRI);
 }
 
+bool modifiesTargetReg(const MachineInstr &MI, Register Reg,
+                       const TargetRegisterInfo &TRI) {
+  auto Upper = TRI.getSubReg(Reg, 1);
+  auto Lower = TRI.getSubReg(Reg, 2);
+
+  return MI.modifiesRegister(Reg, &TRI) || MI.modifiesRegister(Lower, &TRI) ||
+         MI.modifiesRegister(Upper, &TRI);
+}
+
 } // namespace
 
 GBInstructionRelaxation::GBInstructionRelaxation(GBTargetMachine &TargetMachine,
@@ -128,7 +137,7 @@ bool GBInstructionRelaxation::mergeLoadImmStore(MachineFunction &MF,
         }
 
         if (usesTargetReg(NextMI, Target, TRI) ||
-            killsTargetReg(NextMI, Target, TRI)) {
+            modifiesTargetReg(NextMI, Target, TRI)) {
           break;
         }
       }
@@ -182,7 +191,7 @@ bool GBInstructionRelaxation::mergeLoadStoreIncrementIntoLDI(
 
         if (usesTargetReg(NextMI, GB::HL, TRI) ||
             definesTargetReg(NextMI, GB::HL, TRI) ||
-            killsTargetReg(NextMI, GB::HL, TRI)) {
+            modifiesTargetReg(NextMI, GB::HL, TRI)) {
           break;
         }
       }
@@ -248,7 +257,7 @@ bool GBInstructionRelaxation::foldRedundantCopies(MachineFunction &MF) {
           break;
         }
 
-        if (MBBI->killsRegister(DstReg, &TRI) ||
+        if (MBBI->modifiesRegister(DstReg, &TRI) ||
             MBBI->readsRegister(DstReg, &TRI) ||
             MBBI->definesRegister(DstReg, &TRI)) {
           break;
@@ -262,7 +271,7 @@ bool GBInstructionRelaxation::foldRedundantCopies(MachineFunction &MF) {
           break;
         }
 
-        if (MBBI->killsRegister(MoveToReg, &TRI) ||
+        if (MBBI->modifiesRegister(MoveToReg, &TRI) ||
             MBBI->readsRegister(MoveToReg, &TRI) ||
             MBBI->definesRegister(MoveToReg, &TRI)) {
           MoveToOmit = nullptr;

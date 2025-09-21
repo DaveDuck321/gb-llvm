@@ -25,12 +25,31 @@ GBRegisterInfo::GBRegisterInfo() : GBGenRegisterInfo(GB::A) {}
 
 const MCPhysReg *
 GBRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  return GB_CSRs_SaveList;
+  auto CC = MF->getFunction().getCallingConv();
+  switch (CC) {
+  default:
+    llvm_unreachable("Unsupported calling convention");
+  case CallingConv::C:
+  case CallingConv::Cold:
+  case CallingConv::Fast:
+    return GB_CC_CSRs_SaveList;
+  case CallingConv::GB_Interrupt:
+    return GB_Interrupt_CC_CSRs_SaveList;
+  }
 }
 
 const uint32_t *GBRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
-                                                     CallingConv::ID) const {
-  return GB_CSRs_RegMask;
+                                                     CallingConv::ID CC) const {
+  switch (CC) {
+  default:
+    llvm_unreachable("Unsupported calling convention");
+  case CallingConv::C:
+  case CallingConv::Cold:
+  case CallingConv::Fast:
+    return GB_CC_CSRs_RegMask;
+  case CallingConv::GB_Interrupt:
+    return GB_Interrupt_CC_CSRs_RegMask;
+  }
 }
 
 BitVector GBRegisterInfo::getReservedRegs(const MachineFunction &MF) const {

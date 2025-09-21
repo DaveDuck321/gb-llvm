@@ -159,6 +159,7 @@ enum Kind {
   kw_spir_func,
   kw_x86_64_sysvcc,
   kw_win64cc,
+  kw_gb_interrupt_cc,
   kw_anyregcc,
   kw_swiftcc,
   kw_swifttailcc,

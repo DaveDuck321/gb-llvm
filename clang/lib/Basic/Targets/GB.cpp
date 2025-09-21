@@ -75,3 +75,13 @@ std::string_view GBTargetInfo::getClobbers() const { return "~{flags}"; }
 TargetInfo::BuiltinVaListKind GBTargetInfo::getBuiltinVaListKind() const {
   return TargetInfo::VoidPtrBuiltinVaList;
 }
+
+TargetInfo::CallingConvCheckResult GBTargetInfo::checkCallingConvention(CallingConv CC) const {
+    switch (CC) {
+      default:
+        return CCCR_Warning;
+      case CC_C:
+      case CC_GB_Interrupt:
+        return CCCR_OK;
+    }
+}

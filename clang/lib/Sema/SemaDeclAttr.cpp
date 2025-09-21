@@ -5291,6 +5291,9 @@ static void handleCallConvAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   case ParsedAttr::AT_MSABI:
     D->addAttr(::new (S.Context) MSABIAttr(S.Context, AL));
     return;
+  case ParsedAttr::AT_GBInterruptCC:
+    D->addAttr(::new (S.Context) GBInterruptCCAttr(S.Context, AL));
+    return;
   case ParsedAttr::AT_SysVABI:
     D->addAttr(::new (S.Context) SysVABIAttr(S.Context, AL));
     return;
@@ -5562,6 +5565,9 @@ bool Sema::CheckCallingConvAttr(const ParsedAttr &Attrs, CallingConv &CC,
     break;
   case ParsedAttr::AT_MSABI:
     CC = IsTargetDefaultMSABI ? CC_C : CC_Win64;
+    break;
+  case ParsedAttr::AT_GBInterruptCC:
+    CC = CC_GB_Interrupt;
     break;
   case ParsedAttr::AT_SysVABI:
     CC = IsTargetDefaultMSABI ? CC_X86_64SysV : CC_C;
@@ -7545,6 +7551,7 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
   case ParsedAttr::AT_PreserveNone:
   case ParsedAttr::AT_RISCVVectorCC:
   case ParsedAttr::AT_RISCVVLSCC:
+  case ParsedAttr::AT_GBInterruptCC:
     handleCallConvAttr(S, D, AL);
     break;
   case ParsedAttr::AT_DeviceKernel:

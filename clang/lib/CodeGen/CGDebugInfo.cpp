@@ -1694,6 +1694,8 @@ static unsigned getDwarfCC(CallingConv CC) {
     return llvm::dwarf::DW_CC_LLVM_M68kRTD;
   case CC_PreserveNone:
     return llvm::dwarf::DW_CC_LLVM_PreserveNone;
+  case CC_GB_Interrupt:
+    return llvm::dwarf::DW_CC_LLVM_GB_Interrupt;
   case CC_RISCVVectorCall:
     return llvm::dwarf::DW_CC_LLVM_RISCVVectorCall;
 #define CC_VLS_CASE(ABI_VLEN) case CC_RISCVVLSCall_##ABI_VLEN:
