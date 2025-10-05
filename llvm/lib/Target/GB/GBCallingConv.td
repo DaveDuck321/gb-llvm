@@ -8,9 +8,16 @@ def RetCC_GB : CallingConv<[
 
 def CC_GB : CallingConv<[
     CCIfType<[ i8 ], CCAssignToReg<[ B, C, D, E ]>>,
+    CCIfType<[ i16 ], CCAssignToReg<[ BC, DE ]>>,
+    CCAssignToStack<0, 0>,
+]>;
+
+def CC_GB_Fast : CallingConv<[
+    CCIfType<[ i8 ], CCAssignToReg<[ B, C, D, E ]>>,
     CCIfType<[ i16 ], CCAssignToReg<[ HL, BC, DE ]>>,
     CCAssignToStack<0, 0>,
 ]>;
+
 def CC_GB_Interrupt : CallingConv<[CCAssignToStack<0, 0>]>;
 
 def GB_CC_CSRs : CalleeSavedRegs<(add)>;

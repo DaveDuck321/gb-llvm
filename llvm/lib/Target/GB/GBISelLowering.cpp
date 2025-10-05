@@ -28,6 +28,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
+#include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
@@ -155,6 +156,19 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // PSEUDO_PROBE
   // STACKMAP
   // PATCHPOINT
+
+  // All the hand-written runtime libcalls are implemented in fastcc
+  setLibcallCallingConv(RTLIB::Libcall::MEMCPY, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::MEMMOVE, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::MEMSET, CallingConv::Fast);
+
+  setLibcallCallingConv(RTLIB::Libcall::SHL_I16, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::SHL_I32, CallingConv::Fast);
+
+  setLibcallCallingConv(RTLIB::Libcall::SRA_I16, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::SRL_I16, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::SRA_I32, CallingConv::Fast);
+  setLibcallCallingConv(RTLIB::Libcall::SRL_I32, CallingConv::Fast);
 
   setSchedulingPreference(Sched::RegPressure);
 }
@@ -497,12 +511,30 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState ArgCCInfo(CLI.CallConv, CLI.IsVarArg, MF, ArgLocs, *DAG.getContext());
 
+  SDValue Callee = CLI.Callee;
+  if (auto *Node = dyn_cast<GlobalAddressSDNode>(Callee.getNode());
+      Node != nullptr) {
+    Callee = LowerGlobalAddress(Callee, DAG);
+  } else if (auto *Node = dyn_cast<ExternalSymbolSDNode>(Callee.getNode());
+             Node != nullptr) {
+    Callee = LowerExternalSymbol(Callee, DAG);
+  } else {
+    // This is an indirect function call
+    assert(CLI.CallConv != CallingConv::Fast);
+  }
 
   auto CallingConvFn = [&] {
-    if (CLI.CallConv == CallingConv::GB_Interrupt) {
+    switch (CLI.CallConv) {
+    case CallingConv::GB_Interrupt:
       return CC_GB_Interrupt;
+    case CallingConv::Fast:
+      return CC_GB_Fast;
+    case CallingConv::C:
+    case CallingConv::Cold:
+      return CC_GB;
+    default:
+      llvm_unreachable("Unrecoginzed calling convention");
     }
-    return CC_GB;
   }();
   ArgCCInfo.AnalyzeCallOperands(CLI.Outs, CallingConvFn);
 
@@ -550,16 +582,6 @@ SDValue GBTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Chain = DAG.getCopyToReg(Chain, CLI.DL, Reg.first, Reg.second, Glue);
     Glue = Chain.getValue(1);
   }
-
-  SDValue Callee = CLI.Callee;
-  if (auto *Node = dyn_cast<GlobalAddressSDNode>(Callee.getNode());
-      Node != nullptr) {
-    Callee = LowerGlobalAddress(Callee, DAG);
-  } else if (auto *Node = dyn_cast<ExternalSymbolSDNode>(Callee.getNode());
-             Node != nullptr) {
-    Callee = LowerExternalSymbol(Callee, DAG);
-  }
-  // else this is an Indirect function call
 
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
@@ -611,7 +633,7 @@ SDValue GBTargetLowering::LowerFormalArguments(
   if (not is_contained({CallingConv::C, CallingConv::Cold, CallingConv::Fast,
                         CallingConv::GB_Interrupt},
                        CallConv)) {
-                        dbgs() << CallConv << "/n";
+    dbgs() << CallConv << "/n";
     report_fatal_error("Unsupported calling convention");
   }
   if (IsVarArg) {
@@ -627,10 +649,17 @@ SDValue GBTargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
 
   auto CallingConvFn = [&] {
-    if (CallConv == CallingConv::GB_Interrupt) {
+    switch (CallConv) {
+    case CallingConv::GB_Interrupt:
       return CC_GB_Interrupt;
+    case CallingConv::Fast:
+      return CC_GB_Fast;
+    case CallingConv::C:
+    case CallingConv::Cold:
+      return CC_GB;
+    default:
+      llvm_unreachable("Unrecoginzed calling convention");
     }
-    return CC_GB;
   }();
   CCInfo.AnalyzeFormalArguments(Ins, CallingConvFn);
 

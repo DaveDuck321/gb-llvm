@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=gb -verify-machineinstrs -O3 < %s \
 ; RUN:   | FileCheck %s -check-prefix=GBI-O3
 
-define i32 @large_stack_i32_identity(i32 %0) {
+define fastcc i32 @large_stack_i32_identity(i32 %0) {
 ; GBI-O3-LABEL: large_stack_i32_identity:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, c

@@ -14,45 +14,62 @@ main:
     debugtrap
 
     add sp, -100
-    ld de, 100
     ld hl, sp + 0
-    ld b, 0xee
+    ld b, h
+    ld c, l
+
+    ld d, 0xee
+
+    ld hl, 100
+    push hl
     call _Z8g_memsetPA_hhs
+    pop hl
 
     ld hl, sp + 16 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1041
-# EXPECT-CYCLE-Oz: 1292
+# EXPECT-CYCLE-O3: 1307
+# EXPECT-CYCLE-Oz: 1297
 # EXPECT: a=ee
     debugtrap
 
     add sp, -100
-    ld de, 100
     ld hl, sp + 0
-    ld b, 0x01
+    ld b, h
+    ld c, l
+
+    ld d, 0x01
+
+    ld hl, 100
+    push hl
     call _Z8g_memsetPA_hhs
+    pop hl
 
     ld hl, sp + 88 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1041
-# EXPECT-CYCLE-Oz: 1292
+# EXPECT-CYCLE-O3: 1307
+# EXPECT-CYCLE-Oz: 1297
 # EXPECT: a=01
     debugtrap
 
-    ld de, 100          # Length
     ld hl, sp + 100     # src
+    ld d, h
+    ld e, l
+    ld hl, sp + 0       # dst
     ld b, h
     ld c, l
-    ld hl, sp + 0       # dst
+
+    ld hl, 100          # Length
+    push hl
     call _Z8g_memcpyPA_hKPA_hs
+    pop hl
 
     ld hl, sp + 73 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1372
-# EXPECT-CYCLE-Oz: 1430
+# EXPECT-CYCLE-O3: 1450
+# EXPECT-CYCLE-Oz: 1418
 # EXPECT: a=ee
     debugtrap
 
@@ -60,6 +77,8 @@ main:
     ld (hl), 0
 
     ld hl, sp, 0
+    ld b, h
+    ld c, l
     call _Z8g_strlenKPA_h
 # EXPECT: Debug trap!
 # EXPECT-CYCLE-O3: 1024

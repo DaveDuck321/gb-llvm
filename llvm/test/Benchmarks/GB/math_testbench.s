@@ -35,61 +35,61 @@ main:
 # EXPECT: a=d2
     debugtrap
 
-    ld hl, 51
-    ld bc, 63
+    ld bc, 51
+    ld de, 63
     call multiply_i16
-# EXPECT-CYCLE-O3: 603
-# EXPECT-CYCLE-Oz: 694
+# EXPECT-CYCLE-O3: 648
+# EXPECT-CYCLE-Oz: 637
 # EXPECT: hl=0c8d
     debugtrap
 
 
-    ld hl, 3600
-    ld bc, 8
+    ld bc, 3600
+    ld de, 8
     call multiply_i16
-# EXPECT-CYCLE-O3: 1155
-# EXPECT-CYCLE-Oz: 1318
+# EXPECT-CYCLE-O3: 1242
+# EXPECT-CYCLE-Oz: 1201
 # EXPECT: hl=7080
     debugtrap
 
-    ld hl, 3600
+    ld bc, 3600
     call floating_point_add
-# EXPECT-CYCLE-O3: 4145
-# EXPECT-CYCLE-Oz: 4145
+# EXPECT-CYCLE-O3: 4316
+# EXPECT-CYCLE-Oz: 4316
 # EXPECT: hl=0e59
     debugtrap
 
 
-    ld hl, 50
+    ld bc, 50
     call floating_point_mul
-# EXPECT-CYCLE-O3: 22896
-# EXPECT-CYCLE-Oz: 22896
+# EXPECT-CYCLE-O3: 21696
+# EXPECT-CYCLE-Oz: 21696
 # FIXME: 02fe
 # EXPECT-FAILING: hl=0302
     debugtrap
 
 
-    ld hl, 0x80
-    ld b, 4
+    ld bc, 0x80
+    ld d, 4
     call shl_i16
-# EXPECT-CYCLE-O3: 64
-# EXPECT-CYCLE-Oz: 64
+# EXPECT-CYCLE-O3: 68
+# EXPECT-CYCLE-Oz: 68
 # EXPECT: hl=0800
     debugtrap
 
-    ld hl, 0xa5ad
-    ld b, 7
+    ld bc, 0xa5ad
+    ld d, 7
     call lshr_i16
-# EXPECT-CYCLE-O3: 88
-# EXPECT-CYCLE-Oz: 88
+# EXPECT-CYCLE-O3: 92
+# EXPECT-CYCLE-Oz: 92
 # EXPECT: hl=014b
     debugtrap
 
-    ld hl, 0xa5ad
-    ld b, 7
+    ld bc, 0xa5ad
+    ld d, 7
     call ashr_i16
-# EXPECT-CYCLE-O3: 88
-# EXPECT-CYCLE-Oz: 88
+# EXPECT-CYCLE-O3: 92
+# EXPECT-CYCLE-Oz: 92
 # EXPECT: hl=ff4b
     debugtrap
 

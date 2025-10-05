@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=gb -verify-machineinstrs -O3 < %s \
 ; RUN:   | FileCheck %s -check-prefix=GBI-O3
 
-define i16 @and(i16 %b, i16 %c) nounwind {
+define fastcc i16 @and(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: and:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
@@ -16,7 +16,7 @@ define i16 @and(i16 %b, i16 %c) nounwind {
   ret i16 %1
 }
 
-define i16 @andi(i16 %b) nounwind {
+define fastcc i16 @andi(i16 %b) nounwind {
 ; GBI-O3-LABEL: andi:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld h, $00
@@ -28,7 +28,7 @@ define i16 @andi(i16 %b) nounwind {
   ret i16 %1
 }
 
-define i16 @xor(i16 %b, i16 %c) nounwind {
+define fastcc i16 @xor(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: xor:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
@@ -42,7 +42,7 @@ define i16 @xor(i16 %b, i16 %c) nounwind {
   ret i16 %1
 }
 
-define i16 @xori(i16 %b) nounwind {
+define fastcc i16 @xori(i16 %b) nounwind {
 ; GBI-O3-LABEL: xori:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -53,7 +53,7 @@ define i16 @xori(i16 %b) nounwind {
   ret i16 %1
 }
 
-define i16 @or(i16 %b, i16 %c) nounwind {
+define fastcc i16 @or(i16 %b, i16 %c) nounwind {
 ; GBI-O3-LABEL: or:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, h
@@ -67,7 +67,7 @@ define i16 @or(i16 %b, i16 %c) nounwind {
   ret i16 %1
 }
 
-define i16 @ori(i16 %b) nounwind {
+define fastcc i16 @ori(i16 %b) nounwind {
 ; GBI-O3-LABEL: ori:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -78,7 +78,7 @@ define i16 @ori(i16 %b) nounwind {
   ret i16 %1
 }
 
-define i16 @sub16(i16 %a, i8 %b) nounwind {
+define fastcc i16 @sub16(i16 %a, i8 %b) nounwind {
 ; GBI-O3-LABEL: sub16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -93,7 +93,7 @@ define i16 @sub16(i16 %a, i8 %b) nounwind {
   ret i16 %2
 }
 
-define i1 @sless_than(i16 %0, i16 %1) {
+define fastcc i1 @sless_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sless_than:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, l
@@ -129,7 +129,7 @@ begin:
   ret i1 %10
 }
 
-define i1 @sgreater_than(i16 %0, i16 %1) {
+define fastcc i1 @sgreater_than(i16 %0, i16 %1) {
 ; GBI-O3-LABEL: sgreater_than:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, c
@@ -166,7 +166,7 @@ begin:
 }
 
 
-define i32 @add32(i32 %in) nounwind {
+define fastcc i32 @add32(i32 %in) nounwind {
 ; GBI-O3-LABEL: add32:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -4
@@ -240,7 +240,7 @@ define i32 @add32(i32 %in) nounwind {
 }
 
 
-define i16 @shl16(i16 %bc, i16 %de) nounwind {
+define fastcc i16 @shl16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: shl16:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
@@ -251,7 +251,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @lsr16(i16 %bc, i16 %de) nounwind {
+define fastcc i16 @lsr16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: lsr16:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
@@ -262,7 +262,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @asr16(i16 %bc, i16 %de) nounwind {
+define fastcc i16 @asr16(i16 %bc, i16 %de) nounwind {
 ; GBI-O3-LABEL: asr16:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, $00
@@ -273,7 +273,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @shl16_c2(i16 %bc) nounwind {
+define fastcc i16 @shl16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: shl16_c2:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sla l
@@ -286,7 +286,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @shl16_c9(i16 %bc) nounwind {
+define fastcc i16 @shl16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: shl16_c9:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sla l
@@ -299,7 +299,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @asr16_c2(i16 %bc) nounwind {
+define fastcc i16 @asr16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: asr16_c2:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    sra h
@@ -312,7 +312,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @asr16_c9(i16 %bc) nounwind {
+define fastcc i16 @asr16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: asr16_c9:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld b, h
@@ -332,7 +332,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @lsr16_c2(i16 %bc) nounwind {
+define fastcc i16 @lsr16_c2(i16 %bc) nounwind {
 ; GBI-O3-LABEL: lsr16_c2:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    srl h
@@ -345,7 +345,7 @@ begin:
   ret i16 %1
 }
 
-define i16 @lsr16_c9(i16 %bc) nounwind {
+define fastcc i16 @lsr16_c9(i16 %bc) nounwind {
 ; GBI-O3-LABEL: lsr16_c9:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    srl h

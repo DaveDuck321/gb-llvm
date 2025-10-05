@@ -44,7 +44,7 @@ define i16 @load_i16_global() nounwind {
 
 
 @G = global i16 0
-define i16 @lw_sw_global(i16 %a) nounwind {
+define fastcc i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3-LABEL: lw_sw_global:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, (G)

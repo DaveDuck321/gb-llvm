@@ -6,7 +6,7 @@
 
 @_ZL8scroll_y = external global i8
 
-define void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
+define fastcc void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-LABEL: _ZN12FallingPiece36copy_position_into_underlying_spriteEv:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, (_ZL8scroll_y)
@@ -39,7 +39,7 @@ for.cond:                                         ; preds = %for.cond, %entry
 @_ZN12FallingPiece10m_positionE = external dso_local global %struct.Coord
 @_ZL10wall_kicks = external constant %"struct.libgb::Array.1"
 
-define void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
+define fastcc void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
 ; GBI-LABEL: _ZN12FallingPiece20try_rotate_clockwiseEv:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    add sp, -4
@@ -73,8 +73,8 @@ define void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
 ; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    or (hl)
 ; GBI-NEXT:    ld (de), a
-; GBI-NEXT:    ld hl, $0000
-; GBI-NEXT:    ld b, $00
+; GBI-NEXT:    ld bc, $0000
+; GBI-NEXT:    ld d, $00
 ; GBI-NEXT:    call $0000
 ; GBI-NEXT:    jr .LBB1_1
 entry:

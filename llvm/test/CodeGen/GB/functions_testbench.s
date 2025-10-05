@@ -3,8 +3,10 @@
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/functions.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 
+.global fn_ptr
 .global untyped_fn_symbol
 .global fn_normal_cc
+fn_ptr:
 untyped_fn:
     ld a, 0x99
     ret

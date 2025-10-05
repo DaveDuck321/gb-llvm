@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=gb -verify-machineinstrs -O3 < %s \
 ; RUN:   | FileCheck %s -check-prefix=GBI-O3
 
-define i8 @trunc_i32(i32 %0) {
+define fastcc i8 @trunc_i32(i32 %0) {
 ; GBI-O3-LABEL: trunc_i32:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -11,7 +11,7 @@ define i8 @trunc_i32(i32 %0) {
   ret i8 %res
 }
 
-define i8 @trunc_i16(i16 %0) {
+define fastcc i8 @trunc_i16(i16 %0) {
 ; GBI-O3-LABEL: trunc_i16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -20,7 +20,7 @@ define i8 @trunc_i16(i16 %0) {
   ret i8 %res
 }
 
-define i1 @trunc_i1(i8 %0) {
+define fastcc i1 @trunc_i1(i8 %0) {
 ; GBI-O3-LABEL: trunc_i1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
@@ -29,7 +29,7 @@ define i1 @trunc_i1(i8 %0) {
   ret i1 %res
 }
 
-define i8 @sext8_i1(i1 %0) {
+define fastcc i8 @sext8_i1(i1 %0) {
 ; GBI-O3-LABEL: sext8_i1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
@@ -42,7 +42,7 @@ define i8 @sext8_i1(i1 %0) {
   ret i8 %res
 }
 
-define i16 @sext16_i1(i1 %0) {
+define fastcc i16 @sext16_i1(i1 %0) {
 ; GBI-O3-LABEL: sext16_i1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
@@ -57,7 +57,7 @@ define i16 @sext16_i1(i1 %0) {
   ret i16 %res
 }
 
-define i16 @sext16_i8(i8 %0) {
+define fastcc i16 @sext16_i8(i8 %0) {
 ; GBI-O3-LABEL: sext16_i8:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld l, b
@@ -74,7 +74,7 @@ define i16 @sext16_i8(i8 %0) {
   ret i16 %res
 }
 
-define i16 @zext16_i8(i8 %0) {
+define fastcc i16 @zext16_i8(i8 %0) {
 ; GBI-O3-LABEL: zext16_i8:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld l, b
@@ -86,7 +86,7 @@ define i16 @zext16_i8(i8 %0) {
 
 declare void @llvm.trap() noreturn nounwind
 
-define void @trap(i8 %0) noreturn {
+define fastcc void @trap(i8 %0) noreturn {
 ; GBI-O3-LABEL: trap:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    trap

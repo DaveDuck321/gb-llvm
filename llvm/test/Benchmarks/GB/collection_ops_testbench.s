@@ -14,58 +14,68 @@ main:
 # EXPECT: Debug trap!
     debugtrap
 
-    ld b, 20
-    ld c, 20
+    ld d, 20
+    ld e, 20
     ld hl, sp + 5
+    ld b, h
+    ld c, l
     call _Z10get_playercc
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 33
-# EXPECT-CYCLE-Oz: 33
+# EXPECT-CYCLE-O3: 44
+# EXPECT-CYCLE-Oz: 44
     debugtrap
 
-    ld b, 30
-    ld c, 30
+    ld d, 30
+    ld e, 30
     ld hl, sp + 0
+    ld b, h
+    ld c, l
     call _Z10get_playercc
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 33
-# EXPECT-CYCLE-Oz: 33
+# EXPECT-CYCLE-O3: 44
+# EXPECT-CYCLE-Oz: 44
     debugtrap
 
     ld hl, sp + 0
-    ld b, 9
+    ld b, h
+    ld c, l
+    ld d, 9
     call _Z6damageR6Playerc
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 46
-# EXPECT-CYCLE-Oz: 46
+# EXPECT-CYCLE-O3: 48
+# EXPECT-CYCLE-Oz: 48
 # EXPECT: a=00
     debugtrap
 
     ld hl, sp + 0
-    ld b, 2
+    ld d, 2
+    ld b, h
+    ld c, l
     call _Z6damageR6Playerc
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 43
-# EXPECT-CYCLE-Oz: 43
+# EXPECT-CYCLE-O3: 45
+# EXPECT-CYCLE-Oz: 45
 # EXPECT: a=01
     debugtrap
 
     ld hl, sp + 5
+    ld d, h
+    ld e, l
+    ld hl, sp + 0
     ld b, h
     ld c, l
-    ld hl, sp + 0
     call _Z10do_collideRK6PlayerRK6Player
     and 1
 
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 268
-# EXPECT-CYCLE-Oz: 278
+# EXPECT-CYCLE-O3: 288
+# EXPECT-CYCLE-Oz: 298
 # EXPECT: a=01
     debugtrap
 

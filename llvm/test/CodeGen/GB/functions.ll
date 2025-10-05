@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=gb -verify-machineinstrs -O3 < %s \
 ; RUN:   | FileCheck %s -check-prefix=GBI-O3
 
-define i8 @argument0(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
+define fastcc i8 @argument0(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument0:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
@@ -11,7 +11,7 @@ define i8 @argument0(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 }
 
 
-define i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
+define fastcc i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, c
@@ -19,7 +19,7 @@ define i8 @argument1(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
   ret i8 %1
 }
 
-define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
+define fastcc i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument2:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, d
@@ -27,7 +27,7 @@ define i8 @argument2(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
   ret i8 %2
 }
 
-define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
+define fastcc i8 @argument0_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument0_i16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, l
@@ -36,7 +36,7 @@ define i8 @argument0_i16(i16 %0, i16 %1) nounwind {
   ret i8 %res
 }
 
-define i32 @argument0_i32(i32 %0) nounwind {
+define fastcc i32 @argument0_i32(i32 %0) nounwind {
 ; GBI-O3-LABEL: argument0_i32:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, c
@@ -51,7 +51,7 @@ define i32 @argument0_i32(i32 %0) nounwind {
   ret i32 %0
 }
 
-define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
+define fastcc i8 @argument1_i16(i16 %0, i16 %1) nounwind {
 ; GBI-O3-LABEL: argument1_i16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, c
@@ -60,7 +60,7 @@ define i8 @argument1_i16(i16 %0, i16 %1) nounwind {
   ret i8 %res
 }
 
-define i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
+define fastcc i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 ; GBI-O3-LABEL: argument3:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, e
@@ -69,7 +69,7 @@ define i8 @argument3(i8 %0, i8 %1, i8 %2, i8 %3) nounwind {
 }
 
 
-define i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
+define fastcc i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
 ; GBI-O3-LABEL: argument4:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, sp, 2
@@ -78,7 +78,7 @@ define i8 @argument4(i8 %0, i8 %1, i8 %2, i8 %3, i8 %4) nounwind {
   ret i8 %4
 }
 
-define i8 @call_argument2() nounwind {
+define fastcc i8 @call_argument2() nounwind {
 ; GBI-O3-LABEL: call_argument2:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, $00
@@ -87,22 +87,22 @@ define i8 @call_argument2() nounwind {
 ; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument2
 ; GBI-O3-NEXT:    ret
-  %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
+  %val = call fastcc i8 @argument2(i8 0, i8 1, i8 2, i8 3)
   ret i8 %val
 }
 
-define i8 @call_argument1_i16() nounwind {
+define fastcc i8 @call_argument1_i16() nounwind {
 ; GBI-O3-LABEL: call_argument1_i16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, $0000
 ; GBI-O3-NEXT:    ld bc, $0001
 ; GBI-O3-NEXT:    call argument1_i16
 ; GBI-O3-NEXT:    ret
-  %val = call i8 @argument1_i16(i16 0, i16 1)
+  %val = call fastcc i8 @argument1_i16(i16 0, i16 1)
   ret i8 %val
 }
 
-define i8 @call_argument2_with_locals(i8 %b) nounwind {
+define fastcc i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3-LABEL: call_argument2_with_locals:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
@@ -117,11 +117,11 @@ define i8 @call_argument2_with_locals(i8 %b) nounwind {
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
-  %val = call i8 @argument2(i8 0, i8 1, i8 2, i8 3)
+  %val = call fastcc i8 @argument2(i8 0, i8 1, i8 2, i8 3)
   ret i8 %b
 }
 
-define i8 @call_argument3() nounwind {
+define fastcc i8 @call_argument3() nounwind {
 ; GBI-O3-LABEL: call_argument3:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, $00
@@ -130,11 +130,11 @@ define i8 @call_argument3() nounwind {
 ; GBI-O3-NEXT:    ld e, $03
 ; GBI-O3-NEXT:    call argument3
 ; GBI-O3-NEXT:    ret
-  %val = call i8 @argument3(i8 0, i8 1, i8 2, i8 3)
+  %val = call fastcc i8 @argument3(i8 0, i8 1, i8 2, i8 3)
   ret i8 %val
 }
 
-define i32 @large_return() nounwind {
+define fastcc i32 @large_return() nounwind {
 ; GBI-O3-LABEL: large_return:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, $01
@@ -147,7 +147,7 @@ define i32 @large_return() nounwind {
   ret i32 1
 }
 
-define i32 @call_large_return() nounwind {
+define fastcc i32 @call_large_return() nounwind {
 ; GBI-O3-LABEL: call_large_return:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -8
@@ -200,11 +200,11 @@ define i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    add sp, 8
 ; GBI-O3-NEXT:    ret
-  %val = call i32 @large_return()
+  %val = call fastcc i32 @large_return()
   ret i32 %val
 }
 
-define i16 @empty16() nounwind {
+define fastcc i16 @empty16() nounwind {
 ; GBI-O3-LABEL: empty16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld hl, $0001
@@ -212,7 +212,7 @@ define i16 @empty16() nounwind {
   ret i16 1
 }
 
-define i16 @test_spill_arg16(i16 %0) nounwind {
+define fastcc i16 @test_spill_arg16(i16 %0) nounwind {
 ; GBI-O3-LABEL: test_spill_arg16:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
@@ -228,11 +228,11 @@ define i16 @test_spill_arg16(i16 %0) nounwind {
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
-  %val = call i16 @empty16()
+  %val = call fastcc i16 @empty16()
   ret i16 %0
 }
 
-define i8 @empty8(i8 %0) nounwind {
+define fastcc i8 @empty8(i8 %0) nounwind {
 ; GBI-O3-LABEL: empty8:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
@@ -240,7 +240,7 @@ define i8 @empty8(i8 %0) nounwind {
   ret i8 %0
 }
 
-define i8 @test_spill_arg8(i8 %0) nounwind {
+define fastcc i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O3-LABEL: test_spill_arg8:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
@@ -251,7 +251,7 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
 ; GBI-O3-NEXT:    ld a, (hl)
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
-  %val = call i8 @empty8(i8 %0)
+  %val = call fastcc i8 @empty8(i8 %0)
   ret i8 %0
 }
 
@@ -270,16 +270,16 @@ define i8 @test_spill_arg8(i8 %0) nounwind {
   ret i8 %2
 }
 
-define i1 @tail_caller(ptr %0) {
+define fastcc i1 @tail_caller(ptr %0) {
 ; GBI-O3-LABEL: tail_caller:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    call tail_callee
 ; GBI-O3-NEXT:    ret
-  %3 = tail call i1 @tail_callee(ptr %0)
+  %3 = tail call fastcc i1 @tail_callee(ptr %0)
   ret i1 %3
 }
 
-define i1 @tail_callee(ptr %0) {
+define fastcc i1 @tail_callee(ptr %0) {
 ; GBI-O3-LABEL: tail_callee:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, (hl)
@@ -292,7 +292,7 @@ define i1 @tail_callee(ptr %0) {
   ret i1 %4
 }
 
-define ptr @call_with_save(ptr %0) {
+define fastcc ptr @call_with_save(ptr %0) {
 ; GBI-O3-LABEL: call_with_save:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
@@ -310,7 +310,7 @@ define ptr @call_with_save(ptr %0) {
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    add sp, 2
 ; GBI-O3-NEXT:    ret
-  %2 = tail call i1 @tail_callee(ptr %0)
+  %2 = tail call fastcc i1 @tail_callee(ptr %0)
   ret ptr %0
 }
 
@@ -331,13 +331,12 @@ define ptr @call_fastcc(ptr %0) {
 ; GBI-O3-LABEL: call_fastcc:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    add sp, -2
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    call fastcc_callee
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi a, (hl)
@@ -349,7 +348,7 @@ define ptr @call_fastcc(ptr %0) {
   ret ptr %0
 }
 
-define linkonce_odr dso_local noundef zeroext i8 @clang_fn(i8 noundef zeroext %lhs, i8 noundef zeroext %rhs) local_unnamed_addr {
+define linkonce_odr dso_local fastcc noundef zeroext i8 @clang_fn(i8 noundef zeroext %lhs, i8 noundef zeroext %rhs) local_unnamed_addr {
 ; GBI-O3-LABEL: clang_fn:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, $02
@@ -372,7 +371,7 @@ define dso_local gb_interrupt_cc void @fn_int_c() {
   ret void
 }
 
-define i16 @call_interrupt_cc(i16 %arg) {
+define fastcc i16 @call_interrupt_cc(i16 %arg) {
 ; GBI-O3-LABEL: call_interrupt_cc:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld b, h
@@ -400,6 +399,28 @@ define gb_interrupt_cc void @complex_interrupt_cc() {
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    pop bc
 ; GBI-O3-NEXT:    ret
-  %a = call i32 @argument0_i32(i32 10)
+  %a = call fastcc i32 @argument0_i32(i32 10)
   ret void
+}
+
+
+declare void @fn_a(i16 %input) align 2;
+
+@fn_ptr = external global ptr;
+
+define fastcc i16 @indirect_cc() {
+; GBI-O3-LABEL: indirect_cc:
+; GBI-O3:       # %bb.0: # %entry
+; GBI-O3-NEXT:    ld a, (fn_ptr+1)
+; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, (fn_ptr)
+; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld bc, $0002
+; GBI-O3-NEXT:    call (hl)
+; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ret
+entry:
+  %0 = load ptr, ptr @fn_ptr, align 2
+  tail call void %0(i16 2)
+  ret i16 0
 }

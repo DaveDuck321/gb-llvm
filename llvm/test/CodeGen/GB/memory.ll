@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=gb -verify-machineinstrs -O3 < %s \
 ; RUN:   | FileCheck %s -check-prefix=GBI
 
-define i8 @load8(ptr %a) nounwind {
+define fastcc i8 @load8(ptr %a) nounwind {
 ; GBI-LABEL: load8:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
@@ -11,7 +11,7 @@ define i8 @load8(ptr %a) nounwind {
   ret i8 %1
 }
 
-define i16 @load16(ptr %a) nounwind {
+define fastcc i16 @load16(ptr %a) nounwind {
 ; GBI-LABEL: load16:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ldi a, (hl)
@@ -23,7 +23,7 @@ define i16 @load16(ptr %a) nounwind {
   ret i16 %1
 }
 
-define void @store8(ptr %a, i8 %b) nounwind {
+define fastcc void @store8(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store8:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -33,7 +33,7 @@ define void @store8(ptr %a, i8 %b) nounwind {
   ret void
 }
 
-define void @store16(ptr %a, i16 %b) nounwind {
+define fastcc void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld d, h
@@ -48,7 +48,7 @@ define void @store16(ptr %a, i16 %b) nounwind {
   ret void
 }
 
-define void @store1(ptr %a, i1 %b) nounwind {
+define fastcc void @store1(ptr %a, i1 %b) nounwind {
 ; GBI-LABEL: store1:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -59,7 +59,7 @@ define void @store1(ptr %a, i1 %b) nounwind {
   ret void
 }
 
-define i1 @load1(ptr %a) nounwind {
+define fastcc i1 @load1(ptr %a) nounwind {
 ; GBI-LABEL: load1:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
@@ -68,7 +68,7 @@ define i1 @load1(ptr %a) nounwind {
   ret i1 %1
 }
 
-define i8 @load_sext(ptr %a) nounwind {
+define fastcc i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
@@ -82,7 +82,7 @@ define i8 @load_sext(ptr %a) nounwind {
   ret i8 %2
 }
 
-define i8 @load_zext(ptr %a) nounwind {
+define fastcc i8 @load_zext(ptr %a) nounwind {
 ; GBI-LABEL: load_zext:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
@@ -93,7 +93,7 @@ define i8 @load_zext(ptr %a) nounwind {
   ret i8 %2
 }
 
-define void @store_trunc(ptr %a, i8 %b) nounwind {
+define fastcc void @store_trunc(ptr %a, i8 %b) nounwind {
 ; GBI-LABEL: store_trunc:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -105,7 +105,7 @@ define void @store_trunc(ptr %a, i8 %b) nounwind {
   ret void
 }
 
-define i1 @simple_stack(i1 %0) {
+define fastcc i1 @simple_stack(i1 %0) {
 ; GBI-LABEL: simple_stack:
 ; GBI:       # %bb.0: # %begin
 ; GBI-NEXT:    add sp, -2
@@ -123,7 +123,7 @@ begin:
   ret i1 %2
 }
 
-define void @store_bit_1() #0 {
+define fastcc void @store_bit_1() #0 {
 ; GBI-LABEL: store_bit_1:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
@@ -137,7 +137,7 @@ entry:
   ret void
 }
 
-define dso_local void @store_bit_3() #0 {
+define dso_local fastcc void @store_bit_3() #0 {
 ; GBI-LABEL: store_bit_3:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
@@ -151,7 +151,7 @@ entry:
   ret void
 }
 
-define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_3() local_unnamed_addr #0 {
+define dso_local fastcc noundef zeroext range(i8 0, 2) i8 @load_bit_3() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_3:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
@@ -166,7 +166,7 @@ entry:
   ret i8 %bf.clear.i
 }
 
-define dso_local noundef zeroext range(i8 0, 2) i8 @load_bit_1() local_unnamed_addr #0 {
+define dso_local fastcc noundef zeroext range(i8 0, 2) i8 @load_bit_1() local_unnamed_addr #0 {
 ; GBI-LABEL: load_bit_1:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ldh a, ($0f)
@@ -179,7 +179,7 @@ entry:
 }
 
 @ext = external dso_local global i16, align 2
-define i16 @load_global() {
+define fastcc i16 @load_global() {
 ; GBI-LABEL: load_global:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, (ext+1)
@@ -192,7 +192,7 @@ entry:
   ret i16 %0
 }
 
-define void @store_global(i16 %arg) {
+define fastcc void @store_global(i16 %arg) {
 ; GBI-LABEL: store_global:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, h
@@ -207,7 +207,7 @@ entry:
 
 %array = type { [16 x i8] }
 
-define i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
+define fastcc i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data) {
 ; GBI-LABEL: _Z3barN5libgb5ArrayIcLj16EEE:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, l

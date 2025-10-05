@@ -400,7 +400,7 @@ define i8 @select(i1 %b) nounwind {
   ret i8 %result
 }
 
-define void @jt(i8 %in, ptr %out) {
+define fastcc void @jt(i8 %in, ptr %out) {
 ; GBI-O3-LABEL: jt:
 ; GBI-O3:       # %bb.0: # %entry
 ; GBI-O3-NEXT:    bit 7, b
@@ -464,7 +464,7 @@ exit:
   ret void
 }
 
-define i8 @indirectbr(ptr %target) nounwind {
+define fastcc i8 @indirectbr(ptr %target) nounwind {
 ; GBI-O3-LABEL: indirectbr:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    jp (hl)

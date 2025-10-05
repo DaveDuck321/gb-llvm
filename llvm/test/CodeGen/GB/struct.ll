@@ -54,14 +54,14 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ret
 begin:
   %0 = alloca %type._Z5Range
-  %1 = call %type._Z5Range @make_range()
+  %1 = call fastcc %type._Z5Range @make_range()
   store %type._Z5Range %1, ptr %0
   %2 = getelementptr inbounds %type._Z5Range, ptr %0, i32 0, i32 1
   %3 = load i8, ptr %2, align 1
   ret i8 %3
 }
 
-define %type._Z5Range @make_range() {
+define fastcc %type._Z5Range @make_range() {
 ; GBI-O3-LABEL: make_range:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, $00
@@ -78,7 +78,7 @@ begin:
 %type.Rect = type { i8, i8, i8, i8 }
 %type.Player = type { %type.Rect, i8 }
 
-define %type.Player @get_player(i8 %0, i8 %1) {
+define fastcc %type.Player @get_player(i8 %0, i8 %1) {
 ; GBI-O3-LABEL: get_player:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    ld a, b

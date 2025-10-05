@@ -33,7 +33,7 @@ define i8 @inc(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @add_hl(i8 %b, ptr %hl) nounwind {
+define fastcc i8 @add_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: add_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -74,7 +74,7 @@ define i8 @dec(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @sub_hl(i8 %b, ptr %hl) nounwind {
+define fastcc i8 @sub_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: sub_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -105,7 +105,7 @@ define i8 @andi(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @and_hl(i8 %b, ptr %hl) nounwind {
+define fastcc i8 @and_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: and_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -136,7 +136,7 @@ define i8 @xori(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @xor_hl(i8 %b, ptr %hl) nounwind {
+define fastcc i8 @xor_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: xor_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -167,7 +167,7 @@ define i8 @ori(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @or_hl(i8 %b, ptr %hl) nounwind {
+define fastcc i8 @or_hl(i8 %b, ptr %hl) nounwind {
 ; GBI-LABEL: or_hl:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, b
@@ -178,7 +178,7 @@ define i8 @or_hl(i8 %b, ptr %hl) nounwind {
   ret i8 %2
 }
 
-define i16 @add16(i16 %a) nounwind {
+define fastcc i16 @add16(i16 %a) nounwind {
 ; GBI-LABEL: add16:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, l
@@ -475,7 +475,7 @@ define i8 @mul(i8 %b, i8 %c) {
 }
 
 declare i16 @llvm.bswap.i16(i16)
-define i16 @byte_swap(i16 %hl) {
+define fastcc i16 @byte_swap(i16 %hl) {
 ; GBI-LABEL: byte_swap:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld c, h
@@ -773,7 +773,7 @@ define i8 @lshr_7(i8 %b) nounwind {
   ret i8 %1
 }
 
-define i16 @sub_2(i16 %hl) nounwind {
+define fastcc i16 @sub_2(i16 %hl) nounwind {
 ; GBI-LABEL: sub_2:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    dec hl
