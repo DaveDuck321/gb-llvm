@@ -1546,6 +1546,11 @@ bool GBTargetLowering::convertSetCCLogicToBitwiseLogic(EVT VT) const {
 
 bool GBTargetLowering::useSoftFloat() const { return true; }
 
+EVT GBTargetLowering::getOptimalMemOpType(const MemOp &Op,
+                                          const AttributeList &) const {
+  return MVT::i8;
+}
+
 bool GBTargetLowering::isSelectSupported(SelectSupportKind) const {
   // We don't have a select instruction: inform the optimizer
   // This will expand selects into brcond... but only with optimizations on.

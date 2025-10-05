@@ -128,6 +128,9 @@ public:
   // bool shouldAvoidTransformToShift(EVT VT, unsigned Amount) const override
   bool useSoftFloat() const override;
 
+  EVT getOptimalMemOpType(const MemOp &Op,
+                          const AttributeList &) const override;
+
   bool isSelectSupported(SelectSupportKind) const override;
   bool convertSetCCLogicToBitwiseLogic(EVT VT) const override;
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,

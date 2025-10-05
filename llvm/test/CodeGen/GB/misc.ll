@@ -93,3 +93,21 @@ define fastcc void @trap(i8 %0) noreturn {
   call void @llvm.trap()
   unreachable
 }
+
+define i16 @test_memcpy() {
+; GBI-O3-LABEL: test_memcpy:
+; GBI-O3:       # %bb.0: # %entry
+; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ld de, $000a
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    call memcpy
+; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ret
+entry:
+  tail call void @llvm.memcpy.p0.p0.i16(ptr null, ptr null, i16 10, i1 false)
+  ret i16 0
+}
+
+; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.memcpy.p0.p0.i16(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i16, i1 immarg) #0
