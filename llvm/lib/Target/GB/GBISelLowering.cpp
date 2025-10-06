@@ -477,6 +477,8 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::LSHR";
   case GBISD::RET:
     return "GBISD::RET";
+  case GBISD::RETI:
+    return "GBISD::RETI";
   case GBISD::RL:
     return "GBISD::RL";
   case GBISD::RLC:
@@ -1463,7 +1465,12 @@ GBTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     RetOps.push_back(Glue);
   }
 
-  return DAG.getNode(GBISD::RET, DL, MVT::Other, RetOps);
+  // The interrupt calling convention sneakily also reenables interrupts on
+  // return. This is a little counter-intuitive but let's just assume that the
+  // only caller is the interrupt hander itself.
+  auto Opcode =
+      CallConv == CallingConv::GB_Interrupt ? GBISD::RETI : GBISD::RET;
+  return DAG.getNode(Opcode, DL, MVT::Other, RetOps);
 }
 
 bool GBTargetLowering::expandShiftByConstant(SelectionDAG &DAG, SDNode *N,

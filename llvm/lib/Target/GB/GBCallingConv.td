@@ -21,4 +21,4 @@ def CC_GB_Fast : CallingConv<[
 def CC_GB_Interrupt : CallingConv<[CCAssignToStack<0, 0>]>;
 
 def GB_CC_CSRs : CalleeSavedRegs<(add)>;
-def GB_Interrupt_CC_CSRs : CalleeSavedRegs<(add BC, DE)>;
+def GB_Interrupt_CC_CSRs : CalleeSavedRegs<(add BC, DE, HL, AF)>;

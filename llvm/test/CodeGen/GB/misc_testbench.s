@@ -3,6 +3,9 @@
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/misc.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 
+.global memcpy
+memcpy:
+
 .global _start
 _start:
     di

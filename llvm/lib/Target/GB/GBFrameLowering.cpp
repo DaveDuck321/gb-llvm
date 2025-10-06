@@ -101,7 +101,7 @@ void GBFrameLowering::emitEpilogue(MachineFunction &MF,
     return; // Nothing to do
   }
 
-  // Skip the callee-saved pop instructions.
+  // Place the stack-adjust before the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = std::prev(MBBI);
     if (PI->getOpcode() == GB::POP && PI->getFlag(MachineInstr::FrameDestroy)) {

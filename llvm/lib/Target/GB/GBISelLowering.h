@@ -28,6 +28,7 @@ enum NodeType : unsigned {
   LOWER,
   LSHR,
   RET,
+  RETI,
   RL,
   RLC,
   RR,

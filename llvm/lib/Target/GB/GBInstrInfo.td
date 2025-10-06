@@ -238,6 +238,9 @@ def : Pat<(trunc IntReg16:$rs), (EXTRACT_SUBREG IntReg16:$rs, LowerSubReg)>;
 def RET_NODE : SDNode<"GBISD::RET", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def : Pat<(RET_NODE), (RET)>;
 
+def RETI_NODE : SDNode<"GBISD::RETI", SDTNone, [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def : Pat<(RETI_NODE), (RETI)>;
+
 //   ADDR_WRAPPER exists to match targetaddr against i16
 def SDT_GBAddrWrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 def ADDR_WRAPPER : SDNode<"GBISD::ADDR_WRAPPER", SDT_GBAddrWrapper>;

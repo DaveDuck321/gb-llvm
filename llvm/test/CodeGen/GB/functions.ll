@@ -363,10 +363,14 @@ define dso_local gb_interrupt_cc void @fn_int_c() {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    push de
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    push af
 ; GBI-O3-NEXT:    call fn_normal_cc
+; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    pop bc
-; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:    reti
   call void @fn_normal_cc()
   ret void
 }
@@ -374,11 +378,7 @@ define dso_local gb_interrupt_cc void @fn_int_c() {
 define fastcc i16 @call_interrupt_cc(i16 %arg) {
 ; GBI-O3-LABEL: call_interrupt_cc:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    call fn_int_c
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    ret
   call gb_interrupt_cc void @fn_int_c()
   ret i16 %arg
@@ -390,15 +390,19 @@ define gb_interrupt_cc void @complex_interrupt_cc() {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    push bc
 ; GBI-O3-NEXT:    push de
+; GBI-O3-NEXT:    push hl
+; GBI-O3-NEXT:    push af
 ; GBI-O3-NEXT:    add sp, -4
 ; GBI-O3-NEXT:    ld bc, $000a
 ; GBI-O3-NEXT:    ld de, $0000
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    call argument0_i32
 ; GBI-O3-NEXT:    add sp, 4
+; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    pop hl
 ; GBI-O3-NEXT:    pop de
 ; GBI-O3-NEXT:    pop bc
-; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:    reti
   %a = call fastcc i32 @argument0_i32(i32 10)
   ret void
 }
