@@ -5,6 +5,7 @@
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -60,6 +61,8 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // This makes select 4 cycles slower compared to
   // ZeroOrNegativeOneBooleanContent but makes setcc 12-20 cycles faster.
   setBooleanContents(UndefinedBooleanContent);
+
+  // Defaults from TargetLoweringBase.cpp
 
   // AssertSext, AssertZext, AssertAlign
   // RegisterMask
@@ -157,6 +160,42 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
   // STACKMAP
   // PATCHPOINT
 
+  // ATOMIC_FENCE                 // Legal
+  // ATOMIC_LOAD                  // Legal
+  // ATOMIC_STORE                 // Legal
+  // ATOMIC_CMP_SWAP_WITH_SUCCESS // Expand
+
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
+
+  for (const auto &AtomicOp : {
+           ISD::ATOMIC_CMP_SWAP,
+           ISD::ATOMIC_LOAD_CLR, // TODO: can this get emitted?
+           ISD::ATOMIC_LOAD_MAX,
+           ISD::ATOMIC_LOAD_MIN,
+           ISD::ATOMIC_LOAD_NAND,
+           ISD::ATOMIC_LOAD_SUB,
+           ISD::ATOMIC_LOAD_UMAX,
+           ISD::ATOMIC_LOAD_UMIN,
+           ISD::ATOMIC_LOAD_XOR,
+           ISD::ATOMIC_SWAP,
+       }) {
+    setOperationAction(AtomicOp, MVT::i8, LibCall);
+  }
+
+  // We can lower atomic increment and decrement provided we don't need the load
+  for (const auto &AtomicOp : {
+           ISD::ATOMIC_LOAD_ADD,
+           ISD::ATOMIC_LOAD_SUB,
+           ISD::ATOMIC_LOAD_OR,
+           ISD::ATOMIC_LOAD_AND,
+       }) {
+    setOperationAction(AtomicOp, MVT::i8, Custom);
+  }
+
+  // Might as well lie here since everything larger than an i8 will be a
+  // __sync_lock call anyway.
+  setSupportsUnalignedAtomics(true);
+
   // All the hand-written runtime libcalls are implemented in fastcc
   setLibcallCallingConv(RTLIB::Libcall::MEMCPY, CallingConv::Fast);
   setLibcallCallingConv(RTLIB::Libcall::MEMMOVE, CallingConv::Fast);
@@ -189,6 +228,13 @@ SDValue GBTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return LowerBlockAddress(Op, DAG);
   case ISD::SIGN_EXTEND_INREG:
     return LowerSignExtendInReg(Op, DAG);
+  case ISD::ATOMIC_FENCE:
+    return LowerAtomicFence(Op, DAG);
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+    return LowerAtomicReadModifyWrite(Op, DAG);
   }
 }
 
@@ -449,6 +495,115 @@ SDValue GBTargetLowering::LowerSignExtendInReg(SDValue Op,
                      And);
 }
 
+SDValue GBTargetLowering::LowerAtomicFence(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  // Lower into a memory barrier created with an empty inline asm.
+  LLVMContext &Ctx = *DAG.getContext();
+  SDLoc DL = Op;
+
+  const unsigned Flags = InlineAsm::Extra_MayLoad | InlineAsm::Extra_MayStore |
+                         InlineAsm::Extra_HasSideEffects;
+  const SDValue AsmOperands[4] = {
+      Op.getOperand(0),                           // Input chain
+      DAG.getTargetExternalSymbol("", MVT::i16),  // (empty) string
+      DAG.getMDNode(MDNode::get(Ctx, {})),        // (empty) srcloc
+      DAG.getTargetConstant(Flags, DL, MVT::i16), // Flags
+  };
+
+  return DAG.getNode(ISD::INLINEASM, DL, DAG.getVTList(MVT::Other, MVT::Glue),
+                     AsmOperands);
+}
+
+SDValue GBTargetLowering::LowerAtomicReadModifyWrite(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+  SDLoc DL = Op;
+
+  auto *Node = Op.getNode();
+  auto OpCode = Op->getOpcode();
+  auto ValueArg = Node->getOperand(2);
+
+  auto ShouldLowerToLibCall = [&] {
+    // We can't lower an atomic fetch op but we can lower an atomic op, if
+    // anyone uses the fetch, give up and emit the library call.
+    if (Node->hasAnyUseOfValue(0)) {
+      return true;
+    }
+
+    if (ValueArg->getOpcode() != ISD::Constant) {
+      return true;
+    }
+
+    auto Immediate = ValueArg->getAsZExtVal();
+    switch (OpCode) {
+    default:
+      llvm_unreachable("Cannot custom expand atomic");
+      break;
+    case ISD::ATOMIC_LOAD_ADD:
+    case ISD::ATOMIC_LOAD_SUB:
+      // Only inc/ dec is supported
+      return Immediate != 1;
+    case ISD::ATOMIC_LOAD_OR:
+      // This is a single bit-set
+      return llvm::popcount(Immediate) != 1;
+    case ISD::ATOMIC_LOAD_AND:
+      // This is a single bit-reset
+      return llvm::popcount(Immediate) != 7;
+    }
+  }();
+
+  if (ShouldLowerToLibCall) {
+    // We can't do anything helpful here, emit the sync call as if we legalized
+    // to libcall.
+    unsigned Opc = Node->getOpcode();
+    MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
+    AtomicOrdering Order = cast<AtomicSDNode>(Node)->getMergedOrdering();
+
+    RTLIB::Libcall LC = RTLIB::getOUTLINE_ATOMIC(Opc, Order, VT);
+    EVT RetVT = Node->getValueType(0);
+    TargetLowering::MakeLibCallOptions CallOptions;
+
+    LC = RTLIB::getSYNC(Opc, VT);
+    assert(LC != RTLIB::UNKNOWN_LIBCALL &&
+           "Unexpected atomic op or value type!");
+
+    SmallVector<SDValue, 4> Ops;
+    Ops.append(Node->op_begin() + 1, Node->op_end());
+
+    auto [Res, Chain] = makeLibCall(DAG, LC, RetVT, Ops, CallOptions,
+                                    SDLoc(Node), Node->getOperand(0));
+    return Res;
+  }
+
+  // Ops contains the chain and the pointer
+  SmallVector<SDValue, 4> Ops;
+  Ops.append(Node->op_begin(), Node->op_end() - 1);
+  assert(Op.getSimpleValueType() == MVT::i8);
+
+  auto Immediate = ValueArg->getAsZExtVal();
+
+  switch (OpCode) {
+  default:
+    llvm_unreachable("Cannot custom expand atomic");
+    break;
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB: {
+    auto GBOp = (OpCode == ISD::ATOMIC_LOAD_ADD ? GBISD::ATOMIC_INC
+                                                : GBISD::ATOMIC_DEC);
+    return DAG.getNode(GBOp, DL, DAG.getVTList(MVT::i8, MVT::Other), Ops);
+  }
+  case ISD::ATOMIC_LOAD_AND:
+    Ops.push_back(
+        DAG.getConstant(llvm::countr_one(Immediate), SDLoc(ValueArg), MVT::i8));
+    return DAG.getNode(GBISD::ATOMIC_BIT_RESET, DL,
+                       DAG.getVTList(MVT::i8, MVT::Other), Ops);
+  case ISD::ATOMIC_LOAD_OR:
+    Ops.push_back(DAG.getConstant(llvm::countr_zero(Immediate), SDLoc(ValueArg),
+                                  MVT::i8));
+    return DAG.getNode(GBISD::ATOMIC_BIT_SET, DL,
+                       DAG.getVTList(MVT::i8, MVT::Other), Ops);
+  }
+}
+
 const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((GBISD::NodeType)Opcode) {
   case GBISD::FIRST_NUMBER:
@@ -457,6 +612,14 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::ADDR_WRAPPER";
   case GBISD::ASHR:
     return "GBISD::ASHR";
+  case GBISD::ATOMIC_BIT_RESET:
+    return "GBISD::ATOMIC_BIT_RESET";
+  case GBISD::ATOMIC_BIT_SET:
+    return "GBISD::ATOMIC_BIT_SET";
+  case GBISD::ATOMIC_DEC:
+    return "GBISD::ATOMIC_DEC";
+  case GBISD::ATOMIC_INC:
+    return "GBISD::ATOMIC_INC";
   case GBISD::BR_CC:
     return "GBISD::BR_CC";
   case GBISD::CALL:
@@ -489,10 +652,10 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::SBR_CC";
   case GBISD::SELECT_CC:
     return "GBISD::SELECT_CC";
-  case GBISD::SSELECT_CC:
-    return "GBISD::SSELECT_CC";
   case GBISD::SHL:
     return "GBISD::SHL";
+  case GBISD::SSELECT_CC:
+    return "GBISD::SSELECT_CC";
   case GBISD::UPPER:
     return "GBISD::UPPER";
   }

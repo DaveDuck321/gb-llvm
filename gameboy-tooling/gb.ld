@@ -47,7 +47,7 @@ SECTIONS {
     . = 0x0150;
   } > rom0 = 0
 
-  .hram : { *(.text.hram*) } > hram AT> rom0
+  .hram : { *(.text.hram*), *(.data.hram*) } > hram AT> rom0
   .init_array : { KEEP(*(.init_array*)) } > rom0
   .fini_array : { KEEP(*(.fini_array*)) } > rom0
   .text : { *(.text*) } > rom0

@@ -531,7 +531,7 @@ private:
   SDValue ExpandIntOp_TRUNCATE(SDNode *N);
   SDValue ExpandIntOp_XINT_TO_FP(SDNode *N);
   SDValue ExpandIntOp_RETURNADDR(SDNode *N);
-  SDValue ExpandIntOp_ATOMIC_STORE(SDNode *N);
+  SDValue ExpandIntOp_ATOMIC_STORE(SDNode *N, unsigned OpNo);
   SDValue ExpandIntOp_SPLAT_VECTOR(SDNode *N);
   SDValue ExpandIntOp_STACKMAP(SDNode *N, unsigned OpNo);
   SDValue ExpandIntOp_PATCHPOINT(SDNode *N, unsigned OpNo);

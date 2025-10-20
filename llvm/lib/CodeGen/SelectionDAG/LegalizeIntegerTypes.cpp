@@ -5561,7 +5561,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::SCMP:
   case ISD::UCMP:              Res = ExpandIntOp_CMP(N); break;
 
-  case ISD::ATOMIC_STORE:      Res = ExpandIntOp_ATOMIC_STORE(N); break;
+  case ISD::ATOMIC_STORE:      Res = ExpandIntOp_ATOMIC_STORE(N, OpNo); break;
   case ISD::STACKMAP:
     Res = ExpandIntOp_STACKMAP(N, OpNo);
     break;
@@ -5990,7 +5990,12 @@ SDValue DAGTypeLegalizer::ExpandIntOp_TRUNCATE(SDNode *N) {
   return DAG.getNode(ISD::TRUNCATE, SDLoc(N), N->getValueType(0), InL);
 }
 
-SDValue DAGTypeLegalizer::ExpandIntOp_ATOMIC_STORE(SDNode *N) {
+SDValue DAGTypeLegalizer::ExpandIntOp_ATOMIC_STORE(SDNode *N, unsigned OpNo) {
+  if (OpNo == 2) {
+    // We cannot legalize the address any further
+    return SDValue();
+  }
+
   SDLoc dl(N);
   SDValue Swap =
       DAG.getAtomic(ISD::ATOMIC_SWAP, dl, cast<AtomicSDNode>(N)->getMemoryVT(),

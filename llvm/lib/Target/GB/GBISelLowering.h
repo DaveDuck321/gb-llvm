@@ -18,6 +18,10 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   ADDR_WRAPPER,
   ASHR,
+  ATOMIC_BIT_RESET,
+  ATOMIC_BIT_SET,
+  ATOMIC_DEC,
+  ATOMIC_INC,
   BR_CC,
   CALL,
   COMBINE,
@@ -34,8 +38,8 @@ enum NodeType : unsigned {
   RR,
   SBR_CC,
   SELECT_CC,
-  SSELECT_CC,
   SHL,
+  SSELECT_CC,
   UPPER,
 };
 } // namespace GBISD
@@ -62,6 +66,8 @@ private:
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSignExtendInReg(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerAtomicFence(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerAtomicReadModifyWrite(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;

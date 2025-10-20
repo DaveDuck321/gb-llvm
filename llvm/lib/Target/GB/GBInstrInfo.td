@@ -16,7 +16,7 @@ let mayStore = true, Uses = [A, C] in
 def LD_iC_A : GBInstrNoOperands<"ld (c), a", 0xE2>;
 
 let mayStore = true, Uses = [A, HL], Defs = [HL] in {
-  // TOOD GB: should also accept: ld (hl+-), a
+  // TODO GB: should also accept: ld (hl+-), a
   def LDI_iHL_A : GBInstrNoOperands<"ldi (hl), a", 0x22>;
   def LDD_iHL_A : GBInstrNoOperands<"ldd (hl), a", 0x32>;
 }
@@ -31,7 +31,7 @@ let mayLoad = true, Defs = [A] in {
 }
 
 let mayLoad = true, Uses = [HL], Defs = [A, HL] in {
-  // TOOD GB: should also accept: ld a, (hl+-)
+  // TODO GB: should also accept: ld a, (hl+-)
   def LDI_A_iHL : GBInstrNoOperands<"ldi a, (hl)", 0x2A>;
   def LDD_A_iHL : GBInstrNoOperands<"ldd a, (hl)", 0x3A>;
 }
@@ -88,7 +88,7 @@ defm DEC : GBIncDec8<"dec", 0x05>;
 
 let Size = 1 in {
   let Constraints = "$rs = $rd" in {
-    // TOOD GB: there's a hardware bug here... maybe find a way to model this?
+    // TODO GB: there's a hardware bug here... maybe find a way to model this?
     def INC16 : _GB_GPR16S16Sequence<"inc", 0x03, (outs IntReg16:$rd)>;
     def DEC16 : _GB_GPR16S16Sequence<"dec", 0x0B, (outs IntReg16:$rd)>;
   }
@@ -383,8 +383,14 @@ def : Pat<(load io_imm16:$imm), (LDH_A_iImm (to_lower_imm $imm))>;
 def : Pat<(load IntReg16:$rs), (LD_r_iGPR16 IntReg16:$rs)>;
 def : Pat<(extload IntReg16:$rs), (LD_r_iGPR16 IntReg16:$rs)>;
 
+def : Pat<(atomic_load io_imm16:$imm), (LDH_A_iImm (to_lower_imm $imm))>;
+def : Pat<(atomic_load IntReg16:$rs), (LD_r_iGPR16 IntReg16:$rs)>;
+
 def : Pat<(store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
 def : Pat<(store A, IntReg16:$rs), (LD_iGPR16_A IntReg16:$rs)>;
+
+def : Pat<(atomic_store A, io_imm16:$imm), (LDH_iImm_A (to_lower_imm $imm))>;
+def : Pat<(atomic_store A, IntReg16:$rs), (LD_iGPR16_A IntReg16:$rs)>;
 
 let mayLoad = true, Uses = [SP] in {
   def Load16FromFrameIndex : Pseudo<"#load16", "$i to $r", (outs IntReg16:$r), (ins simm8:$i)>;
@@ -458,6 +464,22 @@ def P_SSELECT_CCI
   let usesCustomInserter = true;
   let isSelect = true;
 }
+
+// Atomic rmws special cases
+def SDT_ATOMIC_INC_DEC : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisPtrTy<1>]>;
+def ATOMIC_INC_NODE : SDNode<"GBISD::ATOMIC_INC", SDT_ATOMIC_INC_DEC, [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def ATOMIC_DEC_NODE : SDNode<"GBISD::ATOMIC_DEC", SDT_ATOMIC_INC_DEC, [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+
+def : Pat<(ATOMIC_INC_NODE HL), (INC_iHL)>;
+def : Pat<(ATOMIC_DEC_NODE HL), (DEC_iHL)>;
+
+def SDT_ATOMIC_SET_RESET : SDTypeProfile<1, 2, [SDTCisVT<0, i8>, SDTCisPtrTy<1>, SDTCisVT<2, i8>]>;
+def ATOMIC_BIT_SET_NODE   : SDNode<"GBISD::ATOMIC_BIT_SET",   SDT_ATOMIC_SET_RESET, [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def ATOMIC_BIT_RESET_NODE : SDNode<"GBISD::ATOMIC_BIT_RESET", SDT_ATOMIC_SET_RESET, [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+
+def : Pat<(ATOMIC_BIT_SET_NODE HL,   imm8:$imm8), (SET_iHL imm8:$imm8)>;
+def : Pat<(ATOMIC_BIT_RESET_NODE HL, imm8:$imm8), (RES_iHL imm8:$imm8)>;
+
 
 def SDT_GBSELECT_CC : SDTypeProfile<1, 3, [/*Out=*/SDTCisVT<0, i8>, /*CCODE=*/ SDTCisVT<1, OtherVT>, /*IfTrue=*/ SDTCisVT<2, i8>, /*IfFalse=*/ SDTCisVT<3, i8>]>;
 def SELECT_CC_NODE : SDNode<"GBISD::SELECT_CC", SDT_GBSELECT_CC, [SDNPInGlue]>;

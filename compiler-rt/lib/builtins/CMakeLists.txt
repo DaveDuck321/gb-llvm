@@ -701,15 +701,17 @@ set(avr_SOURCES
 
 set(gb_SOURCES
   ${GENERIC_SOURCES}
-  gb/mulqi.c
-  gb/mulhi.c
-  gb/mulsi.c
-  gb/ashrsi.S
-  gb/lshrsi.S
-  gb/ashrhi.S
-  gb/lshrhi.S
-  gb/ashlsi.S
   gb/ashlhi.S
+  gb/ashlsi.S
+  gb/ashrhi.S
+  gb/ashrsi.S
+  gb/lshrhi.S
+  gb/lshrsi.S
+  gb/mulhi.c
+  gb/mulqi.c
+  gb/mulsi.c
+  gb/sync_fetch_and_op.c
+  gb/sync_val_compare_and_swap.c
 )
 
 # hexagon arch

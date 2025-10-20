@@ -36,6 +36,9 @@ GBTargetInfo::GBTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
   Int16Type = SignedInt;
   Char32Type = UnsignedLong;
   SigAtomicType = SignedChar;
+
+  MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 8;
+
   resetDataLayout(
       "e-S16-p:16:16-i8:8-i16:16-i32:16-i64:16-f32:16-f64:16-a:0-m:e-n8:16");
 }
@@ -76,12 +79,13 @@ TargetInfo::BuiltinVaListKind GBTargetInfo::getBuiltinVaListKind() const {
   return TargetInfo::VoidPtrBuiltinVaList;
 }
 
-TargetInfo::CallingConvCheckResult GBTargetInfo::checkCallingConvention(CallingConv CC) const {
-    switch (CC) {
-      default:
-        return CCCR_Warning;
-      case CC_C:
-      case CC_GB_Interrupt:
-        return CCCR_OK;
-    }
+TargetInfo::CallingConvCheckResult
+GBTargetInfo::checkCallingConvention(CallingConv CC) const {
+  switch (CC) {
+  default:
+    return CCCR_Warning;
+  case CC_C:
+  case CC_GB_Interrupt:
+    return CCCR_OK;
+  }
 }
