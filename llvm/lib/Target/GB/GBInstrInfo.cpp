@@ -185,7 +185,8 @@ unsigned GBInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   }
 
   if (MI.isPseudo()) {
-    llvm_unreachable("Analysis requires size of pseudo instruction");
+    LLVM_DEBUG(
+        dbgs() << "Warning: analysis requires size of pseudo instruction\n");
     return 3;
   }
   return MI.getDesc().getSize();

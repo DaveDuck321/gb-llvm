@@ -2,6 +2,8 @@
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/misc.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/misc.ll -O3 -gb-debug-early-lower-everything \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
 
 .global memcpy
 memcpy:

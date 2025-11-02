@@ -2,6 +2,8 @@
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/addresses.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
+# RUN: run-emulator-test.sh %s $GB_TEST_PATH/addresses.ll -O3 -gb-debug-early-lower-everything \
+# RUN:   | FileCheck %s -check-prefix=EXPECT
 
     .data
 .global external_u16

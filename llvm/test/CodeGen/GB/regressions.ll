@@ -42,40 +42,57 @@ for.cond:                                         ; preds = %for.cond, %entry
 define fastcc void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
 ; GBI-LABEL: _ZN12FallingPiece20try_rotate_clockwiseEv:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    add sp, -4
-; GBI-NEXT:    ld b, h
-; GBI-NEXT:    ld a, l
-; GBI-NEXT:    ld hl, sp, 0
-; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    add sp, -8
+; GBI-NEXT:    ld d, h
+; GBI-NEXT:    ld e, l
+; GBI-NEXT:    ld hl, sp, 4
+; GBI-NEXT:    ld (hl), e # 1-byte Folded Spill
+; GBI-NEXT:    ld bc, $0000
+; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld (hl), c
+; GBI-NEXT:    inc hl
 ; GBI-NEXT:    ld (hl), b
 ; GBI-NEXT:  .LBB1_1: # %for.cond
 ; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
+; GBI-NEXT:    ld hl, sp, 4
+; GBI-NEXT:    ld e, (hl) # 1-byte Folded Reload
 ; GBI-NEXT:    ld hl, sp, 0
-; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld b, (hl)
+; GBI-NEXT:    ld a, e
+; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    ld (hl), d
+; GBI-NEXT:    ld a, e
 ; GBI-NEXT:    add %lo _ZL10wall_kicks
 ; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    adc %hi _ZL10wall_kicks
 ; GBI-NEXT:    ld b, a
 ; GBI-NEXT:    ld d, b
 ; GBI-NEXT:    ld e, c
+; GBI-NEXT:    ld hl, sp, 5
+; GBI-NEXT:    ld (hl), c # 1-byte Folded Spill
 ; GBI-NEXT:    inc de
 ; GBI-NEXT:    ld a, (de)
-; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld hl, sp, 6
 ; GBI-NEXT:    ld d, h
 ; GBI-NEXT:    ld e, l
 ; GBI-NEXT:    inc hl
 ; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ld a, (_ZN12FallingPiece10m_positionE+1)
+; GBI-NEXT:    ld hl, sp, 5
+; GBI-NEXT:    ld l, (hl) # 1-byte Folded Reload
 ; GBI-NEXT:    ld h, b
-; GBI-NEXT:    ld l, c
 ; GBI-NEXT:    or (hl)
 ; GBI-NEXT:    ld (de), a
-; GBI-NEXT:    ld bc, $0000
+; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld c, (hl)
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld b, (hl)
 ; GBI-NEXT:    ld d, $00
 ; GBI-NEXT:    call $0000
+; GBI-NEXT:    ld hl, sp, 0
+; GBI-NEXT:    ld e, (hl)
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld d, (hl)
 ; GBI-NEXT:    jr .LBB1_1
 entry:
   %agg.tmp5 = alloca %struct.Coord, align 2

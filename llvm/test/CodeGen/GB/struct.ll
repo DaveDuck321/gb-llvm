@@ -11,46 +11,66 @@
 define i8 @main() {
 ; GBI-O3-LABEL: main:
 ; GBI-O3:       # %bb.0: # %begin
-; GBI-O3-NEXT:    add sp, -12
-; GBI-O3-NEXT:    ld hl, sp, 4
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld h, b
-; GBI-O3-NEXT:    call make_range
+; GBI-O3-NEXT:    add sp, -16
 ; GBI-O3-NEXT:    ld hl, sp, 8
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld (hl), b
-; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    call make_range
+; GBI-O3-NEXT:    ld hl, sp, 12
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld c, l
 ; GBI-O3-NEXT:    ld d, h
 ; GBI-O3-NEXT:    ld e, l
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld (hl), c
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    inc de
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    push af
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    pop af
-; GBI-O3-NEXT:    ld (hl), a
+; GBI-O3-NEXT:    ld a, e
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), d
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld b, d
+; GBI-O3-NEXT:    ld c, e
+; GBI-O3-NEXT:    ld hl, sp, 6
+; GBI-O3-NEXT:    ld (hl), e
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld (hl), d
 ; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    ld hl, sp, 6
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
 ; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    add sp, 12
+; GBI-O3-NEXT:    ld hl, sp, 4
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    inc bc
+; GBI-O3-NEXT:    ld a, (bc)
+; GBI-O3-NEXT:    ld (de), a
+; GBI-O3-NEXT:    add sp, 16
 ; GBI-O3-NEXT:    ret
 begin:
   %0 = alloca %type._Z5Range
