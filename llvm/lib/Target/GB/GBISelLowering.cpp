@@ -48,7 +48,7 @@ GBTargetLowering::GBTargetLowering(const TargetMachine &TM,
                                    const GBSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
   addRegisterClass(MVT::i8, &GB::GPR8RegClass);
-  addRegisterClass(MVT::i16, &GB::IntReg16RegClass);
+  addRegisterClass(MVT::i16, &GB::GPR16RegClass);
   computeRegisterProperties(STI.getRegisterInfo());
 
   // setStackPointerRegisterToSaveRestore(GB::SP);
@@ -644,8 +644,6 @@ const char *GBTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "GBISD::RETI";
   case GBISD::RL:
     return "GBISD::RL";
-  case GBISD::RLC:
-    return "GBISD::RLC";
   case GBISD::RR:
     return "GBISD::RR";
   case GBISD::SBR_CC:
@@ -895,26 +893,26 @@ GBTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     llvm_unreachable("Instruction emitter not implemented!");
-  case GB::P_SBR_CC_r:
+  case GB::SBR_CC_r:
     return emitUnknownSBRCCWithCustomInserter(MI, MBB);
-  case GB::P_SBR_CCI:
+  case GB::SBR_CCI:
     return emitConstantSBRCCWithCustomInserter(MI, MBB);
-  case GB::P_SELECT_CC:
+  case GB::SELECT_CC:
     return emitSelectCCWithCustomInserter(MI, MBB);
-  case GB::P_SSELECT_CC_r:
-  case GB::P_SSELECT_CCI:
+  case GB::SSELECT_CC_r:
+  case GB::SSELECT_CCI:
     return emitSignedSelectCCWithCustomInserter(MI, MBB);
-  case GB::P_SLA_r:
-  case GB::P_SRA_r:
-  case GB::P_SRL_r:
-  case GB::P_ROTL_r:
-  case GB::P_ROTR_r:
+  case GB::SLA_N_r:
+  case GB::SRA_N_r:
+  case GB::SRL_N_r:
+  case GB::ROTL_N_r:
+  case GB::ROTR_N_r:
     return emitUnknownShiftWithCustomInserter(MI, MBB);
-  case GB::P_SLAI:
-  case GB::P_SRAI:
-  case GB::P_SRLI:
-  case GB::P_ROTLI:
-  case GB::P_ROTRI:
+  case GB::SLA_NI:
+  case GB::SRA_NI:
+  case GB::SRL_NI:
+  case GB::ROTL_NI:
+  case GB::ROTR_NI:
     return emitConstantShiftWithCustomInserter(MI, MBB);
   }
 }
@@ -1300,14 +1298,14 @@ MachineBasicBlock *GBTargetLowering::emitSignedSelectCCWithCustomInserter(
   auto *EndMBB = emitSelectCC(
       [&](MachineBasicBlock *StartMBB, MachineBasicBlock *EndMBB, DebugLoc DL) {
         if (MIRHS.isImm()) {
-          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::P_SBR_CCI))
+          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::SBR_CCI))
                                 .addImm(MICond)
                                 .addMBB(EndMBB)
                                 .addReg(MILHS)
                                 .addImm(MIRHS.getImm())
                                 .getInstr();
         } else {
-          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::P_SBR_CC_r))
+          PseudoJumpInstr = BuildMI(StartMBB, DL, TII.get(GB::SBR_CC_r))
                                 .addImm(MICond)
                                 .addMBB(EndMBB)
                                 .addReg(MILHS)
@@ -1336,15 +1334,15 @@ MachineBasicBlock *GBTargetLowering::emitConstantShiftWithCustomInserter(
 
   auto Opcode = [&] {
     switch (MI.getOpcode()) {
-    case GB::P_SLAI:
+    case GB::SLA_NI:
       return GB::SLA_r;
-    case GB::P_SRAI:
+    case GB::SRA_NI:
       return GB::SRA_r;
-    case GB::P_SRLI:
+    case GB::SRL_NI:
       return GB::SRL_r;
-    case GB::P_ROTLI:
+    case GB::ROTL_NI:
       return GB::RLC_r;
-    case GB::P_ROTRI:
+    case GB::ROTR_NI:
       return GB::RRC_r;
     default:
       llvm_unreachable("Unexpected Opcode");
@@ -1471,15 +1469,15 @@ MachineBasicBlock *GBTargetLowering::emitUnknownShiftWithCustomInserter(
 
   const auto Opcode = [&] {
     switch (MI.getOpcode()) {
-    case GB::P_SLA_r:
+    case GB::SLA_N_r:
       return GB::SLA_r;
-    case GB::P_SRA_r:
+    case GB::SRA_N_r:
       return GB::SRA_r;
-    case GB::P_SRL_r:
+    case GB::SRL_N_r:
       return GB::SRL_r;
-    case GB::P_ROTL_r:
+    case GB::ROTL_N_r:
       return GB::RLC_r;
-    case GB::P_ROTR_r:
+    case GB::ROTR_N_r:
       return GB::RRC_r;
     default:
       llvm_unreachable("Unexpected Opcode");

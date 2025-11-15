@@ -131,7 +131,7 @@ void GBInstrInfo::storeRegToStackSlot(
     return;
   }
 
-  if (GB::IntReg16RegClass.hasSubClassEq(RC)) {
+  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, MI, DL, get(GB::Save16ToFrameIndex))
         .addReg(SrcReg, getKillRegState(IsKill))
         .addFrameIndex(FrameIndex)
@@ -165,7 +165,7 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
         .addMemOperand(MMO);
     return;
   }
-  if (GB::IntReg16RegClass.hasSubClassEq(RC)) {
+  if (GB::GPR16RegClass.hasSubClassEq(RC)) {
     BuildMI(MBB, MI, DL, get(GB::Load16FromFrameIndex), DestReg)
         .addFrameIndex(FrameIndex)
         .addMemOperand(MMO);
@@ -422,7 +422,7 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       break;
     case GB::BC:
     case GB::DE:
-      BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iR16))
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iGPR16WithoutHL))
           .addDef(GB::A, getImplRegState(true))
           .addReg(PtrReg, getKillRegState(DidKillPtr));
       break;
@@ -450,7 +450,7 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       break;
     case GB::BC:
     case GB::DE:
-      BuildMI(*MBB, MBBI, DL, get(GB::LD_iR16_A))
+      BuildMI(*MBB, MBBI, DL, get(GB::LD_iGPR16WithoutHL_A))
           .addReg(PtrReg, getKillRegState(DidKillPtr))
           .addReg(GB::A, getImplRegState(true) | getKillRegState(DidKillSrc));
       break;

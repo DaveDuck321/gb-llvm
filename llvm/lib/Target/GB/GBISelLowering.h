@@ -34,7 +34,6 @@ enum NodeType : unsigned {
   RET,
   RETI,
   RL,
-  RLC,
   RR,
   SBR_CC,
   SELECT_CC,

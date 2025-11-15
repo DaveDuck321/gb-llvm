@@ -28,9 +28,9 @@ namespace {
 
 unsigned GPR8DecodeTable[] = {GB::B, GB::C, GB::D, GB::E,
                               GB::H, GB::L, ~0u,   GB::A};
-unsigned GPR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::SP};
-unsigned SR16DecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::AF};
-unsigned IR16DecodeTable[] = {GB::BC, GB::DE};
+unsigned GPR16AndSPDecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::SP};
+unsigned GPR16AndAFDecodeTable[] = {GB::BC, GB::DE, GB::HL, GB::AF};
+unsigned GPR16WithoutHLDecodeTable[] = {GB::BC, GB::DE};
 
 DecodeStatus DecodeGPR8RegisterClass(MCInst &MI, uint64_t Encoding,
                                      uint64_t Addr, const void *Decoder) {
@@ -43,34 +43,35 @@ DecodeStatus DecodeGPR8RegisterClass(MCInst &MI, uint64_t Encoding,
   return DecodeStatus::Success;
 }
 
+DecodeStatus DecodeGPR16AndSPRegisterClass(MCInst &MI, uint64_t Encoding,
+                                           uint64_t Addr, const void *Decoder) {
+  assert((Encoding & ~0b11) == 0);
+
+  MI.addOperand(MCOperand::createReg(GPR16AndSPDecodeTable[Encoding]));
+
+  return DecodeStatus::Success;
+}
+
 DecodeStatus DecodeGPR16RegisterClass(MCInst &MI, uint64_t Encoding,
                                       uint64_t Addr, const void *Decoder) {
+  return DecodeGPR16AndSPRegisterClass(MI, Encoding, Addr, Decoder);
+}
+
+DecodeStatus DecodeGPR16AndAFRegisterClass(MCInst &MI, uint64_t Encoding,
+                                           uint64_t Addr, const void *Decoder) {
   assert((Encoding & ~0b11) == 0);
 
-  MI.addOperand(MCOperand::createReg(GPR16DecodeTable[Encoding]));
+  MI.addOperand(MCOperand::createReg(GPR16AndAFDecodeTable[Encoding]));
 
   return DecodeStatus::Success;
 }
 
-DecodeStatus DecodeIntReg16RegisterClass(MCInst &MI, uint64_t Encoding,
-                                         uint64_t Addr, const void *Decoder) {
-  return DecodeGPR16RegisterClass(MI, Encoding, Addr, Decoder);
-}
-
-DecodeStatus DecodeSR16RegisterClass(MCInst &MI, uint64_t Encoding,
-                                     uint64_t Addr, const void *Decoder) {
-  assert((Encoding & ~0b11) == 0);
-
-  MI.addOperand(MCOperand::createReg(SR16DecodeTable[Encoding]));
-
-  return DecodeStatus::Success;
-}
-
-DecodeStatus DecodeIR16RegisterClass(MCInst &MI, uint64_t Encoding,
-                                     uint64_t Addr, const void *Decoder) {
+DecodeStatus DecodeGPR16WithoutHLRegisterClass(MCInst &MI, uint64_t Encoding,
+                                               uint64_t Addr,
+                                               const void *Decoder) {
   assert((Encoding & ~0b1) == 0);
 
-  MI.addOperand(MCOperand::createReg(IR16DecodeTable[Encoding]));
+  MI.addOperand(MCOperand::createReg(GPR16WithoutHLDecodeTable[Encoding]));
 
   return DecodeStatus::Success;
 }

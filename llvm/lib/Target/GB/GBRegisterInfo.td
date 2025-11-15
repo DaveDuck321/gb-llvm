@@ -1,15 +1,16 @@
 class GBReg<string name, bits<16> enc> : Register<name> {
-    let Namespace = "GB";
-    let HWEncoding = enc;
+  let Namespace = "GB";
+  let HWEncoding = enc;
 }
 
 def UpperSubReg : SubRegIndex<8, 8>;
 def LowerSubReg : SubRegIndex<8, 0>;
 
-class GBCombinedReg<string name, bits<16> enc, list<GBReg> halves> : GBReg<name, enc> {
-    let SubRegs = halves;
-    let SubRegIndices = [UpperSubReg, LowerSubReg];
-    let CoveredBySubRegs = true;
+class GBCombinedReg<string name, bits<16> enc, list<GBReg> halves>
+    : GBReg<name, enc> {
+  let SubRegs = halves;
+  let SubRegIndices = [UpperSubReg, LowerSubReg];
+  let CoveredBySubRegs = true;
 }
 
 // 8-Bit registers
@@ -33,7 +34,8 @@ def SP : GBReg<"sp", 3>;
 def Flags : RegisterClass<"GB", [i8], 8, (add F)> { let isAllocatable = false; }
 
 def GPR8 : RegisterClass<"GB", [i8], 8, (add A, B, C, D, E, H, L)>;
-def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)>;
-def IntReg16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL)>;
-def SR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, AF)>;
-def IR16 : RegisterClass<"GB", [i16], 16, (add BC, DE)>;
+def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL)>;
+
+def GPR16AndSP : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)>;
+def GPR16AndAF : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, AF)>;
+def GPR16WithoutHL : RegisterClass<"GB", [i16], 16, (add BC, DE)>;
