@@ -9,6 +9,7 @@
 #include "GISel/GBRegisterBankInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
+#include "llvm/CodeGen/GlobalISel/InlineAsmLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 
@@ -26,6 +27,13 @@ GBSubtarget::GBSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
       TSInfo() {}
 
 GBSubtarget::~GBSubtarget() = default;
+
+const InlineAsmLowering *GBSubtarget::getInlineAsmLowering() const {
+  if (!InlineAsm) {
+    InlineAsm.reset(new InlineAsmLowering(getTargetLowering()));
+  }
+  return InlineAsm.get();
+}
 
 const CallLowering *GBSubtarget::getCallLowering() const {
   if (!CallLoweringInfo) {

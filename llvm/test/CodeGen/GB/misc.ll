@@ -111,3 +111,15 @@ entry:
 
 ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 declare void @llvm.memcpy.p0.p0.i16(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i16, i1 immarg) #0
+
+
+define void @inline_asm() {
+; GBI-O3-LABEL: inline_asm:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    #APP
+; GBI-O3-NEXT:    trap
+; GBI-O3-NEXT:    #NO_APP
+; GBI-O3-NEXT:    ret
+  call void asm sideeffect "trap", ""()
+  ret void
+}

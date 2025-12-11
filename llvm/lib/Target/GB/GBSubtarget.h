@@ -7,6 +7,7 @@
 #include "GBRegisterInfo.h"
 #include "GISel/GBRegisterBankInfo.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/GlobalISel/InlineAsmLowering.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -24,6 +25,7 @@ class GBSubtarget final : public GBGenSubtargetInfo {
   GBTargetLowering TargetLowering;
   SelectionDAGTargetInfo TSInfo;
 
+  mutable std::unique_ptr<InlineAsmLowering> InlineAsm = nullptr;
   mutable std::unique_ptr<CallLowering> CallLoweringInfo = nullptr;
   mutable std::unique_ptr<InstructionSelector> InstSelector = nullptr;
   mutable std::unique_ptr<LegalizerInfo> Legalizer = nullptr;
@@ -50,6 +52,7 @@ public:
     return &RegisterInfo;
   }
 
+  const InlineAsmLowering *getInlineAsmLowering() const override;
   const CallLowering *getCallLowering() const override;
   InstructionSelector *getInstructionSelector() const override;
   const LegalizerInfo *getLegalizerInfo() const override;
