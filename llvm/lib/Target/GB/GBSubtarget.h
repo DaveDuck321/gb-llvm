@@ -5,6 +5,7 @@
 #include "GBISelLowering.h"
 #include "GBInstrInfo.h"
 #include "GBRegisterInfo.h"
+#include "GISel/GBRegisterBankInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -23,9 +24,15 @@ class GBSubtarget final : public GBGenSubtargetInfo {
   GBTargetLowering TargetLowering;
   SelectionDAGTargetInfo TSInfo;
 
+  mutable std::unique_ptr<CallLowering> CallLoweringInfo = nullptr;
+  mutable std::unique_ptr<InstructionSelector> InstSelector = nullptr;
+  mutable std::unique_ptr<LegalizerInfo> Legalizer = nullptr;
+  mutable std::unique_ptr<GBRegisterBankInfo> RegBankInfo = nullptr;
+
 public:
   GBSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
               const TargetMachine &TM);
+  ~GBSubtarget();
 
   bool enableSubRegLiveness() const override { return true; }
 
@@ -42,6 +49,11 @@ public:
   const GBRegisterInfo *getRegisterInfo() const override {
     return &RegisterInfo;
   }
+
+  const CallLowering *getCallLowering() const override;
+  InstructionSelector *getInstructionSelector() const override;
+  const LegalizerInfo *getLegalizerInfo() const override;
+  const GBRegisterBankInfo *getRegBankInfo() const override;
 };
 } // namespace llvm
 #endif

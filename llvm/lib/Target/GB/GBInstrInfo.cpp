@@ -1,6 +1,6 @@
 #include "GBInstrInfo.h"
 #include "GB.h"
-#include "GBMOFlags.hpp"
+#include "GBMOFlags.h"
 #include "GBRegisterInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -256,6 +256,10 @@ bool GBInstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   for (auto &MI : *MBB.getIterator()) {
     if (MI.isDebugInstr()) {
       continue;
+    }
+
+    if (MI.isPreISelOpcode()) {
+      return true; // Cannot analyze
     }
 
     if (MI.isUnconditionalBranch()) {

@@ -735,6 +735,9 @@ bool GIMatchTableExecutor::executeMatchTable(
       assert(State.MIs[InsnID] != nullptr && "Used insn before defined");
       MachineOperand &MO = State.MIs[InsnID]->getOperand(OpIdx);
       if (!MO.isReg() || MRI.getType(MO.getReg()) != getTypeFromIdx(TypeID)) {
+        DEBUG_WITH_TYPE(TgtExecutor::getName(), dbgs() << CurrentIdx << ": ";
+                        MRI.getType(MO.getReg()).print(dbgs()); dbgs() << "!=";
+                        getTypeFromIdx(TypeID).print(dbgs()); dbgs() << "\n");
         if (handleReject() == RejectAndGiveUp)
           return false;
       }

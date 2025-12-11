@@ -1927,6 +1927,7 @@ public:
     OR_CopyOrAddZeroReg,
     OR_CopySubReg,
     OR_CopyPhysReg,
+    OR_CopyResultReg,
     OR_CopyConstantAsImm,
     OR_CopyFConstantAsFPImm,
     OR_Imm,
@@ -1999,6 +2000,25 @@ public:
   }
 
   const Record *getPhysReg() const { return PhysReg; }
+
+  void emitRenderOpcodes(MatchTable &Table, RuleMatcher &Rule) const override;
+};
+
+class CopyResultRegRenderer : public OperandRenderer {
+protected:
+  unsigned NewInsnID;
+  unsigned OldInsnID;
+  unsigned ResultIndex;
+
+public:
+  CopyResultRegRenderer(unsigned NewInsnID, unsigned OldInsnID,
+                        unsigned ResultIndex)
+      : OperandRenderer(OR_CopyResultReg), NewInsnID(NewInsnID),
+        OldInsnID(OldInsnID), ResultIndex(ResultIndex) {}
+
+  static bool classof(const OperandRenderer *R) {
+    return R->getKind() == OR_CopyResultReg;
+  }
 
   void emitRenderOpcodes(MatchTable &Table, RuleMatcher &Rule) const override;
 };
@@ -2109,14 +2129,15 @@ protected:
   const Record *RegisterDef;
   bool IsDef;
   bool IsDead;
+  bool IsKill;
   const CodeGenTarget &Target;
 
 public:
   AddRegisterRenderer(unsigned InsnID, const CodeGenTarget &Target,
                       const Record *RegisterDef, bool IsDef = false,
-                      bool IsDead = false)
+                      bool IsDead = false, bool IsKill = false)
       : OperandRenderer(OR_Register), InsnID(InsnID), RegisterDef(RegisterDef),
-        IsDef(IsDef), IsDead(IsDead), Target(Target) {}
+        IsDef(IsDef), IsDead(IsDead), IsKill(IsKill), Target(Target) {}
 
   static bool classof(const OperandRenderer *R) {
     return R->getKind() == OR_Register;

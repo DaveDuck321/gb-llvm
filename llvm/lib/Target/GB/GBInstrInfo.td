@@ -42,5 +42,3 @@ let Uses = [SP], Defs = [SP, F] in {
   def ADJCALLSTACKUP
       : Pseudo<"adjcallstackup", (outs), (ins uimm16:$imm, uimm16:$out)>;
 }
-
-include "GBInstrPatterns.td"

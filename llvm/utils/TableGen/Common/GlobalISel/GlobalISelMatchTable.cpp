@@ -9,6 +9,7 @@
 #include "GlobalISelMatchTable.h"
 #include "Common/CodeGenInstruction.h"
 #include "Common/CodeGenRegisters.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LEB128.h"
@@ -1922,6 +1923,15 @@ void CopyPhysRegRenderer::emitRenderOpcodes(MatchTable &Table,
                                   Operand.getOpIdx(), PhysReg->getName());
 }
 
+//===- CopyResultRegRenderer
+//------------------------------------------------===//
+
+void CopyResultRegRenderer::emitRenderOpcodes(MatchTable &Table,
+                                              RuleMatcher &Rule) const {
+  CopyRenderer::emitRenderOpcodes(Table, Rule, NewInsnID, OldInsnID,
+                                  ResultIndex, "Implicit def");
+}
+
 //===- CopyOrAddZeroRegRenderer -------------------------------------------===//
 
 void CopyOrAddZeroRegRenderer::emitRenderOpcodes(MatchTable &Table,
@@ -2012,13 +2022,22 @@ void AddRegisterRenderer::emitRenderOpcodes(MatchTable &Table,
   // TODO: This is encoded as a 64-bit element, but only 16 or 32-bits are
   // really needed for a physical register reference. We can pack the
   // register and flags in a single field.
+  SmallVector<StringRef, 4> RegStates;
   if (IsDef) {
-    Table << MatchTable::NamedValue(
-        2, IsDead ? "RegState::Define | RegState::Dead" : "RegState::Define");
-  } else {
-    assert(!IsDead && "A use cannot be dead");
-    Table << MatchTable::IntValue(2, 0);
+    RegStates.push_back("RegState::Define");
   }
+  if (IsDead) {
+    RegStates.push_back("RegState::Dead");
+  }
+  if (IsKill) {
+    RegStates.push_back("RegState::Kill");
+  }
+
+  if (RegStates.empty()) {
+    RegStates.push_back("0");
+  }
+  auto RegStatesFmt = join(RegStates, " | ");
+  Table << MatchTable::NamedValue(2, RegStatesFmt);
   Table << MatchTable::LineBreak;
 }
 

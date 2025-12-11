@@ -6,12 +6,18 @@
 #include "TargetInfo/GBTargetInfo.h"
 
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/GlobalISel/IRTranslator.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
+#include "llvm/CodeGen/GlobalISel/Legalizer.h"
+#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 
 #include <memory>
 #include <optional>
@@ -22,6 +28,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeGBTarget() {
   llvm::RegisterTargetMachine<GBTargetMachine> _(getTheGBTarget());
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeGBDAGToDAGISelLegacyPass(PR);
+
+  initializeGlobalISel(PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
@@ -47,6 +55,9 @@ GBTargetMachine::GBTargetMachine(const Target &T, const Triple &TT,
       TLOF{std::make_unique<TargetLoweringObjectFileELF>()},
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
+
+  setGlobalISel(true);
+  setGlobalISelAbort(GlobalISelAbortMode::Enable);
 }
 
 TargetTransformInfo
@@ -83,6 +94,15 @@ public:
   bool addInstSelector() override;
   void addPreSched2() override;
   void addPreEmitPass() override;
+
+  // Global ISEL
+  bool addIRTranslator() override;
+  bool addLegalizeMachineIR() override;
+  void addPreGlobalInstructionSelect() override;
+  bool addRegBankSelect() override;
+  void addPreRegBankSelect() override;
+  void addPreLegalizeMachineIR() override;
+  bool addGlobalInstructionSelect() override;
 };
 } // namespace
 
@@ -110,6 +130,40 @@ void GBPassConfig::addMachineSSAOptimization() {
 
 bool GBPassConfig::addInstSelector() {
   addPass(createGBISelDag(getGBTargetMachine(), getOptLevel()));
+  return false;
+}
+
+bool GBPassConfig::addIRTranslator() {
+  addPass(new IRTranslator(getOptLevel()));
+  return false;
+}
+
+bool GBPassConfig::addLegalizeMachineIR() {
+  addPass(new Legalizer());
+  return false;
+}
+
+bool GBPassConfig::addRegBankSelect() {
+  addPass(new RegBankSelect());
+  return false;
+}
+
+void GBPassConfig::addPreLegalizeMachineIR() {
+  addPass(createGBPreLegalizeCombiner(getOptLevel()));
+}
+
+void GBPassConfig::addPreRegBankSelect() {
+  addPass(createGBPostLegalizeCombiner(getOptLevel()));
+  addPass(createGBPostLegalizeExpand(getOptLevel()));
+  addPass(createGBPostLegalizeCombiner(getOptLevel()));
+}
+
+void GBPassConfig::addPreGlobalInstructionSelect() {
+  // TODO: serialize increments
+}
+
+bool GBPassConfig::addGlobalInstructionSelect() {
+  addPass(new InstructionSelect(getOptLevel()));
   return false;
 }
 

@@ -380,7 +380,41 @@ void LegalizerHelper::buildWidenedRemergeToDst(Register DstReg, LLT LCMTy,
 }
 
 static RTLIB::Libcall getRTLibDesc(unsigned Opcode, unsigned Size) {
-#define RTLIBCASE_INT(LibcallPrefix)                                           \
+#define RTLIBCASE_INT8(LibcallPrefix)                                          \
+  do {                                                                         \
+    switch (Size) {                                                            \
+    case 8:                                                                    \
+      return RTLIB::LibcallPrefix##8;                                          \
+    case 16:                                                                   \
+      return RTLIB::LibcallPrefix##16;                                         \
+    case 32:                                                                   \
+      return RTLIB::LibcallPrefix##32;                                         \
+    case 64:                                                                   \
+      return RTLIB::LibcallPrefix##64;                                         \
+    case 128:                                                                  \
+      return RTLIB::LibcallPrefix##128;                                        \
+    default:                                                                   \
+      llvm_unreachable("unexpected size");                                     \
+    }                                                                          \
+  } while (0)
+
+#define RTLIBCASE_INT16(LibcallPrefix)                                         \
+  do {                                                                         \
+    switch (Size) {                                                            \
+    case 16:                                                                   \
+      return RTLIB::LibcallPrefix##16;                                         \
+    case 32:                                                                   \
+      return RTLIB::LibcallPrefix##32;                                         \
+    case 64:                                                                   \
+      return RTLIB::LibcallPrefix##64;                                         \
+    case 128:                                                                  \
+      return RTLIB::LibcallPrefix##128;                                        \
+    default:                                                                   \
+      llvm_unreachable("unexpected size");                                     \
+    }                                                                          \
+  } while (0)
+
+#define RTLIBCASE_INT32(LibcallPrefix)                                         \
   do {                                                                         \
     switch (Size) {                                                            \
     case 32:                                                                   \
@@ -416,17 +450,23 @@ static RTLIB::Libcall getRTLibDesc(unsigned Opcode, unsigned Size) {
   case TargetOpcode::G_LLROUND:
     RTLIBCASE(LLROUND_F);
   case TargetOpcode::G_MUL:
-    RTLIBCASE_INT(MUL_I);
+    RTLIBCASE_INT8(MUL_I);
   case TargetOpcode::G_SDIV:
-    RTLIBCASE_INT(SDIV_I);
+    RTLIBCASE_INT8(SDIV_I);
   case TargetOpcode::G_UDIV:
-    RTLIBCASE_INT(UDIV_I);
+    RTLIBCASE_INT8(UDIV_I);
   case TargetOpcode::G_SREM:
-    RTLIBCASE_INT(SREM_I);
+    RTLIBCASE_INT8(SREM_I);
   case TargetOpcode::G_UREM:
-    RTLIBCASE_INT(UREM_I);
+    RTLIBCASE_INT8(UREM_I);
   case TargetOpcode::G_CTLZ_ZERO_UNDEF:
-    RTLIBCASE_INT(CTLZ_I);
+    RTLIBCASE_INT32(CTLZ_I);
+  case TargetOpcode::G_SHL:
+    RTLIBCASE_INT16(SHL_I);
+  case TargetOpcode::G_ASHR:
+    RTLIBCASE_INT16(SRA_I);
+  case TargetOpcode::G_LSHR:
+    RTLIBCASE_INT16(SRL_I);
   case TargetOpcode::G_FADD:
     RTLIBCASE(ADD_F);
   case TargetOpcode::G_FSUB:
@@ -838,6 +878,50 @@ static RTLIB::Libcall getOutlineAtomicLibcall(MachineInstr &MI) {
 #undef LCALL5
 }
 
+RTLIB::Libcall getAtomicSyncCall(MachineInstr &MI) {
+  unsigned Opc = MI.getOpcode();
+  auto &AtomicMI = cast<GMemOperation>(MI);
+  auto &MMO = AtomicMI.getMMO();
+  LLT MemType = MMO.getMemoryType();
+  uint64_t MemSize = MemType.getSizeInBytes();
+
+#define OP_TO_LIBCALL(Name, Enum)                                              \
+  case Name:                                                                   \
+    switch (MemSize) {                                                         \
+    default:                                                                   \
+      return RTLIB::UNKNOWN_LIBCALL;                                           \
+    case 1:                                                                    \
+      return RTLIB::Enum##_1;                                                  \
+    case 2:                                                                    \
+      return RTLIB::Enum##_2;                                                  \
+    case 4:                                                                    \
+      return RTLIB::Enum##_4;                                                  \
+    case 8:                                                                    \
+      return RTLIB::Enum##_8;                                                  \
+    case 16:                                                                   \
+      return RTLIB::Enum##_16;                                                 \
+    }
+
+  switch (Opc) {
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_XCHG, SYNC_LOCK_TEST_AND_SET)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMIC_CMPXCHG, SYNC_VAL_COMPARE_AND_SWAP)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_ADD, SYNC_FETCH_AND_ADD)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_SUB, SYNC_FETCH_AND_SUB)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_AND, SYNC_FETCH_AND_AND)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_OR, SYNC_FETCH_AND_OR)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_XOR, SYNC_FETCH_AND_XOR)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_NAND, SYNC_FETCH_AND_NAND)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_MAX, SYNC_FETCH_AND_MAX)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_UMAX, SYNC_FETCH_AND_UMAX)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_MIN, SYNC_FETCH_AND_MIN)
+    OP_TO_LIBCALL(TargetOpcode::G_ATOMICRMW_UMIN, SYNC_FETCH_AND_UMIN)
+  }
+
+#undef OP_TO_LIBCALL
+
+  return RTLIB::UNKNOWN_LIBCALL;
+}
+
 static LegalizerHelper::LegalizeResult
 createAtomicLibcall(MachineIRBuilder &MIRBuilder, MachineInstr &MI) {
   auto &Ctx = MIRBuilder.getMF().getFunction().getContext();
@@ -845,6 +929,19 @@ createAtomicLibcall(MachineIRBuilder &MIRBuilder, MachineInstr &MI) {
   Type *RetTy;
   SmallVector<Register> RetRegs;
   SmallVector<CallLowering::ArgInfo, 3> Args;
+
+  auto &CLI = *MIRBuilder.getMF().getSubtarget().getCallLowering();
+  auto &TLI = *MIRBuilder.getMF().getSubtarget().getTargetLowering();
+
+  RTLIB::Libcall RTLibcall = getOutlineAtomicLibcall(MI);
+  const char *Name = TLI.getLibcallName(RTLibcall);
+  bool UseAtomicOutlines = true;
+  if (!Name) {
+    RTLibcall = getAtomicSyncCall(MI);
+    Name = TLI.getLibcallName(RTLibcall);
+    UseAtomicOutlines = false;
+  }
+
   unsigned Opc = MI.getOpcode();
   switch (Opc) {
   case TargetOpcode::G_ATOMIC_CMPXCHG:
@@ -872,18 +969,24 @@ createAtomicLibcall(MachineIRBuilder &MIRBuilder, MachineInstr &MI) {
   case TargetOpcode::G_ATOMICRMW_SUB:
   case TargetOpcode::G_ATOMICRMW_AND:
   case TargetOpcode::G_ATOMICRMW_OR:
-  case TargetOpcode::G_ATOMICRMW_XOR: {
+  case TargetOpcode::G_ATOMICRMW_XOR:
+  case TargetOpcode::G_ATOMICRMW_NAND:
+  case TargetOpcode::G_ATOMICRMW_MAX:
+  case TargetOpcode::G_ATOMICRMW_UMAX:
+  case TargetOpcode::G_ATOMICRMW_MIN:
+  case TargetOpcode::G_ATOMICRMW_UMIN: {
     auto [Ret, RetLLT, Mem, MemLLT, Val, ValLLT] = MI.getFirst3RegLLTs();
     RetRegs.push_back(Ret);
     RetTy = IntegerType::get(Ctx, RetLLT.getSizeInBits());
-    if (Opc == TargetOpcode::G_ATOMICRMW_AND)
+    if (UseAtomicOutlines && Opc == TargetOpcode::G_ATOMICRMW_AND) {
       Val =
           MIRBuilder.buildXor(ValLLT, MIRBuilder.buildConstant(ValLLT, -1), Val)
               .getReg(0);
-    else if (Opc == TargetOpcode::G_ATOMICRMW_SUB)
+    } else if (UseAtomicOutlines && Opc == TargetOpcode::G_ATOMICRMW_SUB) {
       Val =
           MIRBuilder.buildSub(ValLLT, MIRBuilder.buildConstant(ValLLT, 0), Val)
               .getReg(0);
+    }
     Args.push_back({Val, IntegerType::get(Ctx, ValLLT.getSizeInBits()), 0});
     Args.push_back({Mem, PointerType::get(Ctx, MemLLT.getAddressSpace()), 0});
     break;
@@ -892,16 +995,11 @@ createAtomicLibcall(MachineIRBuilder &MIRBuilder, MachineInstr &MI) {
     llvm_unreachable("unsupported opcode");
   }
 
-  auto &CLI = *MIRBuilder.getMF().getSubtarget().getCallLowering();
-  auto &TLI = *MIRBuilder.getMF().getSubtarget().getTargetLowering();
-  RTLIB::Libcall RTLibcall = getOutlineAtomicLibcall(MI);
-  const char *Name = TLI.getLibcallName(RTLibcall);
-
-  // Unsupported libcall on the target.
-  if (!Name) {
-    LLVM_DEBUG(dbgs() << ".. .. Could not find libcall name for "
-                      << MIRBuilder.getTII().getName(Opc) << "\n");
-    return LegalizerHelper::UnableToLegalize;
+  // The __sync calls take the address as the first argument
+  if (!UseAtomicOutlines) {
+    auto MemoryArg = Args.back();
+    Args.pop_back();
+    Args.insert(Args.begin(), MemoryArg);
   }
 
   CallLowering::CallLoweringInfo Info;
@@ -1266,6 +1364,9 @@ LegalizerHelper::libcall(MachineInstr &MI, LostDebugLocObserver &LocObserver) {
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
+  case TargetOpcode::G_SHL:
+  case TargetOpcode::G_ASHR:
+  case TargetOpcode::G_LSHR:
   case TargetOpcode::G_MUL:
   case TargetOpcode::G_SDIV:
   case TargetOpcode::G_UDIV:
@@ -1432,10 +1533,15 @@ LegalizerHelper::libcall(MachineInstr &MI, LostDebugLocObserver &LocObserver) {
   case TargetOpcode::G_ATOMICRMW_ADD:
   case TargetOpcode::G_ATOMICRMW_SUB:
   case TargetOpcode::G_ATOMICRMW_AND:
+  case TargetOpcode::G_ATOMICRMW_NAND:
   case TargetOpcode::G_ATOMICRMW_OR:
   case TargetOpcode::G_ATOMICRMW_XOR:
   case TargetOpcode::G_ATOMIC_CMPXCHG:
-  case TargetOpcode::G_ATOMIC_CMPXCHG_WITH_SUCCESS: {
+  case TargetOpcode::G_ATOMIC_CMPXCHG_WITH_SUCCESS:
+  case TargetOpcode::G_ATOMICRMW_UMAX:
+  case TargetOpcode::G_ATOMICRMW_MAX:
+  case TargetOpcode::G_ATOMICRMW_UMIN:
+  case TargetOpcode::G_ATOMICRMW_MIN: {
     auto Status = createAtomicLibcall(MIRBuilder, MI);
     if (Status != Legalized)
       return Status;
@@ -1926,7 +2032,16 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
       MachineOperand &MO2 = MI.getOperand(0);
       Register DstExt = MRI.createGenericVirtualRegister(NarrowTy);
       MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
-      MIRBuilder.buildSExt(MO2, DstExt);
+
+      if (SizeInBits != 1) {
+        MIRBuilder.buildSExt(MO2, DstExt);
+      } else {
+        llvm::SmallVector<Register, 4> Ops;
+        for (unsigned I = 0; I < SizeOp0 / NarrowSize; I += 1) {
+          Ops.push_back(DstExt);
+        }
+        MIRBuilder.buildMergeValues(MO2, Ops);
+      }
       MO2.setReg(DstExt);
       Observer.changedInstr(MI);
       return Legalized;
@@ -4567,6 +4682,24 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT LowerHintTy) {
   case TargetOpcode::G_CTTZ:
   case TargetOpcode::G_CTPOP:
     return lowerBitCount(MI);
+  case G_PTR_ADD: {
+    // Very naughty but it makes addition MUCH easier to legalize
+    auto [Res, Base, Offset] = MI.getFirst3Regs();
+
+    auto PtrType = MRI.getType(Base);
+    auto IntType = LLT::scalar(PtrType.getScalarSizeInBits());
+
+    Register BitcastSrc = MRI.createGenericVirtualRegister(IntType);
+    Register BitcastDst = MRI.createGenericVirtualRegister(IntType);
+
+    MIRBuilder.buildPtrToInt(BitcastSrc, Base);
+    MIRBuilder.buildAdd(BitcastDst, BitcastSrc, Offset);
+
+    MIRBuilder.buildIntToPtr(Res, BitcastDst);
+
+    MI.eraseFromParent();
+    return Legalized;
+  }
   case G_UADDO: {
     auto [Res, CarryOut, LHS, RHS] = MI.getFirst4Regs();
 

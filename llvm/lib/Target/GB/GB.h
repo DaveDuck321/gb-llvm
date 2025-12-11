@@ -5,13 +5,15 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+class AsmPrinter;
+class FunctionPass;
+class GBRegisterBankInfo;
+class GBSubtarget;
 class GBTargetMachine;
+class InstructionSelector;
 class MachineInstr;
 class MCInst;
-class AsmPrinter;
 class PassRegistry;
-
-class FunctionPass;
 
 FunctionPass *createGBISelDag(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBStackSlotLowering(GBTargetMachine &, CodeGenOptLevel);
@@ -20,6 +22,13 @@ FunctionPass *createGBInstructionRelaxation(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBBranchRelaxation(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBFoldImmediates(GBTargetMachine &, CodeGenOptLevel);
 FunctionPass *createGBEarlyLowerIntoStack(GBTargetMachine &);
+
+FunctionPass *createGBPreLegalizeCombiner(CodeGenOptLevel);
+FunctionPass *createGBPostLegalizeCombiner(CodeGenOptLevel);
+FunctionPass *createGBPostLegalizeExpand(CodeGenOptLevel);
+
+InstructionSelector *createGBInstructionSelector(const GBSubtarget &,
+                                                 const GBRegisterBankInfo &);
 
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);

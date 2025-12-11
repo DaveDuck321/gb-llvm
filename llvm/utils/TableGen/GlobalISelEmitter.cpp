@@ -1468,6 +1468,29 @@ Expected<BuildMIAction &> GlobalISelEmitter::createAndImportInstructionRenderer(
                        .takeError())
     return std::move(Error);
 
+  // If no outputs are given, the N results come from the first N implicit defs.
+  auto *DstI = DstMIBuilder.getCGI();
+  if (DstI->Operands.NumDefs == 0 && Dst.getNumResults() != 0 &&
+      DstI->ImplicitDefs.size() != 0) {
+    assert(DstI->ImplicitDefs.size() >= Dst.getNumResults() &&
+           "Too few implicit defs");
+    for (size_t I = 0; I < Dst.getNumResults(); I += 1) {
+      InsertPt = M.insertAction<BuildMIAction>(
+          M.actions_end(), M.allocateOutputInsnID(),
+          &Target.getInstruction(RK.getDef("COPY")));
+      BuildMIAction &CopyFromPhysRegMIBuilder =
+          *static_cast<BuildMIAction *>(InsertPt->get());
+      auto *Reg = DstI->ImplicitDefs[I];
+
+      auto CopyInstID = CopyFromPhysRegMIBuilder.getInsnID();
+      CopyFromPhysRegMIBuilder.addRenderer<CopyResultRegRenderer>(
+          I, InsnMatcher.getInsnVarID());
+      CopyFromPhysRegMIBuilder.addRenderer<AddRegisterRenderer>(
+          Target, Reg, /*IsDef=*/false, /*IsDead=*/false, /*IsKill=*/true);
+      if (auto Error = constrainOperands(M.actions_end(), M, CopyInstID, Dst))
+        return std::move(Error);
+    }
+  }
   return DstMIBuilder;
 }
 
@@ -1587,8 +1610,17 @@ Expected<action_iterator> GlobalISelEmitter::importExplicitDefRenderers(
         TempRegID, /*IsDef=*/true, /*SubReg=*/nullptr, /*IsDead=*/true);
   }
 
-  // Implicit defs are not currently supported, mark all of them as dead.
-  for (const Record *Reg : DstI->ImplicitDefs) {
+  // Implicit defs are not currently supported, unless as the only implicit
+  // outputs. Mark the remaining ImplicitDefs as Dead.
+  unsigned FirstDeadImplicitDef = 0;
+  if (DstI->Operands.NumDefs == 0 && Dst.getNumResults() != 0 &&
+      DstI->ImplicitDefs.size() != 0) {
+    FirstDeadImplicitDef = Dst.getNumResults();
+  }
+
+  for (unsigned I = FirstDeadImplicitDef; I < DstI->ImplicitDefs.size();
+       I += 1) {
+    const Record *Reg = DstI->ImplicitDefs[I];
     std::string OpName = getMangledRootDefName(Reg->getName());
     assert(!M.hasOperand(OpName) && "The pattern should've been rejected");
     DstMIBuilder.setDeadImplicitDef(Reg);

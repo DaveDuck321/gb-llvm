@@ -79,6 +79,8 @@ let Uses = [A, F], Defs = [A, F] in {
 
 let Defs = [F] in {
   def SCF : GBInstrNoOperands<"scf", 0x37>;
+
+  let Uses = [F] in
   def CCF : GBInstrNoOperands<"ccf", 0x3F>;
 }
 

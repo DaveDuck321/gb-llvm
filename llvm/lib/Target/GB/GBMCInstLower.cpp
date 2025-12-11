@@ -1,5 +1,5 @@
 #include "GB.h"
-#include "GBMOFlags.hpp"
+#include "GBMOFlags.h"
 #include "MCTargetDesc/GBMCExpr.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"

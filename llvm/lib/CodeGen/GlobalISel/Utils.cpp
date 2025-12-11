@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineSizeOpts.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -162,6 +163,41 @@ bool llvm::constrainSelectedInstRegOperands(MachineInstr &I,
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
+  if (I.getOpcode() == TargetOpcode::COPY) {
+    // Copies to physical registers may be required if both our uses and defines
+    // are implicit. In this case we'll need to calculate a constraint based on
+    // the physical register we're interacting with.
+    const TargetRegisterClass *RegClass = nullptr;
+    for (auto MO : I.explicit_operands()) {
+      Register Reg = MO.getReg();
+      if (Reg.isPhysical()) {
+        for (unsigned RCId = 0; RCId != TRI.getNumRegClasses(); ++RCId) {
+          auto const *MaybeRegClass = TRI.getRegClass(RCId);
+          if (MaybeRegClass->contains(Reg)) {
+            if (RegClass != nullptr) {
+              RegClass = nullptr; // Ambiguous class, don't apply any constraint
+              break;
+            }
+            RegClass = MaybeRegClass;
+          }
+        }
+        break;
+      }
+    }
+
+    if (RegClass != nullptr) {
+      for (auto MO : I.explicit_operands()) {
+        Register Reg = MO.getReg();
+        // Physical registers don't need to be constrained.
+        if (Reg.isPhysical()) {
+          continue;
+        }
+
+        RBI.constrainGenericRegister(Reg, *RegClass, MRI);
+      }
+    }
+  }
+
   for (unsigned OpI = 0, OpE = I.getNumExplicitOperands(); OpI != OpE; ++OpI) {
     MachineOperand &MO = I.getOperand(OpI);
 
@@ -237,8 +273,7 @@ static void reportGISelDiagnostic(DiagnosticSeverity Severity,
                                   const TargetPassConfig &TPC,
                                   MachineOptimizationRemarkEmitter &MORE,
                                   MachineOptimizationRemarkMissed &R) {
-  bool IsFatal = Severity == DS_Error &&
-                 TPC.isGlobalISelAbortEnabled();
+  bool IsFatal = Severity == DS_Error && TPC.isGlobalISelAbortEnabled();
   // Print the function name explicitly if we don't have a debug location (which
   // makes the diagnostic less useful) or if we're going to emit a raw error.
   if (!R.getLocation().isValid() || IsFatal)
@@ -267,8 +302,8 @@ void llvm::reportGISelFailure(MachineFunction &MF, const TargetPassConfig &TPC,
                               MachineOptimizationRemarkEmitter &MORE,
                               const char *PassName, StringRef Msg,
                               const MachineInstr &MI) {
-  MachineOptimizationRemarkMissed R(PassName, "GISelFailure: ",
-                                    MI.getDebugLoc(), MI.getParent());
+  MachineOptimizationRemarkMissed R(
+      PassName, "GISelFailure: ", MI.getDebugLoc(), MI.getParent());
   R << Msg;
   // Printing MI is expensive;  only do it if expensive remarks are enabled.
   if (TPC.isGlobalISelAbortEnabled() || MORE.allowExtraAnalysis(PassName))
@@ -455,8 +490,8 @@ std::optional<FPValueAndVReg> llvm::getFConstantVRegValWithLookThrough(
                         Reg->VReg};
 }
 
-const ConstantFP *
-llvm::getConstantFPVRegVal(Register VReg, const MachineRegisterInfo &MRI) {
+const ConstantFP *llvm::getConstantFPVRegVal(Register VReg,
+                                             const MachineRegisterInfo &MRI) {
   MachineInstr *MI = MRI.getVRegDef(VReg);
   if (TargetOpcode::G_FCONSTANT != MI->getOpcode())
     return nullptr;
@@ -812,7 +847,7 @@ bool llvm::isKnownNeverNaN(Register Val, const MachineRegisterInfo &MRI,
   if (!DefMI)
     return false;
 
-  const TargetMachine& TM = DefMI->getMF()->getTarget();
+  const TargetMachine &TM = DefMI->getMF()->getTarget();
   if (DefMI->getFlag(MachineInstr::FmNoNans) || TM.Options.NoNaNsFPMath)
     return true;
 
@@ -919,7 +954,8 @@ Register llvm::getFunctionLiveInPhysReg(MachineFunction &MF,
     MachineInstr *Def = MRI.getVRegDef(LiveIn);
     if (Def) {
       // FIXME: Should the verifier check this is in the entry block?
-      assert(Def->getParent() == &EntryMBB && "live-in copy not in entry block");
+      assert(Def->getParent() == &EntryMBB &&
+             "live-in copy not in entry block");
       return LiveIn;
     }
 
@@ -934,7 +970,7 @@ Register llvm::getFunctionLiveInPhysReg(MachineFunction &MF,
   }
 
   BuildMI(EntryMBB, EntryMBB.begin(), DL, TII.get(TargetOpcode::COPY), LiveIn)
-    .addReg(PhysReg);
+      .addReg(PhysReg);
   if (!EntryMBB.isLiveIn(PhysReg))
     EntryMBB.addLiveIn(PhysReg);
   return LiveIn;
@@ -1413,7 +1449,7 @@ llvm::getIConstantSplatVal(const Register Reg, const MachineRegisterInfo &MRI) {
   if (auto SplatValAndReg =
           getAnyConstantSplat(Reg, MRI, /* AllowUndef */ false)) {
     if (std::optional<ValueAndVReg> ValAndVReg =
-        getIConstantVRegValWithLookThrough(SplatValAndReg->VReg, MRI))
+            getIConstantVRegValWithLookThrough(SplatValAndReg->VReg, MRI))
       return ValAndVReg->Value;
   }
 

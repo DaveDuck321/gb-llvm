@@ -9,8 +9,16 @@ tablegen(LLVM GBGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM GBGenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM GBGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM GBGenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM GBGenRegisterBank.inc -gen-register-bank)
 tablegen(LLVM GBGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM GBGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM GBGenGlobalISel.inc -gen-global-isel)
+
+tablegen(LLVM GBGenPreLegalizeGICombiner.inc -gen-global-isel-combiner
+              -combiners="GBPreLegalizeCombiner")
+tablegen(LLVM GBGenPostLegalizeGICombiner.inc -gen-global-isel-combiner
+              -combiners="GBPostLegalizeCombiner")
+
 
 add_public_tablegen_target(GBCommonTableGen)
 
@@ -30,6 +38,13 @@ add_llvm_target(GBCodeGen
     GBStackSlotLowering.cpp
     GBSubtarget.cpp
     GBTargetMachine.cpp
+    GISel/GBCallLowering.cpp
+    GISel/GBInstructionSelector.cpp
+    GISel/GBLegalizerInfo.cpp
+    GISel/GBPostLegalizeCombiner.cpp
+    GISel/GBPostLegalizeExpand.cpp
+    GISel/GBPreLegalizeCombiner.cpp
+    GISel/GBRegisterBankInfo.cpp
 
     LINK_COMPONENTS
     AsmPrinter
