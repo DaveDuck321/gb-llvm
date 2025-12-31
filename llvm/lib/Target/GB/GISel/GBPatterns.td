@@ -10,71 +10,16 @@ def to_lower_imm
           imm,
           [{ return CurDAG->getTargetConstant(N->getZExtValue() & 0xFF, SDLoc(N), MVT::i8); }]>;
 
-// Helpers: sync with GBMOFlags.h
-def to_upper_global
-    : SDNodeXForm<
-          tglobaladdr,
-          [{ return CurDAG->getTargetGlobalAddress(N->getGlobal(), SDLoc(N), MVT::i8, N->getOffset(), 1); }]>;
-def to_lower_global
-    : SDNodeXForm<
-          tglobaladdr,
-          [{ return CurDAG->getTargetGlobalAddress(N->getGlobal(), SDLoc(N), MVT::i8, N->getOffset(), 2); }]>;
-
-def to_upper_symbol
-    : SDNodeXForm<
-          texternalsym,
-          [{ return CurDAG->getTargetExternalSymbol(N->getSymbol(), MVT::i8, 1); }]>;
-def to_lower_symbol
-    : SDNodeXForm<
-          texternalsym,
-          [{ return CurDAG->getTargetExternalSymbol(N->getSymbol(), MVT::i8, 2); }]>;
-
-def ADDR_WRAPPER
-    : SDNode<"GBISD::ADDR_WRAPPER",
-             SDTypeProfile<1, 1, [SDTCisPtrTy<0>]>>;
-
-// Combine and split
 def SDT_GBCOMBINE
     : SDTypeProfile<1,
                     2, [SDTCisVT<0, i16>, SDTCisVT<1, i8>, SDTCisSameAs<1, 2>]>;
 def COMBINE_NODE : SDNode<"GBISD::COMBINE", SDT_GBCOMBINE, []>;
 
 def : GINodeEquiv<G_MERGE_VALUES, COMBINE_NODE>;
-
 def : Pat<(COMBINE_NODE GPR8:$rs1, GPR8:$rs2),
           (REG_SEQUENCE GPR16, GPR8:$rs1, LowerSubReg, GPR8:$rs2, UpperSubReg)>;
 
-def SDT_GBSPLIT : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisVT<1, i16>]>;
-def LOWER_NODE : SDNode<"GBISD::LOWER", SDT_GBSPLIT, []>;
-def UPPER_NODE : SDNode<"GBISD::UPPER", SDT_GBSPLIT, []>;
-
-def EXTRACT_NODE
-    : SDNode<"GBISD::EXTRACT",
-             SDTypeProfile<
-                 1, 2, [SDTCisVT<0, i8>, SDTCisVT<1, i16>, SDTCisVT<2, i16>]>>;
-def : GINodeEquiv<G_EXTRACT, EXTRACT_NODE>;
-
-def : Pat<(LOWER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
-def : Pat<(UPPER_NODE GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
-
-def : Pat<(EXTRACT_NODE GPR16:$rs, 0), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
-def : Pat<(EXTRACT_NODE GPR16:$rs, 8), (EXTRACT_SUBREG GPR16:$rs, UpperSubReg)>;
-
 def : Pat<(trunc GPR16:$rs), (EXTRACT_SUBREG GPR16:$rs, LowerSubReg)>;
-
-// Constants
-def : Pat<(LOWER_NODE(ADDR_WRAPPER tglobaladdr:$imm)),
-          (LDI8_r(to_lower_global $imm))>;
-def : Pat<(UPPER_NODE(ADDR_WRAPPER tglobaladdr:$imm)),
-          (LDI8_r(to_upper_global $imm))>;
-def : Pat<(ADDR_WRAPPER tglobaladdr:$imm), (LDI16 $imm)>;
-def : Pat<(LOWER_NODE(ADDR_WRAPPER texternalsym:$imm)),
-          (LDI8_r(to_lower_symbol $imm))>;
-def : Pat<(UPPER_NODE(ADDR_WRAPPER texternalsym:$imm)),
-          (LDI8_r(to_upper_symbol $imm))>;
-def : Pat<(ADDR_WRAPPER texternalsym:$imm), (LDI16 $imm)>;
-
-def : Pat<(ADDR_WRAPPER tblockaddress:$imm), (LDI16 imm16:$imm)>;
 
 // Loads/ stores
 def : Pat<(load io_imm16:$imm), (LDH_A_iImm(to_lower_imm $imm))>;
@@ -89,12 +34,6 @@ def : Pat<(store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
 
 def : Pat<(atomic_store A, io_imm16:$imm), (LDH_iImm_A(to_lower_imm $imm))>;
 def : Pat<(atomic_store A, GPR16:$rs), (LD_iGPR16_A GPR16:$rs)>;
-
-// Required when passing arguments on the stack
-def LD_HL_SP_NODE
-    : SDNode<"GBISD::LD_HL_SP",
-             SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i8>]>, []>;
-def : Pat<(LD_HL_SP_NODE imm8:$imm), (LD_HL_SP imm8:$imm)>;
 
 // ALU
 multiclass ALU_Pat<SDNode node, GBInstr regInstr> {

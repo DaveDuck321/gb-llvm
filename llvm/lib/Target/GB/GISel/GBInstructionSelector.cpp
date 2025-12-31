@@ -51,6 +51,8 @@ public:
   bool selectConstant(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectPhi(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectCopy(MachineInstr &MI, MachineRegisterInfo &MRI) const;
+  bool selectUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI) const;
+
   bool selectFrameIndex(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectFence(MachineInstr &MI, MachineRegisterInfo &MRI) const;
 
@@ -91,9 +93,13 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto DL = MI.getDebugLoc();
 
-  LLVM_DEBUG(MF.dump());
-
   switch (MI.getOpcode()) {
+  case TargetOpcode::COPY:
+    return selectCopy(MI, MRI);
+
+  case TargetOpcode::G_UNMERGE_VALUES:
+    return selectUnmerge(MI, MRI);
+
   case TargetOpcode::G_INTTOPTR:
   case TargetOpcode::G_PTRTOINT:
   case TargetOpcode::G_BITCAST:
@@ -109,6 +115,7 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
 
   case TargetOpcode::G_BLOCK_ADDR:
   case TargetOpcode::G_GLOBAL_VALUE:
+  case TargetOpcode::G_CONSTANT_POOL:
     return selectAddress(MI, MRI);
 
   case TargetOpcode::G_CONSTANT:
@@ -123,14 +130,16 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
   case TargetOpcode::G_FENCE:
     return selectFence(MI, MRI);
 
+  case TargetOpcode::G_IMPLICIT_DEF:
+    MI.setDesc(TII.get(TargetOpcode::IMPLICIT_DEF));
+    constrainGeneric(MI.getOperand(0).getReg(), MRI);
+    return true;
+
   default:
     break; // Continue to tablegen
   }
 
   if (!isPreISelGenericOpcode(MI.getOpcode())) {
-    if (MI.isCopy()) {
-      return selectCopy(MI, MRI);
-    }
     return true;
   }
 
@@ -188,6 +197,40 @@ bool GBInstructionSelector::selectCopy(MachineInstr &MI,
   Register DstReg = MI.getOperand(0).getReg();
   constrainGeneric(SrcReg, MRI);
   constrainGeneric(DstReg, MRI);
+  return true;
+}
+
+bool GBInstructionSelector::selectUnmerge(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI) const {
+  MachineBasicBlock &MBB = *MI.getParent();
+  auto DL = MI.getDebugLoc();
+
+  assert(MI.getNumOperands() == 3);
+
+  auto Lower = MI.getOperand(0).getReg();
+  auto Upper = MI.getOperand(1).getReg();
+  auto Src = MI.getOperand(2);
+
+  if (MRI.getType(Lower).getSizeInBits() != 8 ||
+      MRI.getType(Upper).getSizeInBits() != 8 ||
+      MRI.getType(Src.getReg()).getSizeInBits() != 16) {
+    llvm_unreachable("Legalizer produced illegal unmerge");
+  }
+
+  constrainGeneric(Lower, MRI);
+  constrainGeneric(Upper, MRI);
+  constrainGeneric(Src.getReg(), MRI);
+
+  auto SrcSub1 = Src;
+  SrcSub1.setSubReg(1);
+
+  auto SrcSub2 = Src;
+  SrcSub2.setSubReg(2);
+
+  BuildMI(MBB, MI, DL, TII.get(TargetOpcode::COPY), Lower).add(SrcSub1);
+  BuildMI(MBB, MI, DL, TII.get(TargetOpcode::COPY), Upper).add(SrcSub2);
+
+  MI.eraseFromParent();
   return true;
 }
 

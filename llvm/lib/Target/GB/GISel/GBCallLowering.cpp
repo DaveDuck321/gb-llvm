@@ -7,6 +7,7 @@
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/IR/CallingConv.h"
@@ -81,13 +82,12 @@ struct GBIncomingValueHandler : public CallLowering::IncomingValueHandler {
   Register getStackAddress(uint64_t MemSize, int64_t Offset,
                            MachinePointerInfo &MPO,
                            ISD::ArgFlagsTy Flags) override {
-    MachineFunction &MF = MIRBuilder.getMF();
-    MIRBuilder.buildInstr(GB::LD_HL_SP).addImm(Offset);
+    auto &MFI = MIRBuilder.getMF().getFrameInfo();
+    const bool IsImmutable = !Flags.isByVal();
 
-    auto Res = MRI.createGenericVirtualRegister(LLT::pointer(0, 16));
-    MIRBuilder.buildCopy(Res, Register(GB::HL));
-    MPO = MachinePointerInfo::getStack(MF, Offset);
-    return Res;
+    int FI = MFI.CreateFixedObject(MemSize, Offset, IsImmutable);
+    MPO = MachinePointerInfo::getFixedStack(MIRBuilder.getMF(), FI);
+    return MIRBuilder.buildFrameIndex(LLT::pointer(0, 16), FI).getReg(0);
   }
 };
 

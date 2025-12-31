@@ -35,9 +35,10 @@ def GBNormalizeBranch
           (apply [{
             auto& MIR = Helper.getBuilder();
             auto One = MIR.buildConstant(MRI.createGenericVirtualRegister(LLT::scalar(8)), 1);
+            auto Masked = MIR.buildAnd(MRI.createGenericVirtualRegister(LLT::scalar(8)), ${cond}.getReg(), One.getReg(0));
             MIR.buildInstr(GB::G_JP_CP)
               .addPredicate(CmpInst::ICMP_EQ)
-              .addUse(${cond}.getReg())
+              .addUse(Masked.getReg(0))
               .addUse(One.getReg(0))
               .add(${dst_bb});
             ${root}->eraseFromParent();

@@ -16,6 +16,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
+
 #include <algorithm>
 #include <cstdint>
 
@@ -28,11 +29,15 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
 
   const LLT S8 = LLT::scalar(8);
   const LLT S16 = LLT::scalar(16);
+  const LLT S32 = LLT::scalar(32);
+  const LLT S64 = LLT::scalar(64);
 
-  getActionDefinitionsBuilder(
-      {G_CONSTANT, G_IMPLICIT_DEF, G_FREEZE, G_CONSTANT_FOLD_BARRIER})
+  getActionDefinitionsBuilder({G_CONSTANT, G_IMPLICIT_DEF, G_FREEZE,
+                               G_CONSTANT_FOLD_BARRIER, G_CONSTANT_POOL})
       .legalFor({S8, S16, P0})
       .clampScalar(0, S8, S16);
+
+  getActionDefinitionsBuilder(G_FCONSTANT).lower();
 
   getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
       .legalFor({S8})
@@ -43,8 +48,13 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       .clampScalar(1, S8, S8)
       .custom();
 
+  getActionDefinitionsBuilder({G_SMIN, G_SMAX, G_UMIN, G_UMAX, G_ABS}).lower();
+
   // TODO: experiment with S8 only
-  getActionDefinitionsBuilder(G_PHI).legalFor({P0, S8, S16});
+  getActionDefinitionsBuilder(G_PHI)
+      .legalFor({P0, S8, S16})
+      .clampScalar(0, S8, S16);
+  getActionDefinitionsBuilder({G_TRAP, G_DEBUGTRAP}).alwaysLegal();
 
   // Avoid lowering to G_(U|S)ADD(O|E) and instead lower directly into the
   // native instructions.
@@ -62,12 +72,26 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       .customFor({S8})
       .libcall();
 
-  getActionDefinitionsBuilder({G_SBFX, G_UBFX}).lower();
+  getActionDefinitionsBuilder({G_SCMP, G_UCMP, G_SBFX, G_UBFX}).lower();
   getActionDefinitionsBuilder(G_BSWAP).legalFor({S8}).custom();
+
+  // TODO: these should be libcalls
+  // TODO: the descending powers of two here should be automatic
   getActionDefinitionsBuilder(
       {G_CTPOP, G_CTTZ, G_CTLZ, G_CTTZ_ZERO_UNDEF, G_CTLZ_ZERO_UNDEF})
       .clampScalar(0, S8, S8)
+      .clampScalar(1, S8, S64)
+      .clampScalar(1, S8, S32)
+      .clampScalar(1, S8, S16)
       .clampScalar(1, S8, S8)
+      .lower();
+
+  getActionDefinitionsBuilder({G_UMULO,      G_SMULO,      G_UMULH,   G_SMULH,
+                               G_UADDSAT,    G_SADDSAT,    G_USUBSAT, G_SSUBSAT,
+                               G_USHLSAT,    G_SSHLSAT,    G_SMULFIX, G_UMULFIX,
+                               G_SMULFIXSAT, G_UMULFIXSAT, G_SDIVFIX, G_UDIVFIX,
+                               G_SDIVFIXSAT, G_UDIVFIXSAT, G_UADDO,   G_SADDO,
+                               G_USUBO,      G_SSUBO})
       .lower();
 
   getActionDefinitionsBuilder({G_STORE, G_LOAD})
@@ -82,16 +106,21 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       {G_MUL, G_SDIV, G_UDIV, G_SREM, G_UREM, G_SDIVREM, G_UDIVREM})
       .libcall();
 
-  getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S16, S8}});
-  getActionDefinitionsBuilder(G_UNMERGE_VALUES).customFor({{S8, S16}});
-  getActionDefinitionsBuilder(G_EXTRACT).legalFor({{S8, S16}});
-  getActionDefinitionsBuilder(G_TRUNC).customFor({{S8, S16}}).lower();
+  // Not all MERGEs are legal... But, much like in the DAG implementation, we
+  // rely on the combiner (and EVERY other legalization rule) to implicitly
+  // eliminate unsupported MERGEs. ISEL will detect, and complain about, MERGEs
+  // that we haven't correctly legalized.
+  getActionDefinitionsBuilder({G_MERGE_VALUES, G_UNMERGE_VALUES}).alwaysLegal();
+
+  getActionDefinitionsBuilder(G_EXTRACT).lower();
+  getActionDefinitionsBuilder(G_TRUNC)
+      .legalFor({{S8, S16}})
+      .clampScalar(1, S16, S16);
 
   getActionDefinitionsBuilder({G_INTTOPTR, G_PTRTOINT}).alwaysLegal();
-
   getActionDefinitionsBuilder(G_PTR_ADD).lower();
-  getActionDefinitionsBuilder({G_SCMP, G_UCMP}).lower();
 
+  getActionDefinitionsBuilder(G_BR).alwaysLegal();
   getActionDefinitionsBuilder(G_BRCOND).legalFor({S8}).clampScalar(0, S8, S8);
   getActionDefinitionsBuilder(G_BRINDIRECT).legalFor({P0});
 
@@ -100,6 +129,7 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
 
   getActionDefinitionsBuilder({G_MEMCPY, G_MEMMOVE, G_MEMSET}).libcall();
 
+  getActionDefinitionsBuilder(G_FENCE).alwaysLegal();
   getActionDefinitionsBuilder(
       {G_ATOMICRMW_XCHG, G_ATOMIC_CMPXCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
        G_ATOMICRMW_AND, G_ATOMICRMW_NAND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR,
@@ -107,9 +137,7 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       .libcallFor({S8})
       .unsupported();
 
-  getActionDefinitionsBuilder(G_FENCE).alwaysLegal();
   getActionDefinitionsBuilder(G_ATOMIC_CMPXCHG_WITH_SUCCESS).lower();
-
   getActionDefinitionsBuilder({G_ATOMICRMW_UINC_WRAP, G_ATOMICRMW_UDEC_WRAP,
                                G_ATOMICRMW_USUB_COND, G_ATOMICRMW_USUB_SAT})
       .unsupported();
@@ -119,12 +147,39 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
                                G_ATOMICRMW_FMAXIMUM, G_ATOMICRMW_FMINIMUM})
       .unsupported();
 
+  getActionDefinitionsBuilder(
+      {G_FADD,    G_FSUB,    G_FMUL,    G_FDIV,  G_FMA,     G_FPOW,
+       G_FREM,    G_FCOS,    G_FSIN,    G_FTAN,  G_FACOS,   G_FASIN,
+       G_FATAN,   G_FATAN2,  G_FCOSH,   G_FSINH, G_FTANH,   G_FLOG10,
+       G_FLOG,    G_FLOG2,   G_FEXP,    G_FEXP2, G_FEXP10,  G_FCEIL,
+       G_FFLOOR,  G_FMINNUM, G_FMAXNUM, G_FSQRT, G_FRINT,   G_FNEARBYINT,
+       G_FSINCOS, G_FPOWI,   G_FLDEXP,  G_FPEXT, G_FPTRUNC, G_FCMP})
+      .libcall();
+
+  getActionDefinitionsBuilder(
+      {G_FNEG,        G_FSHL,          G_FSHR,         G_FMAD,
+       G_FFREXP,      G_FPTOSI_SAT,    G_FPTOUI_SAT,   G_FCOPYSIGN,
+       G_IS_FPCLASS,  G_FCANONICALIZE, G_FMINNUM_IEEE, G_FMAXNUM_IEEE,
+       G_FABS,        G_FMINIMUM,      G_FMAXIMUM,     G_FMINIMUMNUM,
+       G_FMAXIMUMNUM, G_GET_FPENV,     G_SET_FPENV,    G_RESET_FPENV,
+       G_GET_FPMODE,  G_SET_FPMODE,    G_RESET_FPMODE, G_STRICT_FADD,
+       G_STRICT_FSUB, G_STRICT_FMUL,   G_STRICT_FDIV,  G_STRICT_FREM,
+       G_STRICT_FMA,  G_STRICT_FSQRT,  G_STRICT_FLDEXP})
+      .lower();
+
+  getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
+      .clampScalar(1, S32, S64)
+      .libcall();
+
+  getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
+      .clampScalar(0, S32, S64)
+      .libcall();
+
   // G_ASSERT_ZEXT
   // G_ASSERT_ALIGN
   // G_ABDS
   // G_ABDU
   // G_PTRAUTH_GLOBAL_VALUE
-  // G_CONSTANT_POOL
   // G_INSERT
   // G_BITCAST
   // G_INDEXED_LOAD
@@ -133,123 +188,24 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
   // G_INDEXED_STORE
   // G_PREFETCH
   // G_INVOKE_REGION_START
-  // G_FCONSTANT
+  //
   // G_VASTART
   // G_VAARG
-  // G_FSHL
-  // G_FSHR
-  // G_FCMP
 
-  // G_UMULO
-  // G_SMULO
-  // G_UMULH
-  // G_SMULH
-  // G_UADDSAT
-  // G_SADDSAT
-  // G_USUBSAT
-  // G_SSUBSAT
-  // G_USHLSAT
-  // G_SSHLSAT
-  // G_SMULFIX
-  // G_UMULFIX
-  // G_SMULFIXSAT
-  // G_UMULFIXSAT
-  // G_SDIVFIX
-  // G_UDIVFIX
-  // G_SDIVFIXSAT
-  // G_UDIVFIXSAT
-
-  // G_FADD
-  // G_FSUB
-  // G_FMUL
-  // G_FMA
-  // G_FMAD
-  // G_FDIV
-  // G_FREM
-  // G_FPOW
-  // G_FPOWI
-  // G_FEXP
-  // G_FEXP2
-  // G_FEXP10
-  // G_FLOG
-  // G_FLOG2
-  // G_FLOG10
-  // G_FLDEXP
-  // G_FFREXP
-  // G_FNEG
-  // G_FPEXT
-  // G_FPTRUNC
-  // G_FPTOSI
-  // G_FPTOUI
-  // G_SITOFP
-  // G_UITOFP
-  // G_FPTOSI_SAT
-  // G_FPTOUI_SAT
-  // G_FABS
-  // G_FCOPYSIGN
-  // G_IS_FPCLASS
-  // G_FCANONICALIZE
-  // G_FMINNUM
-  // G_FMAXNUM
-  // G_FMINNUM_IEEE
-  // G_FMAXNUM_IEEE
-  // G_FMINIMUM
-  // G_FMAXIMUM
-  // G_FMINIMUMNUM
-  // G_FMAXIMUMNUM
-  // G_GET_FPENV
-  // G_SET_FPENV
-  // G_RESET_FPENV
-  // G_GET_FPMODE
-  // G_SET_FPMODE
-  // G_RESET_FPMODE
-  // G_PTR_ADD
   // G_PTRMASK
-  // G_SMIN
-  // G_SMAX
-  // G_UMIN
-  // G_UMAX
-  // G_ABS
   // G_LROUND
   // G_LLROUND
-  // G_BR
   // G_BRJT
   // G_BITREVERSE
-  // G_FCEIL
-  // G_FCOS
-  // G_FSIN
-  // G_FSINCOS
-  // G_FTAN
-  // G_FACOS
-  // G_FASIN
-  // G_FATAN
-  // G_FATAN2
-  // G_FCOSH
-  // G_FSINH
-  // G_FTANH
-  // G_FSQRT
-  // G_FFLOOR
-  // G_FRINT
-  // G_FNEARBYINT
   // G_ADDRSPACE_CAST
   // G_JUMP_TABLE
   // G_DYN_STACKALLOC
   // G_STACKSAVE
   // G_STACKRESTORE
-  // G_STRICT_FADD
-  // G_STRICT_FSUB
-  // G_STRICT_FMUL
-  // G_STRICT_FDIV
-  // G_STRICT_FREM
-  // G_STRICT_FMA
-  // G_STRICT_FSQRT
-  // G_STRICT_FLDEXP
   // G_READ_REGISTER
   // G_WRITE_REGISTER
   // G_MEMCPY_INLINE
   // G_BZERO
-  // G_TRAP
-  // G_DEBUGTRAP
   // G_UBSANTRAP
 }
 
@@ -258,10 +214,6 @@ bool GBLegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     llvm_unreachable("Unimplemented custom legalization");
-  case TargetOpcode::G_UNMERGE_VALUES:
-    return legalizeUnmerge(Helper, MI, LocObserver);
-  case TargetOpcode::G_TRUNC:
-    return legalizeTrunc(Helper, MI, LocObserver);
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB:
     return legalizeLargeAddSub(Helper, MI, LocObserver);
@@ -290,8 +242,6 @@ bool GBLegalizerInfo::legalizeLoadStore(
     LostDebugLocObserver &LocObserver) const {
   // Loading or storing a pointer is not supported and breaks the narrowing.
   // Convert to an int type so the legalizer has something it can split.
-  MachineIRBuilder MIB(MI);
-
   MachineFunction &MF = *MI.getMF();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
@@ -305,6 +255,7 @@ bool GBLegalizerInfo::legalizeLoadStore(
 
   if (MI.getOpcode() == TargetOpcode::G_LOAD) {
     // Result goes in PtrReg
+    MachineIRBuilder MIB(*MI.getParent(), ++MI.getIterator());
     auto ToLoad = MRI.createGenericVirtualRegister(S16);
     MI.getOperand(0).ChangeToRegister(ToLoad, /*isDef=*/true);
     MIB.buildIntToPtr(PtrReg, ToLoad);
@@ -312,43 +263,13 @@ bool GBLegalizerInfo::legalizeLoadStore(
   } else {
     // We're storing PtrReg
     assert(MI.getOpcode() == TargetOpcode::G_STORE);
+
+    MachineIRBuilder MIB(MI);
     auto ToStore = MRI.createGenericVirtualRegister(S16);
     MIB.buildPtrToInt(ToStore, PtrReg);
     MI.getOperand(0).ChangeToRegister(ToStore, /*isDef=*/false);
     Helper.Observer.changedInstr(MI);
   }
-  return true;
-}
-
-bool GBLegalizerInfo::legalizeUnmerge(LegalizerHelper &Helper, MachineInstr &MI,
-                                      LostDebugLocObserver &LocObserver) const {
-  assert(MI.getOpcode() == TargetOpcode::G_UNMERGE_VALUES);
-
-  MachineIRBuilder MIB(MI);
-
-  auto LowerOut = MI.getOperand(0);
-  auto UpperOut = MI.getOperand(1);
-  auto RegIn = MI.getOperand(2);
-
-  MIB.buildExtract(LowerOut, RegIn, 0);
-  MIB.buildExtract(UpperOut, RegIn, 8);
-
-  MI.eraseFromParent();
-  return true;
-}
-
-bool GBLegalizerInfo::legalizeTrunc(LegalizerHelper &Helper, MachineInstr &MI,
-                                    LostDebugLocObserver &LocObserver) const {
-  assert(MI.getOpcode() == TargetOpcode::G_TRUNC);
-
-  MachineIRBuilder MIB(MI);
-
-  auto LowerOut = MI.getOperand(0);
-  auto RegIn = MI.getOperand(1);
-
-  MIB.buildExtract(LowerOut, RegIn, 0);
-
-  MI.eraseFromParent();
   return true;
 }
 
@@ -405,7 +326,7 @@ bool GBLegalizerInfo::legalizeSelect(LegalizerHelper &Helper, MachineInstr &MI,
   TrueBB->addSuccessor(AfterSelect);
 
   // Setup the compare
-  MIB.setInsertPt(*BeforeSelect, BeforeSelect->end());
+  MIB.setInsertPt(*BeforeSelect, MI);
   MIB.buildBrCond(Cond, *TrueBB);
   MIB.buildBr(*AfterSelect);
 
@@ -439,6 +360,26 @@ bool GBLegalizerInfo::legalizeICmp(LegalizerHelper &Helper, MachineInstr &MI,
   auto Result = MI.getOperand(0).getReg();
   auto LHS = MI.getOperand(2).getReg();
   auto RHS = MI.getOperand(3).getReg();
+
+  auto LHSType = MRI.getType(LHS);
+  auto RHSType = MRI.getType(RHS);
+
+  // Decay pointer comparisons into 16-bit integer comparisons -- these will
+  // later be legalized down to 8-bit comparisons.
+  if (LHSType.isPointer() || RHSType.isPointer()) {
+    if (LHSType.isPointer()) {
+      auto NewLHS = MIB.buildPtrToInt(LLT::scalar(16), LHS);
+      MI.getOperand(2).setReg(NewLHS.getReg(0));
+    }
+
+    if (RHSType.isPointer()) {
+      auto NewRHS = MIB.buildPtrToInt(LLT::scalar(16), RHS);
+      MI.getOperand(3).setReg(NewRHS.getReg(0));
+    }
+
+    Helper.Observer.changedInstr(MI);
+    return true;
+  }
 
   auto Predicate = ICmpInst::Predicate(MI.getOperand(1).getPredicate());
   switch (Predicate) {

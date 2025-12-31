@@ -26,12 +26,15 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RuntimeLibcallUtil.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGenTypes/LowLevelType.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -621,7 +624,9 @@ llvm::createLibcall(MachineIRBuilder &MIRBuilder, const char *Name,
                     ArrayRef<CallLowering::ArgInfo> Args,
                     const CallingConv::ID CC, LostDebugLocObserver &LocObserver,
                     MachineInstr *MI) {
-  auto &CLI = *MIRBuilder.getMF().getSubtarget().getCallLowering();
+  auto &MF = MIRBuilder.getMF();
+  auto &CLI = *MF.getSubtarget().getCallLowering();
+  const DataLayout &DL = MIRBuilder.getDataLayout();
 
   CallLowering::CallLoweringInfo Info;
   Info.CallConv = CC;
@@ -633,6 +638,28 @@ llvm::createLibcall(MachineIRBuilder &MIRBuilder, const char *Name,
          Result.Ty == MIRBuilder.getMF().getFunction().getReturnType()) &&
         isLibCallInTailPosition(Result, *MI, MIRBuilder.getTII(),
                                 *MIRBuilder.getMRI());
+
+  SmallVector<CallLowering::BaseArgInfo, 4> SplitArgs;
+  CLI.getReturnInfo(CC, Result.Ty, AttributeList{}, SplitArgs, DL);
+  Info.CanLowerReturn = CLI.canLowerReturn(MF, CC, SplitArgs, false);
+  if (!Info.CanLowerReturn) {
+    unsigned AS = DL.getAllocaAddrSpace();
+    LLT FramePtrTy = LLT::pointer(AS, DL.getPointerSizeInBits(AS));
+
+    int FI = MIRBuilder.getMF().getFrameInfo().CreateStackObject(
+        DL.getTypeAllocSize(Result.Ty), DL.getPrefTypeAlign(Result.Ty), false);
+
+    Register DemoteReg = MIRBuilder.buildFrameIndex(FramePtrTy, FI).getReg(0);
+    CallLowering::ArgInfo DemoteArg(
+        DemoteReg, PointerType::get(Result.Ty->getContext(), AS),
+        CallLowering::ArgInfo::NoArgIndex);
+    Info.IsTailCall = false;
+    DemoteArg.Flags[0].setSRet();
+
+    Info.OrigArgs.insert(Info.OrigArgs.begin(), DemoteArg);
+    Info.DemoteStackIndex = FI;
+    Info.DemoteRegister = DemoteReg;
+  }
 
   llvm::append_range(Info.OrigArgs, Args);
   if (!CLI.lowerCall(MIRBuilder, Info))

@@ -54,6 +54,7 @@ add_llvm_target(GBCodeGen
     GBAsmParser
     GBDesc
     GBInfo
+    GlobalISel
     MC
     SelectionDAG
     Support

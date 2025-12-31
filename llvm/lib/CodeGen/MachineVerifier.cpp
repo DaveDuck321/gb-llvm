@@ -2656,7 +2656,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         // FIXME: This restriction should probably be broadened to all SSA
         // MIR. However, DetectDeadLanes/ProcessImplicitDefs technically still
         // run on the SSA function just before phi elimination.
-        if (MO->isUndef())
+        if (!MI->isDebugValue() && MO->isUndef())
           report("Generic virtual register use cannot be undef", MO, MONum);
 
         // Debug value instruction is permitted to use undefined vregs.

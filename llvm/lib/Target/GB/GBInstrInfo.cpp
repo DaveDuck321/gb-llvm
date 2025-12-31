@@ -504,7 +504,7 @@ bool GBInstrInfo::foldAddressImmediate(MachineInstr &UseMI, MachineOperand &Imm,
   case GB::LD_r_iGPR16:
     BuildMI(*MBB, MBBI, DL, get(GB::LD_A_iImm))
         .addDef(GB::A, getImplRegState(true))
-        ->addOperand(Imm);
+        .add(Imm);
 
     BuildMI(*MBB, MBBI, DL, get(GB::COPY), UseMI.getOperand(0).getReg())
         .addReg(GB::A, getKillRegState(true));
@@ -513,10 +513,10 @@ bool GBInstrInfo::foldAddressImmediate(MachineInstr &UseMI, MachineOperand &Imm,
   case GB::LD_iGPR16_A:
     BuildMI(*MBB, MBBI, DL, get(GB::LD_iImm_A))
         .addReg(GB::A, getImplRegState(true))
-        ->addOperand(Imm);
+        .add(Imm);
     break;
   }
-  assert(Imm.isImm() || Imm.isSymbol() || Imm.isGlobal());
+  assert(Imm.isImm() || Imm.isSymbol() || Imm.isGlobal() || Imm.isCPI());
   return true;
 }
 
@@ -530,6 +530,26 @@ bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
 
   unsigned FoldedOpcode = 0;
   MachineOperand Operand = DefMIImmOperand;
+
+  auto DecayImmediate = [&] {
+    if (Operand.isImm()) {
+      auto Imm = Operand.getImm();
+      switch (getGBFlag(Operand)) {
+      default:
+        llvm_unreachable("Unrecognized TargetFlag");
+      case GBMOFlag::NONE:
+        break;
+      case GBMOFlag::LOWER_PART:
+        Operand.setImm(Imm & 0xFF);
+        break;
+      case GBMOFlag::UPPER_PART:
+        Operand.setImm((Imm & 0xFFFF) >> 8);
+        break;
+      }
+      setGBFlag(Operand, GBMOFlag::NONE);
+    }
+  };
+
   switch (UseMI.getOpcode()) {
   default:
     LLVM_DEBUG(dbgs() << "Fold failed: unsupported use opcode "
@@ -559,9 +579,10 @@ bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
     } else {
       assert(SubReg == 0);
     }
+    DecayImmediate();
     BuildMI(*MBB, MBBI, DL, get(FoldedOpcode))
         .addDef(UseMI.getOperand(0).getReg())
-        ->addOperand(Operand);
+        .add(Operand);
     return true;
   }
   case GB::ADD_r:
@@ -587,9 +608,10 @@ bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
     break;
   }
 
+  DecayImmediate();
   BuildMI(*MBB, MBBI, DL, get(FoldedOpcode))
       .addDef(GB::A, getImplRegState(true))
-      ->addOperand(Operand);
+      .add(Operand);
 
   return true;
 }
@@ -597,8 +619,6 @@ bool GBInstrInfo::fold8BitImmediate(MachineInstr &UseMI,
 bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
                                 Register Reg, MachineRegisterInfo *MRI,
                                 bool &IsDeleted) const {
-  auto *MBB = UseMI.getParent();
-
   LLVM_DEBUG(dbgs() << "foldImmediate: \n"; dbgs() << "  def=";
              DefMI.print(dbgs()); dbgs() << "  use="; UseMI.print(dbgs()));
 
@@ -638,7 +658,7 @@ bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   }
   UseMI.eraseFromParent();
 
-  LLVM_DEBUG(dbgs() << "Fold accepted: "; MBB->print(dbgs()));
+  // LLVM_DEBUG(dbgs() << "Fold accepted: "; MBB->print(dbgs()));
   IsDeleted = true;
   return true;
 }

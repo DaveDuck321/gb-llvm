@@ -76,6 +76,10 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
           createGBExpression(MO, AP.GetBlockAddressSymbol(MO.getBlockAddress()),
                              MO.getOffset(), AP.OutContext);
       break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      MCOp = createGBExpression(MO, AP.GetCPISymbol(MO.getIndex()), 0,
+                                AP.OutContext);
+      break;
     case MachineOperand::MO_ExternalSymbol:
       assert(MO.getOffset() == 0);
       MCOp =

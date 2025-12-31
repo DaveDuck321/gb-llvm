@@ -20,9 +20,6 @@ private:
   bool legalizeTrunc(LegalizerHelper &Helper, MachineInstr &MI,
                      LostDebugLocObserver &LocObserver) const;
 
-  bool legalizeUnmerge(LegalizerHelper &Helper, MachineInstr &MI,
-                       LostDebugLocObserver &LocObserver) const;
-
   bool legalizeSExt(LegalizerHelper &Helper, MachineInstr &MI,
                     LostDebugLocObserver &LocObserver) const;
 

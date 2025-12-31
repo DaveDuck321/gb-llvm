@@ -12,6 +12,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#define DEBUG_TYPE "gb-postlegalize-expand"
+
 using namespace llvm;
 
 class GBPostLegalizeExpand : public MachineFunctionPass {
@@ -50,18 +52,18 @@ bool GBPostLegalizeExpand::expandJP_CP(MachineFunction &MF,
     break;
   }
 
-  auto [UnsignedPredicate, Unsigned2sComplementPredicate] = [&] {
+  auto UnsignedPredicate = [&] {
     switch (Predicate) {
     default:
       llvm_unreachable("Unrecognized predicate");
     case CmpInst::ICMP_SGE:
-      return std::make_pair(CmpInst::ICMP_UGE, CmpInst::ICMP_ULE);
+      return CmpInst::ICMP_UGE;
     case CmpInst::ICMP_SGT:
-      return std::make_pair(CmpInst::ICMP_UGT, CmpInst::ICMP_ULT);
+      return CmpInst::ICMP_UGT;
     case CmpInst::ICMP_SLE:
-      return std::make_pair(CmpInst::ICMP_ULE, CmpInst::ICMP_UGE);
+      return CmpInst::ICMP_ULE;
     case CmpInst::ICMP_SLT:
-      return std::make_pair(CmpInst::ICMP_ULT, CmpInst::ICMP_UGT);
+      return CmpInst::ICMP_ULT;
     }
   }();
 
@@ -73,41 +75,33 @@ bool GBPostLegalizeExpand::expandJP_CP(MachineFunction &MF,
 
   // .lhs_is_pos_bb
   //    br .pos_signs_match_bb or .false_bb
-  // .pos_signs_match_bb
-  //    br  .false_bb or .true_bb
-
   // .lhs_is_neg_bb
   //    br .neg_signs_match_bb or .false_bb
-  // .neg_signs_match_bb
-  //    br .false_bb or .true_bb
-
+  //
   // .signs_match_bb
+  //    br .false_bb or .true_bb
   //
   // .true_bb
   // .false_bb
 
   auto LHS = MI.getOperand(1).getReg();
   auto RHS = MI.getOperand(2).getReg();
-  auto *TrueBB = MI.getOperand(3).getMBB();
+  auto *TrueTargetBB = MI.getOperand(3).getMBB();
   auto *InitBB = &MBB;
   auto *FalseBB = MBB.splitAt(MI);
+  auto *TrueBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
   auto *LHSIsPositiveBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
   auto *LHSIsNegativeBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
-  auto *PosSignsMatchBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
-  auto *NegSignsMatchBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
+  auto *SignsMatchBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
 
   InitBB->removeSuccessor(FalseBB);
-  FalseBB->removeSuccessor(TrueBB);
+  FalseBB->removeSuccessor(TrueTargetBB);
 
   auto MBBI = ++InitBB->getIterator();
   MF.insert(MBBI, LHSIsPositiveBB);
-  MF.insert(MBBI, PosSignsMatchBB);
   MF.insert(MBBI, LHSIsNegativeBB);
-  MF.insert(MBBI, NegSignsMatchBB);
-
-  auto MaybeLHSConst = getIConstantVRegValWithLookThrough(LHS, MRI);
-  auto MaybeRHSConst = getIConstantVRegValWithLookThrough(RHS, MRI);
-  assert(!(MaybeLHSConst && MaybeRHSConst));
+  MF.insert(MBBI, SignsMatchBB);
+  MF.insert(MBBI, TrueBB);
 
   MachineIRBuilder MIB(MI);
 
@@ -117,71 +111,121 @@ bool GBPostLegalizeExpand::expandJP_CP(MachineFunction &MF,
       MIB.buildConstant(MRI.createGenericVirtualRegister(S8), 0x80);
   auto LHSSignBit =
       MIB.buildAnd(MRI.createGenericVirtualRegister(S8), LHS, SignBitMask);
-  auto LHSSignBitCmp =
-      MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
-                    LHSSignBit.getReg(0), Zero);
 
-  InitBB->addSuccessor(LHSIsPositiveBB);
-  InitBB->addSuccessor(LHSIsNegativeBB);
-  MIB.buildBrCond(LHSSignBitCmp, *LHSIsPositiveBB);
-  MIB.buildBr(*LHSIsNegativeBB);
+  auto MaybeLHSSignBitValue =
+      getIConstantVRegValWithLookThrough(LHSSignBit.getReg(0), MRI);
+  if (MaybeLHSSignBitValue) {
+    if (MaybeLHSSignBitValue->Value.getZExtValue() == 0) {
+      InitBB->addSuccessor(LHSIsPositiveBB);
+      MIB.buildBr(*LHSIsPositiveBB);
+    } else {
+      InitBB->addSuccessor(LHSIsNegativeBB);
+      MIB.buildBr(*LHSIsNegativeBB);
+    }
+  } else {
+    auto LHSSignBitCmp =
+        MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
+                      LHSSignBit.getReg(0), Zero);
+
+    InitBB->addSuccessor(LHSIsPositiveBB);
+    InitBB->addSuccessor(LHSIsNegativeBB);
+    MIB.buildBrCond(LHSSignBitCmp, *LHSIsPositiveBB);
+    MIB.buildBr(*LHSIsNegativeBB);
+  }
 
   // Build lhs_is_pos_bb
   MIB.setInsertPt(*LHSIsPositiveBB, LHSIsPositiveBB->begin());
   auto RHSSignBit =
       MIB.buildAnd(MRI.createGenericVirtualRegister(S8), RHS, SignBitMask);
-  auto RHSSignBitCmp =
-      MIB.buildICmp(CmpInst::ICMP_NE, MRI.createGenericVirtualRegister(S8),
-                    RHSSignBit.getReg(0), Zero);
-  //    If RHSSignBitCmp == 0, both are positive, otherwise RHS is negative
-  if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-    LHSIsPositiveBB->addSuccessor(TrueBB);
-    MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
+
+  auto MaybeRHSValue = getIConstantVRegValWithLookThrough(RHS, MRI);
+  if (MaybeRHSValue) {
+    if ((MaybeRHSValue->Value.getZExtValue() & 0x80) == 0) {
+      LHSIsPositiveBB->addSuccessor(SignsMatchBB);
+      MIB.buildBr(*SignsMatchBB);
+    } else {
+      // MaybeRHSValue & 0x80 != 0
+      if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
+        LHSIsPositiveBB->addSuccessor(TrueBB);
+        MIB.buildBr(*TrueBB);
+      } else {
+        assert(Predicate == CmpInst::ICMP_SLT ||
+               Predicate == CmpInst::ICMP_SLE);
+        LHSIsPositiveBB->addSuccessor(FalseBB);
+        MIB.buildBr(*FalseBB);
+      }
+    }
   } else {
-    assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
-    LHSIsPositiveBB->addSuccessor(FalseBB);
-    MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
+    auto RHSSignBitCmp =
+        MIB.buildICmp(CmpInst::ICMP_NE, MRI.createGenericVirtualRegister(S8),
+                      RHSSignBit.getReg(0), Zero);
+    //    If RHSSignBitCmp == 0, both are positive, otherwise RHS is negative
+    if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
+      LHSIsPositiveBB->addSuccessor(TrueBB);
+      MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
+    } else {
+      assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
+      LHSIsPositiveBB->addSuccessor(FalseBB);
+      MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
+    }
+    LHSIsPositiveBB->addSuccessor(SignsMatchBB);
+    MIB.buildBr(*SignsMatchBB);
   }
-  LHSIsPositiveBB->addSuccessor(PosSignsMatchBB);
-  MIB.buildBr(*PosSignsMatchBB);
-
-  // Build pos_signs_match_bb
-  MIB.setInsertPt(*PosSignsMatchBB, PosSignsMatchBB->begin());
-  auto UnsignedCmp = MIB.buildICmp(
-      UnsignedPredicate, MRI.createGenericVirtualRegister(S8), LHS, RHS);
-
-  PosSignsMatchBB->addSuccessor(TrueBB);
-  PosSignsMatchBB->addSuccessor(FalseBB);
-  MIB.buildBrCond(UnsignedCmp.getReg(0), *TrueBB);
-  MIB.buildBr(*FalseBB);
 
   // Build lhs_is_neg_bb
   MIB.setInsertPt(*LHSIsNegativeBB, LHSIsNegativeBB->begin());
   RHSSignBit =
       MIB.buildAnd(MRI.createGenericVirtualRegister(S8), RHS, SignBitMask);
-  RHSSignBitCmp =
-      MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
-                    RHSSignBit.getReg(0), Zero);
-  //    If RHSSignBitCmp == 0, both are negative, otherwise RHS is positive
-  if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-    LHSIsNegativeBB->addSuccessor(FalseBB);
-    MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
-  } else {
-    assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
-    LHSIsNegativeBB->addSuccessor(TrueBB);
-    MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
-  }
-  LHSIsNegativeBB->addSuccessor(NegSignsMatchBB);
-  MIB.buildBr(*NegSignsMatchBB);
 
-  // Build neg_signs_match_bb
-  MIB.setInsertPt(*NegSignsMatchBB, NegSignsMatchBB->begin());
-  UnsignedCmp = MIB.buildICmp(Unsigned2sComplementPredicate,
-                              MRI.createGenericVirtualRegister(S8), LHS, RHS);
-  NegSignsMatchBB->addSuccessor(TrueBB);
-  NegSignsMatchBB->addSuccessor(FalseBB);
+  MaybeRHSValue = getIConstantVRegValWithLookThrough(RHS, MRI);
+  if (MaybeRHSValue) {
+    if ((MaybeRHSValue->Value.getZExtValue() & 0x80) != 0) {
+      LHSIsNegativeBB->addSuccessor(SignsMatchBB);
+      MIB.buildBr(*SignsMatchBB);
+    } else {
+      // MaybeRHSValue & 0x80 == 0
+      if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
+        LHSIsNegativeBB->addSuccessor(FalseBB);
+        MIB.buildBr(*FalseBB);
+      } else {
+        assert(Predicate == CmpInst::ICMP_SLT ||
+               Predicate == CmpInst::ICMP_SLE);
+        LHSIsNegativeBB->addSuccessor(TrueBB);
+        MIB.buildBr(*TrueBB);
+      }
+    }
+  } else {
+    auto RHSSignBitCmp =
+        MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
+                      RHSSignBit.getReg(0), Zero);
+    //    If RHSSignBitCmp == 0, both are negative, otherwise RHS is positive
+    if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
+      LHSIsNegativeBB->addSuccessor(FalseBB);
+      MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
+    } else {
+      assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
+      LHSIsNegativeBB->addSuccessor(TrueBB);
+      MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
+    }
+    LHSIsNegativeBB->addSuccessor(SignsMatchBB);
+    MIB.buildBr(*SignsMatchBB);
+  }
+
+  // Build signs_match_bb
+  MIB.setInsertPt(*SignsMatchBB, SignsMatchBB->begin());
+  auto UnsignedCmp = MIB.buildICmp(
+      UnsignedPredicate, MRI.createGenericVirtualRegister(S8), LHS, RHS);
+
+  SignsMatchBB->addSuccessor(TrueBB);
+  SignsMatchBB->addSuccessor(FalseBB);
   MIB.buildBrCond(UnsignedCmp.getReg(0), *TrueBB);
   MIB.buildBr(*FalseBB);
+
+  // Build true_bb (which only exits as a PHI src)
+  MIB.setInsertPt(*TrueBB, TrueBB->begin());
+  TrueTargetBB->replacePhiUsesWith(FalseBB, TrueBB);
+  TrueBB->addSuccessor(TrueTargetBB);
+  MIB.buildBr(*TrueTargetBB);
 
   MI.eraseFromParent();
   return true;
@@ -199,6 +243,9 @@ bool GBPostLegalizeExpand::expandMachineInstruction(MachineFunction &MF,
 }
 
 bool GBPostLegalizeExpand::runOnMachineFunction(MachineFunction &MF) {
+  LLVM_DEBUG(dbgs() << "======== GBPostLegalizeExpand ========\n";
+             dbgs() << "Starting with: "; MF.dump());
+
   bool DidMakeChanges = false;
 
 restart_with_invalid_iterators:
@@ -211,6 +258,11 @@ restart_with_invalid_iterators:
       }
     }
   }
+
+  LLVM_DEBUG(
+      dbgs() << "After GBPostLegalizeExpand:\n";
+      if (DidMakeChanges) { MF.dump(); } else { dbgs() << "No change!\n"; });
+
   return DidMakeChanges;
 }
 

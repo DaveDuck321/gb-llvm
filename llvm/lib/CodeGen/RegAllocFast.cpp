@@ -1576,7 +1576,7 @@ void RegAllocFastImpl::allocateInstruction(MachineInstr &MI) {
              "tied def assigned to clobbered register");
 
       // Do not free tied operands and early clobbers.
-      if (isTiedToNotUndef(MO) || MO.isEarlyClobber())
+      if (MO.isTied() || MO.isEarlyClobber())
         continue;
       if (!Reg)
         continue;

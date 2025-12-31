@@ -30,6 +30,9 @@ def HL : GBCombinedReg<"hl", 2, [H, L]>;
 def AF : GBCombinedReg<"af", 3, [A, F]>;
 def SP : GBReg<"sp", 3>;
 
+// Debug only registers
+def DEBUG_REG : GBReg<"DEBUG_REG", -1>;
+
 // Classes
 def Flags : RegisterClass<"GB", [i8], 8, (add F)> { let isAllocatable = false; }
 
@@ -39,3 +42,7 @@ def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL)>;
 def GPR16AndSP : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)>;
 def GPR16AndAF : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, AF)>;
 def GPR16WithoutHL : RegisterClass<"GB", [i16], 16, (add BC, DE)>;
+
+def DebugRegs : RegisterClass<"GB", [i128], 128, (add DEBUG_REG)> {
+  let isAllocatable = false;
+}
