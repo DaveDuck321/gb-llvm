@@ -97,6 +97,8 @@ GBPreLegalizeCombiner::GBPreLegalizeCombiner(CodeGenOptLevel OptLvl)
 
 bool GBPreLegalizeCombiner::runOnMachineFunction(MachineFunction &MF) {
   assert(!MF.getProperties().hasFailedISel());
+  LLVM_DEBUG(dbgs() << "======== GBPreLegalizeCombiner ========\n";
+             dbgs() << "Starting with: "; MF.dump());
 
   assert(!MF.getProperties().hasLegalized() &&
          "Expected a pre-legalized function?");
@@ -121,7 +123,11 @@ bool GBPreLegalizeCombiner::runOnMachineFunction(MachineFunction &MF) {
                      F.hasMinSize());
   GBPreLegalizeCombinerImpl Impl(MF, CInfo, TPC, *VT, CSEInfo, RuleConfig, ST,
                                  MDT, LI);
-  return Impl.combineMachineInstrs();
+  auto Result = Impl.combineMachineInstrs();
+  LLVM_DEBUG(
+      dbgs() << "After GBPreLegalizeCombiner:\n";
+      if (Result) { MF.dump(); } else { dbgs() << "No change!\n"; });
+  return Result;
 }
 
 void GBPreLegalizeCombiner::getAnalysisUsage(AnalysisUsage &AU) const {

@@ -27,7 +27,6 @@ enum NodeType : unsigned {
   COMBINE,
   CP,
   DEC16,
-  EXTRACT,
   INC16,
   LD_HL_SP,
   LOWER,

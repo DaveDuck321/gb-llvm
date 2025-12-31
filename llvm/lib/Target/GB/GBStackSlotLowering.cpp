@@ -120,9 +120,11 @@ public:
   void saveReg8ToStackSlot(MachineInstr &MI,
                            const LivePhysRegs &RegsImmediatelyAfter) const;
   void saveReg16ToStackSlot(MachineInstr &MI,
+                            const LivePhysRegs &RegsImmediatelyBefore,
                             const LivePhysRegs &RegsImmediatelyAfter) const;
 
   void loadReg8FromStackSlot(MachineInstr &MI,
+                             const LivePhysRegs &RegsImmediatelyBefore,
                              const LivePhysRegs &RegsImmediatelyAfter) const;
   void loadReg16FromStackSlot(MachineInstr &MI,
                               const LivePhysRegs &RegsImmediatelyAfter) const;
@@ -256,7 +258,8 @@ void GBStackSlotLowering::saveReg8ToStackSlot(
 }
 
 void GBStackSlotLowering::saveReg16ToStackSlot(
-    MachineInstr &MI, const LivePhysRegs &RegsImmediatelyAfter) const {
+    MachineInstr &MI, const LivePhysRegs &RegsImmediatelyBefore,
+    const LivePhysRegs &RegsImmediatelyAfter) const {
   auto &MF = *MI.getMF();
   auto &MBB = *MI.getParent();
   auto &TII = *MF.getSubtarget().getInstrInfo();
@@ -321,22 +324,39 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     if (LLiveAfter) {
       CopyIntoL = SrcLower;
     }
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), SrcUpper)
-        .addReg(GB::H, getKillRegState(true));
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), SrcLower)
-        .addReg(GB::L, getKillRegState(true));
+
+    // The register allocator may request a 16-bit save where either the upper
+    // or lower part is undefined. The machine code verifier will error unless
+    // we catch it here and avoid generating the undefined stores.
+    bool LowerUndef = RegsImmediatelyBefore.available(MRI, GB::L);
+    bool UpperUndef = RegsImmediatelyBefore.available(MRI, GB::H);
+    assert(!LowerUndef || !UpperUndef);
+
+    if (not UpperUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), SrcUpper)
+          .addReg(GB::H, getKillRegState(true));
+    }
+
+    if (not LowerUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), SrcLower)
+          .addReg(GB::L, getKillRegState(true));
+    }
 
     // Finally do the store
     loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                           SPOffest + Stack.currentOffset());
 
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-        .addReg(SrcLower);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-        .addReg(GB::HL);
+    if (not LowerUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+          .addReg(SrcLower);
+    }
 
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-        .addReg(SrcUpper);
+    if (not UpperUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+          .addReg(GB::HL);
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+          .addReg(SrcUpper);
+    }
 
     if (CopyIntoL.isValid()) {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::L)
@@ -348,8 +368,6 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     }
   } else {
     // Otherwise we just push/ pop
-    // TODO GB: optimize this in a later pass 1) remove unnecessary stack manip,
-    // 2) coalesce
     if (HLLiveAfter) {
       Stack.save(GB::HL);
     }
@@ -357,30 +375,44 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                           SPOffest + Stack.currentOffset());
 
-    // If A is available we can blindly copy into it and eliminate the
-    // increment.
-    bool CanClobberA = RegsImmediatelyAfter.available(MRI, GB::A);
-    if (CanClobberA) {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::A)
-          .addReg(SrcLower,
-                  getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-          .addReg(GB::A, getKillRegState(true));
-    } else {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-          .addReg(SrcLower,
-                  getKillRegState(not RegsImmediatelyAfter.contains(SrcLower)));
+    // The register allocator may request a 16-bit save where either the upper
+    // or lower part is undefined. The machine code verifier will error unless
+    // we catch it here and avoid generating the undefined stores.
+    bool LowerUndef = RegsImmediatelyBefore.available(MRI, SrcLower);
+    bool UpperUndef = RegsImmediatelyBefore.available(MRI, SrcUpper);
+    assert(!LowerUndef || !UpperUndef);
+
+    if (not LowerUndef) {
+      // If A is available we can blindly copy into it and eliminate the
+      // increment.
+      bool CanClobberA = RegsImmediatelyAfter.available(MRI, GB::A);
+      if (CanClobberA) {
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_rr), GB::A)
+            .addReg(SrcLower, getKillRegState(
+                                  not RegsImmediatelyAfter.contains(SrcLower)));
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+            .addReg(GB::A, getKillRegState(true));
+      } else {
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+            .addReg(SrcLower, getKillRegState(
+                                  not RegsImmediatelyAfter.contains(SrcLower)));
+      }
     }
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-        .addReg(GB::HL);
-    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
-        .addReg(SrcUpper,
-                getKillRegState(not RegsImmediatelyAfter.contains(SrcUpper)));
+
+    if (not UpperUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+          .addReg(GB::HL);
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
+          .addReg(SrcUpper,
+                  getKillRegState(not RegsImmediatelyAfter.contains(SrcUpper)))
+          .addReg(GB::HL, getKillRegState(true) | getImplRegState(true));
+    }
   }
 }
 
 void GBStackSlotLowering::loadReg8FromStackSlot(
-    MachineInstr &MI, const LivePhysRegs &RegsImmediatelyAfter) const {
+    MachineInstr &MI, const LivePhysRegs &RegsImmediatelyBefore,
+    const LivePhysRegs &RegsImmediatelyAfter) const {
   auto &MF = *MI.getMF();
   auto &MBB = *MI.getParent();
   auto &TII = *MF.getSubtarget().getInstrInfo();
@@ -406,8 +438,13 @@ void GBStackSlotLowering::loadReg8FromStackSlot(
   bool ResultIsH = MI.definesRegister(GB::H, &TRI);
   bool ResultIsL = MI.definesRegister(GB::L, &TRI);
 
-  bool HasToSaveH = (!RegsImmediatelyAfter.available(MRI, GB::H) && !ResultIsH);
-  bool HasToSaveL = (!RegsImmediatelyAfter.available(MRI, GB::L) && !ResultIsL);
+  bool HIsUndef = RegsImmediatelyBefore.available(MRI, GB::H);
+  bool LIsUndef = RegsImmediatelyBefore.available(MRI, GB::L);
+
+  bool HasToSaveH =
+      (!RegsImmediatelyAfter.available(MRI, GB::H) && !ResultIsH && !HIsUndef);
+  bool HasToSaveL =
+      (!RegsImmediatelyAfter.available(MRI, GB::L) && !ResultIsL && !LIsUndef);
 
   bool CopyBackToA = false;
   bool FSaved = false;
@@ -570,8 +607,8 @@ void GBStackSlotLowering::loadReg16FromStackSlot(
   BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
       .addReg(GB::HL);
 
-  // TODO GB: do I need to mark HL as killed after this?
-  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), CopyUpperTo);
+  BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_r_iHL), CopyUpperTo)
+      .addReg(GB::HL, getKillRegState(true) | getImplRegState(true));
 
   if (ResultIsHL) {
     assert(CopyLowerTo != GB::L);
@@ -608,15 +645,22 @@ bool GBStackSlotLowering::runOnMachineFunction(MachineFunction &MF) {
         LiveRegsAfter.stepBackward(*I);
       }
 
+      LivePhysRegs LiveRegsBefore(TRI);
+      LiveRegsBefore.addLiveIns(MBB);
+      for (auto I = MBB.begin(); I != MI.getIterator(); ++I) {
+        SmallVector<std::pair<MCPhysReg, const MachineOperand *>, 2> Clobbers;
+        LiveRegsBefore.stepForward(*I, Clobbers);
+      }
+
       switch (MI.getOpcode()) {
       case GB::Save8ToFrameIndex:
         saveReg8ToStackSlot(MI, LiveRegsAfter);
         break;
       case GB::Save16ToFrameIndex:
-        saveReg16ToStackSlot(MI, LiveRegsAfter);
+        saveReg16ToStackSlot(MI, LiveRegsBefore, LiveRegsAfter);
         break;
       case GB::Load8FromFrameIndex:
-        loadReg8FromStackSlot(MI, LiveRegsAfter);
+        loadReg8FromStackSlot(MI, LiveRegsBefore, LiveRegsAfter);
         break;
       case GB::Load16FromFrameIndex:
         loadReg16FromStackSlot(MI, LiveRegsAfter);

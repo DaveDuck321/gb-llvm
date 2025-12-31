@@ -123,7 +123,11 @@ bool GBPostLegalizeCombiner::runOnMachineFunction(MachineFunction &MF) {
                      F.hasMinSize());
   GBPostLegalizeCombinerImpl Impl(MF, CInfo, TPC, *VT, CSEInfo, RuleConfig, ST,
                                   MDT, LI);
-  return Impl.combineMachineInstrs();
+  auto Result = Impl.combineMachineInstrs();
+  LLVM_DEBUG(
+      dbgs() << "After GBPostLegalizeCombiner:\n";
+      if (Result) { MF.dump(); } else { dbgs() << "No change!\n"; });
+  return Result;
 }
 
 void GBPostLegalizeCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
