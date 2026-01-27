@@ -10,7 +10,7 @@ class Triple;
 class GBMCAsmInfo : public MCAsmInfoELF {
 public:
   GBMCAsmInfo() {
-    CodePointerSize = 2;
+    CodePointerSize = 4;
     CalleeSaveStackSlotSize = 2;
     AlignmentIsInBytes = false;
     UseMotorolaIntegers = true;

@@ -1460,6 +1460,17 @@ RegisterContextUnwind::GetAbstractRegisterLocation(uint32_t lldb_regnum,
     }
   }
 
+  if (std::strcmp(regnum.GetName(), "sp") == 0 ||
+      std::strcmp(regnum.GetName(), "SP") == 0) {
+    // This has been really awkward: fixing this properly currently requires
+    // more than just defining the dwarf register as LLDB_REGNUM_GENERIC_SP in
+    // the ABI plugin (which should be sufficient IMO). Instead, lets just
+    // invoke common sense and assume that SP is a stack pointer :-/
+    UnwindLogMsg("assuming (previous) SP == CFA");
+    unwindplan_regloc.SetIsCFAPlusOffset(0);
+    return unwindplan_regloc;
+  }
+
   // We have no AbstractRegisterLocation, and the ABI says this is a
   // non-volatile / callee-preserved register.  Continue down the stack
   // or to frame 0 & the live RegisterContext.
