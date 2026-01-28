@@ -167,34 +167,22 @@ bool llvm::constrainSelectedInstRegOperands(MachineInstr &I,
     // Copies to physical registers may be required if both our uses and defines
     // are implicit. In this case we'll need to calculate a constraint based on
     // the physical register we're interacting with.
-    const TargetRegisterClass *RegClass = nullptr;
+    Register PhysicalReg;
+    Register VirtualReg;
     for (auto MO : I.explicit_operands()) {
       Register Reg = MO.getReg();
       if (Reg.isPhysical()) {
-        for (unsigned RCId = 0; RCId != TRI.getNumRegClasses(); ++RCId) {
-          auto const *MaybeRegClass = TRI.getRegClass(RCId);
-          if (MaybeRegClass->contains(Reg)) {
-            if (RegClass != nullptr) {
-              RegClass = nullptr; // Ambiguous class, don't apply any constraint
-              break;
-            }
-            RegClass = MaybeRegClass;
-          }
-        }
-        break;
+        PhysicalReg = Reg;
+      } else {
+        VirtualReg = Reg;
       }
     }
 
-    if (RegClass != nullptr) {
-      for (auto MO : I.explicit_operands()) {
-        Register Reg = MO.getReg();
-        // Physical registers don't need to be constrained.
-        if (Reg.isPhysical()) {
-          continue;
-        }
-
-        RBI.constrainGenericRegister(Reg, *RegClass, MRI);
-      }
+    if (PhysicalReg.isValid() && VirtualReg.isValid()) {
+      auto *RegClass =
+          TRI.getMinimalPhysRegClassLLT(PhysicalReg, MRI.getType(VirtualReg));
+      RBI.constrainGenericRegister(VirtualReg, *RegClass, MRI);
+      return true;
     }
   }
 
