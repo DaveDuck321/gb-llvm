@@ -5,6 +5,7 @@
 #include "TargetInfo/GBTargetInfo.h"
 
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSchedule.h"
@@ -34,7 +35,19 @@ static MCInstPrinter *createGBInstPrinter(const Triple &,
 
 static MCAsmInfo *createGBMCAsmInfo(const MCRegisterInfo &MRI, const Triple &TT,
                                     const MCTargetOptions &MTO) {
-  return new GBMCAsmInfo();
+  int StackGrowth = -2;
+
+  auto *MAI = new GBMCAsmInfo();
+  unsigned SP = MRI.getDwarfRegNum(GB::SP, false);
+  MCCFIInstruction Inst =
+      MCCFIInstruction::cfiDefCfa(nullptr, SP, -StackGrowth);
+  MAI->addInitialFrameState(Inst);
+
+  unsigned PC = MRI.getDwarfRegNum(GB::PC, true);
+  MCCFIInstruction Inst2 =
+      MCCFIInstruction::createOffset(nullptr, PC, StackGrowth);
+  MAI->addInitialFrameState(Inst2);
+  return MAI;
 }
 
 static MCInstrInfo *createGBInstrInfo() {

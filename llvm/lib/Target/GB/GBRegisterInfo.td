@@ -24,11 +24,12 @@ def A : GBReg<"a", 7>;
 def F : GBReg<"f", -1>;
 
 // 16-Bit registers
-def BC : GBCombinedReg<"bc", 0, [B, C]>;
-def DE : GBCombinedReg<"de", 1, [D, E]>;
-def HL : GBCombinedReg<"hl", 2, [H, L]>;
-def AF : GBCombinedReg<"af", 3, [A, F]>;
-def SP : GBReg<"sp", 3>;
+def BC : GBCombinedReg<"bc", 0, [B, C]>, DwarfRegNum<[1]>;
+def DE : GBCombinedReg<"de", 1, [D, E]>, DwarfRegNum<[2]>;
+def HL : GBCombinedReg<"hl", 2, [H, L]>, DwarfRegNum<[3]>;
+def AF : GBCombinedReg<"af", 3, [A, F]>, DwarfRegNum<[0]>;
+def SP : GBReg<"sp", 3>, DwarfRegNum<[4]>;
+def PC : GBReg<"pc", -1>, DwarfRegNum<[5]>;
 
 // Debug only registers
 def DEBUG_REG : GBReg<"DEBUG_REG", -1>;
@@ -38,6 +39,7 @@ def Flags : RegisterClass<"GB", [i8], 8, (add F)> { let isAllocatable = false; }
 
 def GPR8 : RegisterClass<"GB", [i8], 8, (add A, B, C, D, E, H, L)>;
 def GPR16 : RegisterClass<"GB", [i16], 16, (add BC, DE, HL)>;
+def ReservedR16 : RegisterClass<"GB", [i16], 16, (add AF, SP)>;
 
 def GPR16AndSP : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, SP)>;
 def GPR16AndAF : RegisterClass<"GB", [i16], 16, (add BC, DE, HL, AF)>;

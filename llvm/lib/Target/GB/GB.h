@@ -26,6 +26,7 @@ FunctionPass *createGBEarlyLowerIntoStack(GBTargetMachine &);
 FunctionPass *createGBPreLegalizeCombiner(CodeGenOptLevel);
 FunctionPass *createGBPostLegalizeCombiner(CodeGenOptLevel);
 FunctionPass *createGBPostLegalizeExpand(CodeGenOptLevel);
+FunctionPass *createGBCFIInserter();
 
 InstructionSelector *createGBInstructionSelector(const GBSubtarget &,
                                                  const GBRegisterBankInfo &);

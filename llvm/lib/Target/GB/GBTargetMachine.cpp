@@ -180,4 +180,5 @@ void GBPassConfig::addPreSched2() {
 
 void GBPassConfig::addPreEmitPass() {
   addPass(createGBBranchRelaxation(getGBTargetMachine(), getOptLevel()));
+  addPass(createGBCFIInserter());
 }

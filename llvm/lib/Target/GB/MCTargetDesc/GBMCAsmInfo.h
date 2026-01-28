@@ -17,6 +17,10 @@ public:
     CommentString = "#";
     SeparatorString = ";";
     SupportsDebugInformation = true;
+
+    DwarfRegNumForCFI = true;
+    UsesCFIWithoutEH = true;
+    SupportsDebugInformation = true;
   }
 };
 
