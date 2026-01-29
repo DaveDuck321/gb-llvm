@@ -346,14 +346,22 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     loadHLWithStackOffset(MBB, MBBI, MI.getDebugLoc(), TII,
                           SPOffest + Stack.currentOffset());
 
-    if (not LowerUndef) {
+    if (LowerUndef) {
+      // Save 0 so that the load passes UBSan
+      // TODO GB: avoid this entirely
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI8_iHL)).addImm(0);
+    } else {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
           .addReg(SrcLower);
     }
 
-    if (not UpperUndef) {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-          .addReg(GB::HL);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+        .addReg(GB::HL);
+    if (UpperUndef) {
+      // Save 0 so that the load passes UBSan
+      // TODO GB: avoid this entirely
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI8_iHL)).addImm(0);
+    } else {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
           .addReg(SrcUpper);
     }
@@ -382,7 +390,9 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
     bool UpperUndef = RegsImmediatelyBefore.available(MRI, SrcUpper);
     assert(!LowerUndef || !UpperUndef);
 
-    if (not LowerUndef) {
+    if (LowerUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI8_iHL)).addImm(0);
+    } else {
       // If A is available we can blindly copy into it and eliminate the
       // increment.
       bool CanClobberA = RegsImmediatelyAfter.available(MRI, GB::A);
@@ -399,9 +409,13 @@ void GBStackSlotLowering::saveReg16ToStackSlot(
       }
     }
 
-    if (not UpperUndef) {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
-          .addReg(GB::HL);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::INC16), GB::HL)
+        .addReg(GB::HL);
+    if (UpperUndef) {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LDI8_iHL))
+          .addImm(0)
+          .addReg(GB::HL, getKillRegState(true) | getImplRegState(true));
+    } else {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII.get(GB::LD_iHL_r))
           .addReg(SrcUpper,
                   getKillRegState(not RegsImmediatelyAfter.contains(SrcUpper)))

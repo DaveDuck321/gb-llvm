@@ -68,9 +68,17 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       .clampScalar(0, S8, S8);
 
   // TODO: wider 16 bit shifts by a CONSTANT amount should also be custom
+  // Shifts are narrowed and NOT libcalls since the shift __builtins have an
+  // unfortunate circular dependency.
+  // TODO: the descending powers of two here should be automatic
+  // TODO: this is really fragile, ideally #1 would be legalized to S8 also.
   getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR, G_ROTR, G_ROTL})
       .customFor({S8})
-      .libcall();
+      .clampScalar(1, S8, S16)
+      .clampScalar(0, S8, S64)
+      .clampScalar(0, S8, S32)
+      .clampScalar(0, S8, S16)
+      .libcallFor({S16});
 
   getActionDefinitionsBuilder({G_SCMP, G_UCMP, G_SBFX, G_UBFX}).lower();
   getActionDefinitionsBuilder(G_BSWAP).legalFor({S8}).custom();
@@ -118,7 +126,7 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
       .clampScalar(1, S16, S16);
 
   getActionDefinitionsBuilder({G_INTTOPTR, G_PTRTOINT}).alwaysLegal();
-  getActionDefinitionsBuilder(G_PTR_ADD).lower();
+  getActionDefinitionsBuilder(G_PTR_ADD).alwaysLegal();
 
   getActionDefinitionsBuilder(G_BR).alwaysLegal();
   getActionDefinitionsBuilder(G_BRCOND).legalFor({S8}).clampScalar(0, S8, S8);
@@ -628,8 +636,12 @@ bool GBLegalizerInfo::legalizeLargeAddSub(
 
   DstOp ResultOp = MI.getOperand(0);
   auto ResultTy = ResultOp.getLLTTy(MRI);
-
   auto Size = ResultTy.getScalarSizeInBits();
+
+  if (Size == 8 || (Size == 16 && IsAdd)) {
+    // Already legal (or we're going to legalize it later)
+    return true;
+  }
 
   MachineIRBuilder MIB(MI);
 
