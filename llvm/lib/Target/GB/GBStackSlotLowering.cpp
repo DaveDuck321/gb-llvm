@@ -30,7 +30,7 @@ void loadHLWithStackOffset(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &MBBI, DebugLoc DL,
                            const TargetInstrInfo &TII, size_t TargetOffset) {
   if (TargetOffset > 127) {
-    BuildMI(MBB, MBBI, DL, TII.get(GB::LDI16), GB::HL).addImm(TargetOffset);
+    BuildMI(MBB, MBBI, DL, TII.get(GB::LDI16_r), GB::HL).addImm(TargetOffset);
     BuildMI(MBB, MBBI, DL, TII.get(GB::ADD_HL)).addReg(GB::SP);
   } else {
     BuildMI(MBB, MBBI, DL, TII.get(GB::LD_HL_SP)).addImm(TargetOffset);

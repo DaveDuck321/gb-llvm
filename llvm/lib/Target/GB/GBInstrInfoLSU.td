@@ -38,8 +38,8 @@ def LDI8_iHL
 }
 
 // LDI16
-def LDI16 : GBInstrImm16<"ld $rd, $imm", 0x01, (outs GPR16AndSP:$rd),
-                         (ins uimm16:$imm)> {
+def LDI16_r : GBInstrImm16<"ld $rd, $imm", 0x01, (outs GPR16AndSP:$rd),
+                           (ins uimm16:$imm)> {
   bits<2> rd;
   let Inst{23 - 8} = imm;
   let Inst{5 - 4} = rd;

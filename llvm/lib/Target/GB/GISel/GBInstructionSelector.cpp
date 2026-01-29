@@ -175,7 +175,7 @@ bool GBInstructionSelector::selectConstant(MachineInstr &MI,
   if (MRI.getType(DstReg).getSizeInBits() == 8) {
     MI.setDesc(TII.get(GB::LDI8_r));
   } else {
-    MI.setDesc(TII.get(GB::LDI16));
+    MI.setDesc(TII.get(GB::LDI16_r));
   }
   MI.addOperand(MachineOperand::CreateImm(Value));
   return true;
@@ -279,7 +279,7 @@ bool GBInstructionSelector::selectAddress(MachineInstr &MI,
       // 8-bit global
       return GB::LDI8_r;
     }
-    return GB::LDI16;
+    return GB::LDI16_r;
   }();
   constrainGeneric(Dst, MRI);
   BuildMI(MBB, MI, DL, TII.get(Opcode), Dst).add(Target);

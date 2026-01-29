@@ -42,26 +42,22 @@ multiclass ALU_Pat<SDNode node, GBInstr regInstr> {
 }
 
 defm : ALU_Pat<add, ADD_r>;
-defm : ALU_Pat<addc, ADD_r>;
-defm : ALU_Pat<adde, ADC_r>;
 def : Pat<(add GPR8:$rs, 1), (INC_r GPR8:$rs)>;
+def : Pat<(add HL, GPR16:$rs), (ADD_HL GPR16:$rs)>;
+def : Pat<(ptradd(p0 HL), GPR16:$rs), (ADD_HL GPR16:$rs)>;
+def : Pat<(add GPR16:$rs, 1), (INC16 GPR16:$rs)>;
+def : Pat<(ptradd GPR16:$rs, (i16 1)), (INC16 GPR16:$rs)>;
 
 defm : ALU_Pat<sub, SUB_r>;
-defm : ALU_Pat<subc, SUB_r>;
-defm : ALU_Pat<sube, SBC_r>;
 def : Pat<(add GPR8:$rs, -1), (DEC_r GPR8:$rs)>;
+def : Pat<(add GPR16:$rs, -1), (DEC16 GPR16:$rs)>;
+def : Pat<(ptradd GPR16:$rs, (i16 -1)), (DEC16 GPR16:$rs)>;
 
 defm : ALU_Pat<and, AND_r>;
 defm : ALU_Pat<xor, XOR_r>;
 defm : ALU_Pat<or, OR_r>;
 
 def : Pat<(xor A, -1), (CPL)>;
-
-def SDT_GBIncDec16 : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
-def INC16_NODE : SDNode<"GBISD::INC16", SDT_GBIncDec16, []>;
-def DEC16_NODE : SDNode<"GBISD::DEC16", SDT_GBIncDec16, []>;
-def : Pat<(INC16_NODE GPR16:$rd), (INC16 GPR16:$rd)>;
-def : Pat<(DEC16_NODE GPR16:$rd), (DEC16 GPR16:$rd)>;
 
 // Atomic rmws special cases
 def SDT_ATOMIC_INC_DEC : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisPtrTy<1>]>;
@@ -89,7 +85,7 @@ def : Pat<(ATOMIC_BIT_RESET_NODE HL, imm8:$imm8), (RES_iHL imm8:$imm8)>;
 
 // Branches
 def : Pat<(br bb:$imm), (JP $imm)>;
-def : Pat<(brind (p0 HL)), (JP_HL)>;
+def : Pat<(brind(p0 HL)), (JP_HL)>;
 def : GINodeEquiv<G_BRINDIRECT, brind>;
 
 // Special instructions

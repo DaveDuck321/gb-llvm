@@ -109,7 +109,7 @@ void GBInstrInfo::storeRegToStackSlot(
     const TargetRegisterInfo *TRI, Register VReg,
     MachineInstr::MIFlag Flags) const {
   LLVM_DEBUG(dbgs() << "Added StoreToStackSlot: " << printReg(SrcReg, TRI)
-                    << " slot." << FrameIndex << "\n");
+                    << " %stack." << FrameIndex << "\n");
 
   DebugLoc DL = MBB.findDebugLoc(MI);
 
@@ -149,7 +149,7 @@ void GBInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                        Register VReg,
                                        MachineInstr::MIFlag Flags) const {
   LLVM_DEBUG(dbgs() << "Added LoadFromStackSlot: " << printReg(DestReg, TRI)
-                    << " slot." << FrameIndex << "\n");
+                    << " %stack." << FrameIndex << "\n");
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction *MF = MBB.getParent();
@@ -185,7 +185,6 @@ unsigned GBInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   }
 
   if (MI.isPseudo()) {
-    llvm_unreachable("Analysis requires size of pseudo instruction");
     return 3;
   }
   return MI.getDesc().getSize();
@@ -419,7 +418,7 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       llvm_unreachable("Unexpected register");
     case GB::HL:
       // Note: we always produce LD A, (HL) here rather than loading directly to
-      // the target GPR since this allows us to produce peephole optimizations
+      // the target GPR since this allows us to perform peephole optimizations
       // like LDH.
       BuildMI(*MBB, MBBI, DL, get(GB::LD_r_iHL), GB::A)
           .addReg(GB::HL, getImplRegState(true) | getKillRegState(DidKillPtr));
@@ -450,7 +449,7 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     case GB::HL:
       BuildMI(*MBB, MBBI, DL, get(GB::LD_iHL_r))
           .addReg(GB::A, getKillRegState(DidKillSrc))
-          .addReg(GB::HL, getImplRegState(true) | getKillRegState(DidKillPtr));
+          .addReg(PtrReg, getImplRegState(true) | getKillRegState(DidKillPtr));
       break;
     case GB::BC:
     case GB::DE:
@@ -474,7 +473,7 @@ bool GBInstrInfo::getConstValDefinedInReg(const MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     return false;
-  case GB::LDI16:
+  case GB::LDI16_r:
   case GB::LDI8_r:
     if (not MI.getOperand(1).isImm()) {
       return false;
@@ -631,7 +630,7 @@ bool GBInstrInfo::foldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
     LLVM_DEBUG(dbgs() << "Fold failed: unsupported def opcode "
                       << DefMI.getOpcode() << "\n");
     return false;
-  case GB::LDI16:
+  case GB::LDI16_r:
     Imm = &DefMI.getOperand(1);
     break;
   case GB::LDI8_r:

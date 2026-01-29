@@ -42,8 +42,8 @@ void GBFrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   // Skip the callee-saved push instructions.
-  while ((MBBI != MBB.end()) && MBBI->getFlag(MachineInstr::FrameSetup) &&
-         (MBBI->getOpcode() == GB::PUSH)) {
+  while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup) &&
+         MBBI->getOpcode() == GB::PUSH) {
     ++MBBI;
   }
 
