@@ -44,10 +44,19 @@ def GBNormalizeBranch
             ${root}->eraseFromParent();
         }]:$root)>;
 
+def convert_icmp_to_unsigned
+    : GICombineRule<
+          (defs root:$root, build_fn_matchinfo:$matchinfo),
+          (match(G_ICMP $dst, $p, $lhs, $rhs):$root,
+              [{ return matchCombineICMPToUnsigned(*${root}, ${matchinfo}); }]),
+          (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def GBPreLegalizeCombiner
     : GICombiner<"GBPreLegalizeCombinerImpl", [all_combines, GBCombineBranchCC,
-                                               GBNormalizeBranch]>;
+                                               GBNormalizeBranch,
+                                               convert_icmp_to_unsigned]>;
 
 def GBPostLegalizeCombiner
     : GICombiner<"GBPostLegalizeCombinerImpl", [all_combines, GBCombineBranchCC,
-                                                GBNormalizeBranch]>;
+                                                GBNormalizeBranch,
+                                                convert_icmp_to_unsigned]>;

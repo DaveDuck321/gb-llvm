@@ -1,6 +1,7 @@
 #include "GB.h"
 #include "GBLegalizerInfo.h"
 #include "GBSubtarget.h"
+#include "GISel/GBCombinerCommon.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -25,6 +26,7 @@
 #define DEBUG_TYPE "gb-postlegalize-combiner"
 
 using namespace llvm;
+using namespace llvm::gb;
 using namespace MIPatternMatch;
 
 namespace {

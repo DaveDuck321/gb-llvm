@@ -40,6 +40,7 @@ add_llvm_target(GBCodeGen
     GBSubtarget.cpp
     GBTargetMachine.cpp
     GISel/GBCallLowering.cpp
+    GISel/GBCombinerCommon.cpp
     GISel/GBInstructionSelector.cpp
     GISel/GBLegalizerInfo.cpp
     GISel/GBPostLegalizeCombiner.cpp
