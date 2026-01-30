@@ -159,7 +159,7 @@ void GBPassConfig::addPreRegBankSelect() {
 }
 
 void GBPassConfig::addPreGlobalInstructionSelect() {
-  // TODO: serialize increments
+  addPass(createGBIncrementSerialize(getOptLevel()));
 }
 
 bool GBPassConfig::addGlobalInstructionSelect() {
