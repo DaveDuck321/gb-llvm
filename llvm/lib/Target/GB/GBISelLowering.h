@@ -110,14 +110,6 @@ public:
   emitSignedSelectCCWithCustomInserter(MachineInstr &MI,
                                        MachineBasicBlock *MBB) const;
 
-  MachineBasicBlock *
-  emitUnknownShiftWithCustomInserter(MachineInstr &MI,
-                                     MachineBasicBlock *MBB) const;
-
-  MachineBasicBlock *
-  emitConstantShiftWithCustomInserter(MachineInstr &MI,
-                                      MachineBasicBlock *MBB) const;
-
   bool expandShiftByConstant(SelectionDAG &DAG, SDNode *N, const APInt &Amt,
                              SDValue &Lo, SDValue &Hi) const override;
 

@@ -74,6 +74,15 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
   // TODO: this is really fragile, ideally #1 would be legalized to S8 also.
   getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR, G_ROTR, G_ROTL})
       .customFor({S8})
+      .customIf([=](const LegalityQuery &Query) {
+        if (Query.MI == nullptr || Query.Types[0] != S16 ||
+            Query.Opcode == G_ROTR || Query.Opcode == G_ROTL) {
+          return false;
+        }
+        auto &MRI = Query.MI->getMF()->getRegInfo();
+        Register Reg = Query.MI->getOperand(2).getReg();
+        return getIConstantVRegValWithLookThrough(Reg, MRI).has_value();
+      })
       .clampScalar(1, S8, S16)
       .clampScalar(0, S8, S64)
       .clampScalar(0, S8, S32)
@@ -261,13 +270,13 @@ bool GBLegalizerInfo::legalizeLoadStore(
   assert(MRI.getType(PtrReg) == P0);
   assert(MRI.getType(AddrReg) == P0);
 
+  Helper.Observer.changingInstr(MI);
   if (MI.getOpcode() == TargetOpcode::G_LOAD) {
     // Result goes in PtrReg
     MachineIRBuilder MIB(*MI.getParent(), ++MI.getIterator());
     auto ToLoad = MRI.createGenericVirtualRegister(S16);
     MI.getOperand(0).ChangeToRegister(ToLoad, /*isDef=*/true);
     MIB.buildIntToPtr(PtrReg, ToLoad);
-    Helper.Observer.changedInstr(MI);
   } else {
     // We're storing PtrReg
     assert(MI.getOpcode() == TargetOpcode::G_STORE);
@@ -276,8 +285,8 @@ bool GBLegalizerInfo::legalizeLoadStore(
     auto ToStore = MRI.createGenericVirtualRegister(S16);
     MIB.buildPtrToInt(ToStore, PtrReg);
     MI.getOperand(0).ChangeToRegister(ToStore, /*isDef=*/false);
-    Helper.Observer.changedInstr(MI);
   }
+  Helper.Observer.changedInstr(MI);
   return true;
 }
 
@@ -375,6 +384,8 @@ bool GBLegalizerInfo::legalizeICmp(LegalizerHelper &Helper, MachineInstr &MI,
   // Decay pointer comparisons into 16-bit integer comparisons -- these will
   // later be legalized down to 8-bit comparisons.
   if (LHSType.isPointer() || RHSType.isPointer()) {
+    Helper.Observer.changingInstr(MI);
+
     if (LHSType.isPointer()) {
       auto NewLHS = MIB.buildPtrToInt(LLT::scalar(16), LHS);
       MI.getOperand(2).setReg(NewLHS.getReg(0));
@@ -536,6 +547,21 @@ bool GBLegalizerInfo::legalizeShiftRotate(
     LegalizerHelper &Helper, MachineInstr &MI,
     LostDebugLocObserver &LocObserver) const {
   MachineFunction &MF = *MI.getMF();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  auto ShiftValue = MI.getOperand(1).getReg();
+  if (MRI.getType(ShiftValue) == LLT::scalar(8)) {
+    return legalizeShiftRotate8(Helper, MI, LocObserver);
+  }
+
+  assert(MRI.getType(ShiftValue) == LLT::scalar(16));
+  return legalizeShiftRotate16(Helper, MI, LocObserver);
+}
+
+bool GBLegalizerInfo::legalizeShiftRotate8(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    LostDebugLocObserver &LocObserver) const {
+  MachineFunction &MF = *MI.getMF();
   MachineBasicBlock &MBB = *MI.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
@@ -621,6 +647,103 @@ bool GBLegalizerInfo::legalizeShiftRotate(
   MIB.buildCopy(Result, Value);
 
   MI.eraseFromParent();
+  return true;
+}
+
+bool GBLegalizerInfo::legalizeShiftRotate16(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    LostDebugLocObserver &LocObserver) const {
+  MachineFunction &MF = *MI.getMF();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  if (MI.getOpcode() == TargetOpcode::G_ROTL ||
+      MI.getOpcode() == TargetOpcode::G_ROTR) {
+    return false;
+  }
+
+  auto S8 = LLT::scalar(8);
+  auto S16 = LLT::scalar(16);
+  auto Result = MI.getOperand(0).getReg();
+  auto Val = MI.getOperand(1).getReg();
+  auto AmountReg = MI.getOperand(2).getReg();
+  assert(MRI.getType(Val) == S16);
+
+  auto Constant = getIConstantVRegValWithLookThrough(AmountReg, MRI);
+  if (not Constant.has_value()) {
+    return false;
+  }
+
+  size_t Amount = Constant->Value.getZExtValue();
+
+  MachineIRBuilder MIB(MI);
+  auto Unmerge = MIB.buildUnmerge(S8, Val);
+  Register Lower = Unmerge.getReg(0);
+  Register Upper = Unmerge.getReg(1);
+  MRI.setRegClass(Lower, &GB::GPR8RegClass);
+  MRI.setRegClass(Upper, &GB::GPR8RegClass);
+
+  switch (MI.getOpcode()) {
+  default:
+    llvm_unreachable("Unrecognized opcode");
+
+  case TargetOpcode::G_SHL:
+    if (Amount < 8) {
+      for (size_t I = 0; I < Amount; I += 1) {
+        auto NewLower = MRI.createGenericVirtualRegister(S8);
+        auto NewUpper = MRI.createGenericVirtualRegister(S8);
+        Lower = MIB.buildInstr(GB::SLA_r, {NewLower}, {Lower}).getReg(0);
+        Upper = MIB.buildInstr(GB::RL_r, {NewUpper}, {Upper}).getReg(0);
+        MRI.setRegClass(Lower, &GB::GPR8RegClass);
+        MRI.setRegClass(Upper, &GB::GPR8RegClass);
+      }
+    } else {
+      Amount -= 8;
+
+      auto ShiftAmountReg = MRI.createGenericVirtualRegister(S8);
+      MIB.buildConstant(ShiftAmountReg, Amount);
+
+      Upper = MRI.createGenericVirtualRegister(S8);
+      MIB.buildShl(Upper, Lower, ShiftAmountReg);
+
+      Lower = MRI.createGenericVirtualRegister(S8);
+      MIB.buildConstant(Lower, 0);
+    }
+    break;
+
+  case TargetOpcode::G_LSHR:
+    if (Amount >= 8) {
+      Amount -= 8;
+
+      auto ShiftAmountReg = MRI.createGenericVirtualRegister(S8);
+      MIB.buildConstant(ShiftAmountReg, Amount);
+
+      Lower = MRI.createGenericVirtualRegister(S8);
+      MIB.buildLShr(Lower, Upper, ShiftAmountReg);
+
+      Upper = MRI.createGenericVirtualRegister(S8);
+      MIB.buildConstant(Upper, 0);
+      break;
+    }
+    [[fallthrough]];
+  case TargetOpcode::G_ASHR: {
+    unsigned Opcode =
+        MI.getOpcode() == TargetOpcode::G_ASHR ? GB::SRA_r : GB::SRL_r;
+
+    for (size_t I = 0; I < Amount; I += 1) {
+      auto NewLower = MRI.createGenericVirtualRegister(S8);
+      auto NewUpper = MRI.createGenericVirtualRegister(S8);
+      Upper = MIB.buildInstr(Opcode, {NewUpper}, {Upper}).getReg(0);
+      Lower = MIB.buildInstr(GB::RR_r, {NewLower}, {Lower}).getReg(0);
+      MRI.setRegClass(Lower, &GB::GPR8RegClass);
+      MRI.setRegClass(Upper, &GB::GPR8RegClass);
+    }
+    break;
+  }
+  }
+
+  MIB.buildMergeValues(Result, {Lower, Upper});
+  MI.eraseFromParent();
+
   return true;
 }
 

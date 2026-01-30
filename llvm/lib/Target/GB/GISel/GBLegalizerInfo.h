@@ -40,6 +40,10 @@ private:
 
   bool legalizeShiftRotate(LegalizerHelper &Helper, MachineInstr &MI,
                            LostDebugLocObserver &LocObserver) const;
+  bool legalizeShiftRotate8(LegalizerHelper &Helper, MachineInstr &MI,
+                            LostDebugLocObserver &LocObserver) const;
+  bool legalizeShiftRotate16(LegalizerHelper &Helper, MachineInstr &MI,
+                             LostDebugLocObserver &LocObserver) const;
 
   bool legalizeConstantShiftRotate(LegalizerHelper &Helper, MachineInstr &MI,
                                    LostDebugLocObserver &LocObserver,

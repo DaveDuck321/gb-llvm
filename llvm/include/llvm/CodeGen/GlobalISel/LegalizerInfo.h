@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/LegacyLegalizerInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGenTypes/LowLevelType.h"
@@ -109,6 +110,7 @@ using LegalizeActions::LegalizeAction;
 /// For efficiency, it doesn't make a copy of Types so care must be taken not
 /// to free it before using the query.
 struct LegalityQuery {
+  MachineInstr const *MI;
   unsigned Opcode;
   ArrayRef<LLT> Types;
 
@@ -129,9 +131,17 @@ struct LegalityQuery {
   /// memory type for each MMO.
   ArrayRef<MemDesc> MMODescrs;
 
+  constexpr LegalityQuery(MachineInstr const *MI, unsigned Opcode,
+                          ArrayRef<LLT> Types, ArrayRef<MemDesc> MMODescrs = {})
+      : MI(MI), Opcode(Opcode), Types(Types), MMODescrs(MMODescrs) {}
+
+  constexpr LegalityQuery(MachineInstr const &MI, ArrayRef<LLT> Types,
+                          ArrayRef<MemDesc> MMODescrs = {})
+      : LegalityQuery(&MI, MI.getOpcode(), Types, MMODescrs) {}
+
   constexpr LegalityQuery(unsigned Opcode, ArrayRef<LLT> Types,
                           ArrayRef<MemDesc> MMODescrs = {})
-      : Opcode(Opcode), Types(Types), MMODescrs(MMODescrs) {}
+      : LegalityQuery(nullptr, Opcode, Types, MMODescrs) {}
 
   LLVM_ABI raw_ostream &print(raw_ostream &OS) const;
 };

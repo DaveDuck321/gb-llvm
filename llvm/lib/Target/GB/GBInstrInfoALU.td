@@ -200,30 +200,3 @@ def BIT_iHL : GBInstrCB<"bit $imm, (hl)", 0x40, (outs), (ins uimm3:$imm)> {
   let Defs = [F];
   let mayLoad = true;
 }
-
-// Pseudos
-multiclass GBPseudoShiftN<SDNode node, string name> {
-  def _r : Pseudo<name#" $rd, $amount", (outs GPR8:$rd),
-                  (ins GPR8:$rs, GPR8:$amount)> {
-    let Defs = [F];
-    let Constraints = "$rs = $rd";
-
-    let usesCustomInserter = true;
-    let Pattern = [(set GPR8:$rd, !setdagop((? GPR8:$rs, GPR8:$amount), node))];
-  }
-
-  def I : Pseudo<name#"$rd, $amount", (outs GPR8:$rd),
-                 (ins GPR8:$rs, uimm8:$amount)> {
-    let Defs = [F];
-    let Constraints = "$rs = $rd";
-
-    let usesCustomInserter = true;
-    let Pattern = [(set GPR8:$rd, !setdagop((? GPR8:$rs, imm8:$amount), node))];
-  }
-}
-
-defm SLA_N : GBPseudoShiftN<shl, "sla">;
-defm SRA_N : GBPseudoShiftN<sra, "sra">;
-defm SRL_N : GBPseudoShiftN<srl, "srl">;
-defm ROTL_N : GBPseudoShiftN<rotl, "rotl">;
-defm ROTR_N : GBPseudoShiftN<rotr, "rotr">;

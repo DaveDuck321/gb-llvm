@@ -378,7 +378,7 @@ LegalizerInfo::getAction(const MachineInstr &MI,
   for (const auto &MMO : MI.memoperands())
     MemDescrs.push_back({*MMO});
 
-  return getAction({MI.getOpcode(), Types, MemDescrs});
+  return getAction({MI, Types, MemDescrs});
 }
 
 bool LegalizerInfo::isLegal(const MachineInstr &MI,
