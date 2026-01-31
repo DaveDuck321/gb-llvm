@@ -487,9 +487,9 @@ static unsigned getShiftOpcode(unsigned GOpcode) {
   case TargetOpcode::G_LSHR:
     return GB::SRL_r;
   case TargetOpcode::G_ROTR:
-    return GB::RLC_r;
-  case TargetOpcode::G_ROTL:
     return GB::RRC_r;
+  case TargetOpcode::G_ROTL:
+    return GB::RLC_r;
   }
 }
 
@@ -509,16 +509,54 @@ bool GBLegalizerInfo::legalizeConstantShiftRotate(
   auto LastShiftResult = Val;
   MRI.setRegClass(LastShiftResult, &GB::GPR8RegClass);
 
-  // TODO: combine rotates, shifts and masks to produce better code
+  unsigned GenericOpcode = MI.getOpcode();
+  unsigned ResultMask = 0;
+  if (GenericOpcode == TargetOpcode::G_SHL && Amount > 3) {
+    GenericOpcode = TargetOpcode::G_ROTL;
+    ResultMask = static_cast<uint8_t>(~((1U << Amount) - 1U));
+  }
+
+  if (GenericOpcode == TargetOpcode::G_LSHR && Amount > 3) {
+    GenericOpcode = TargetOpcode::G_ROTR;
+    ResultMask = static_cast<uint8_t>((0x80U >> (Amount - 1U)) - 1U);
+  }
+
+  if (GenericOpcode == TargetOpcode::G_ROTR ||
+      GenericOpcode == TargetOpcode::G_ROTL) {
+    if (Amount == 3 || Amount == 4 || Amount == 5) {
+      Amount = static_cast<uint8_t>(Amount - 4) % 8U;
+      auto ThisSwapResult = MRI.createGenericVirtualRegister(S8);
+      MRI.setRegClass(ThisSwapResult, &GB::GPR8RegClass);
+      MIB.buildInstr(GB::SWAP_r, {ThisSwapResult}, {LastShiftResult});
+      LastShiftResult = ThisSwapResult;
+    }
+
+    if (Amount >= 6) {
+      Amount = 8 - Amount;
+      if (GenericOpcode == TargetOpcode::G_ROTR) {
+        GenericOpcode = TargetOpcode::G_ROTL;
+      } else {
+        assert(GenericOpcode == TargetOpcode::G_ROTL);
+        GenericOpcode = TargetOpcode::G_ROTR;
+      }
+    }
+  }
+
+  unsigned TargetOpcode = getShiftOpcode(GenericOpcode);
   for (unsigned I = 0; I < Amount; I += 1) {
     auto ThisShiftResult = MRI.createGenericVirtualRegister(S8);
     MRI.setRegClass(ThisShiftResult, &GB::GPR8RegClass);
-    MIB.buildInstr(getShiftOpcode(MI.getOpcode()), {ThisShiftResult},
-                   {LastShiftResult});
+    MIB.buildInstr(TargetOpcode, {ThisShiftResult}, {LastShiftResult});
     LastShiftResult = ThisShiftResult;
   }
-  MIB.buildCopy(Result, LastShiftResult);
 
+  if (ResultMask != 0) {
+    auto Mask = MRI.createGenericVirtualRegister(S8);
+    MIB.buildConstant(Mask, ResultMask);
+    MIB.buildAnd(Result, LastShiftResult, Mask);
+  } else {
+    MIB.buildCopy(Result, LastShiftResult);
+  }
   MI.eraseFromParent();
   return true;
 }
