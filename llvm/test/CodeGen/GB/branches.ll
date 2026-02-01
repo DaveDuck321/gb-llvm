@@ -482,3 +482,65 @@ test_label2:
 ret:
   ret i8 0
 }
+
+declare void @some_fn();
+declare void @some_other_fn();
+
+define void @pred_ret(i8 %b) nounwind {
+; GBI-O3-LABEL: pred_ret:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    ret c
+; GBI-O3-NEXT:    call some_fn
+; GBI-O3-NEXT:    ret
+  %result = icmp ugt i8 %b, 0
+  br i1 %result, label %true, label %false
+true:
+  ret void
+false:
+  call void @some_fn()
+  ret void
+}
+
+define void @pred_call(i8 %b) nounwind {
+; GBI-O3-LABEL: pred_call:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    call c, some_other_fn
+; GBI-O3-NEXT:    call some_fn
+; GBI-O3-NEXT:    call some_fn
+; GBI-O3-NEXT:    ret
+  %result = icmp ugt i8 %b, 0
+  br i1 %result, label %true, label %false
+true:
+  call void @some_other_fn()
+  br label %false
+false:
+  call void @some_fn()
+  call void @some_fn()
+  ret void
+}
+
+define void @no_pred_call_ret(i8 %b) nounwind {
+; GBI-O3-LABEL: no_pred_call_ret:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld a, $00
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    jr nc, .LBB22_2
+; GBI-O3-NEXT:  # %bb.1: # %true
+; GBI-O3-NEXT:    call some_fn
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB22_2: # %false
+; GBI-O3-NEXT:    call some_other_fn
+; GBI-O3-NEXT:    ret
+  %result = icmp ugt i8 %b, 0
+  br i1 %result, label %true, label %false
+true:
+  call void @some_fn()
+  ret void
+false:
+  call void @some_other_fn()
+  ret void
+}

@@ -397,6 +397,55 @@ bool GBInstrInfo::reverseBranchCondition(
   return false;
 }
 
+bool GBInstrInfo::PredicateInstruction(MachineInstr &MI,
+                                       ArrayRef<MachineOperand> Pred) const {
+  assert(Pred.size() == 1);
+  if (MI.getOpcode() == GB::RET) {
+    MI.setDesc(get(GB::RET_COND));
+    MI.addOperand(MachineOperand::CreateImm(Pred[0].getImm()));
+    return true;
+  }
+
+  if (MI.getOpcode() == GB::CALL) {
+    MI.setDesc(get(GB::CALL_COND));
+    MI.insert(&MI.getOperand(0), MachineOperand::CreateImm(Pred[0].getImm()));
+    return true;
+  }
+  return false;
+}
+
+unsigned GBInstrInfo::getPredicationCost(const MachineInstr &MI) const {
+  if (MI.getOpcode() == GB::RET) {
+    return 1;
+  }
+  return 0; // CALL_COND
+}
+
+bool GBInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                      unsigned NumCycles,
+                                      unsigned ExtraPredCycles,
+                                      BranchProbability Probability) const {
+  // TODO: correctly model when the scheduler actually knows instruction
+  // latencies... For now, only let ifcvt convert single instructions.
+  // TODO: find an example where branch probabilities matter
+  return NumCycles == 1;
+}
+
+bool GBInstrInfo::isProfitableToIfCvt(
+    MachineBasicBlock &TMBB, unsigned NumTCycles, unsigned ExtraTCycles,
+    MachineBasicBlock &FMBB, unsigned NumFCycles, unsigned ExtraFCycles,
+    BranchProbability Probability) const {
+  return true;
+}
+
+bool GBInstrInfo::isProfitableToDupForIfCvt(
+    MachineBasicBlock &MBB, unsigned NumCycles,
+    BranchProbability Probability) const {
+  // We only support predicated returns and calls.
+  // Assume that we should ALWAYS duplicate the predicated instructions.
+  return true;
+}
+
 bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   auto *MBB = MI.getParent();
   auto *TRI = MBB->getParent()->getRegInfo().getTargetRegisterInfo();

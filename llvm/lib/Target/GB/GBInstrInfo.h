@@ -44,6 +44,19 @@ struct GBInstrInfo final : public GBGenInstrInfo {
       const TargetRegisterInfo *TRI, Register VReg,
       MachineInstr::MIFlag Flags = MachineInstr::NoFlags) const override;
 
+  bool PredicateInstruction(MachineInstr &MI,
+                            ArrayRef<MachineOperand> Pred) const override;
+  unsigned getPredicationCost(const MachineInstr &MI) const override;
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                           unsigned ExtraPredCycles,
+                           BranchProbability Probability) const override;
+  bool isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumTCycles,
+                           unsigned ExtraTCycles, MachineBasicBlock &FMBB,
+                           unsigned NumFCycles, unsigned ExtraFCycles,
+                           BranchProbability Probability) const override;
+  bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                                 BranchProbability Probability) const override;
+
   bool expandPostRAPseudo(MachineInstr &MI) const override;
 
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;

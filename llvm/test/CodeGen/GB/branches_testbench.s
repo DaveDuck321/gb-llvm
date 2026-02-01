@@ -3,6 +3,12 @@
 # RUN: run-emulator-test.sh %s $GB_TEST_PATH/branches.ll -O0 \
 # RUN:   | FileCheck %s -check-prefix=EXPECT
 
+.global some_fn
+.global some_other_fn
+some_fn:
+some_other_fn:
+    ret
+
 .global _start
 _start:
     di

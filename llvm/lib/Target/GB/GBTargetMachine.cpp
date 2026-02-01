@@ -168,6 +168,8 @@ bool GBPassConfig::addGlobalInstructionSelect() {
 }
 
 void GBPassConfig::addPreSched2() {
+  addPass(&IfConverterID);
+
   // Relaxation may reduce register pressure before stack slot lowering
   addPass(createGBInstructionRelaxation(getGBTargetMachine(), getOptLevel()));
 
