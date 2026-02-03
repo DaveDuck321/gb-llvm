@@ -2,6 +2,7 @@
 #include "GBLegalizerInfo.h"
 #include "GBSubtarget.h"
 #include "GISel/GBCombinerCommon.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -14,8 +15,11 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
+#include "llvm/CodeGenTypes/LowLevelType.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/Passes/OptimizationLevel.h"
 
@@ -34,6 +38,151 @@ namespace {
 #define GET_GICOMBINER_TYPES
 #include "GBGenPostLegalizeGICombiner.inc"
 #undef GET_GICOMBINER_TYPES
+
+bool matchNormalizeJpCp(MachineInstr &MI,
+                        std::function<void(MachineIRBuilder &)> &MatchInfo) {
+  auto &MF = *MI.getMF();
+  auto &MRI = MF.getRegInfo();
+
+  assert(MI.getOpcode() == GB::G_JP_CP);
+  auto Predicate =
+      static_cast<ICmpInst::Predicate>(MI.getOperand(0).getPredicate());
+  auto Src1 = MI.getOperand(1).getReg();
+  auto Src2 = MI.getOperand(2).getReg();
+  auto Target = MI.getOperand(3);
+
+  auto Src1RegAndVal = getIConstantVRegValWithLookThrough(Src1, MRI);
+  auto Src2RegAndVal = getIConstantVRegValWithLookThrough(Src2, MRI);
+
+  // Normalize the operand order
+  if (Src1RegAndVal && !Src2RegAndVal) {
+    MatchInfo = [=](MachineIRBuilder &MIR) {
+      MIR.buildInstr(GB::G_JP_CP)
+          .addPredicate(CmpInst::getSwappedPredicate(Predicate))
+          .addReg(Src2)
+          .addReg(Src1)
+          .add(Target);
+    };
+    return true;
+  }
+
+  if (not Src2RegAndVal) {
+    return false;
+  }
+
+  auto MatchIntoNewBranchConstant = [&](ICmpInst::Predicate Predicate,
+                                        size_t Value) {
+    MatchInfo = [=](MachineIRBuilder &MIR) {
+      auto Constant = MIR.buildConstant(LLT::scalar(8), Value);
+      MIR.buildInstr(GB::G_JP_CP)
+          .addPredicate(Predicate)
+          .addReg(Src1)
+          .addReg(Constant.getReg(0))
+          .add(Target);
+    };
+    return true;
+  };
+
+  size_t Src2Value = Src2RegAndVal->Value.getZExtValue();
+
+  // Avoid swaps in isel: convert UGT -> UGE and ULE -> ULT
+  if (Predicate == CmpInst::ICMP_UGT && Src2Value != 0xff) {
+    return MatchIntoNewBranchConstant(CmpInst::ICMP_UGE, Src2Value + 1);
+  }
+
+  if (Predicate == CmpInst::ICMP_ULE && Src2Value != 0xff) {
+    return MatchIntoNewBranchConstant(CmpInst::ICMP_ULT, Src2Value + 1);
+  }
+
+  // Convert unsigned compares to equalities
+  if (Predicate == CmpInst::ICMP_UGE && Src2Value == 1) {
+    return MatchIntoNewBranchConstant(CmpInst::ICMP_NE, 0);
+  }
+
+  if (Predicate == CmpInst::ICMP_ULT && Src2Value == 1) {
+    return MatchIntoNewBranchConstant(CmpInst::ICMP_EQ, 0);
+  }
+
+  return false;
+}
+
+bool matchJpCmpToJpBinaryOp(
+    MachineInstr &MI, std::function<void(MachineIRBuilder &)> &MatchInfo) {
+  auto &MF = *MI.getMF();
+  auto &MRI = MF.getRegInfo();
+
+  assert(MI.getOpcode() == GB::G_JP_CP);
+  auto Predicate =
+      static_cast<ICmpInst::Predicate>(MI.getOperand(0).getPredicate());
+  auto Src1 = MI.getOperand(1).getReg();
+  auto Src2 = MI.getOperand(2).getReg();
+  auto Target = MI.getOperand(3);
+
+  auto *Src1DefOp = MRI.getOneDef(Src1);
+  assert(Src1DefOp);
+  auto &Src1DefMI = *Src1DefOp->getParent();
+
+  // Match BIT
+  bool DidMatchBitMask = [&] {
+    if (!ICmpInst::isEquality(Predicate)) {
+      return false;
+    }
+
+    if (!MRI.hasOneNonDBGUse(Src1)) {
+      // We shouldn't waste time here if we still need Src1
+      return false;
+    }
+
+    auto Src2RegAndVal = getIConstantVRegValWithLookThrough(Src2, MRI);
+    if (!Src2RegAndVal.has_value()) {
+      return false;
+    }
+
+    auto Src2Imm = Src2RegAndVal->Value.getZExtValue();
+    if (llvm::popcount(Src2Imm) != 1 && Src2Imm != 0) {
+      return false;
+    }
+
+    if (Src1DefMI.getOpcode() != TargetOpcode::G_AND) {
+      return false;
+    }
+
+    auto Src1OtherReg = Src1DefMI.getOperand(1).getReg();
+    auto Src1MaskValue = getIConstantVRegValWithLookThrough(
+        Src1DefMI.getOperand(2).getReg(), MRI);
+    if (!Src1MaskValue.has_value()) {
+      return false;
+    }
+
+    auto Src1MaskImm = Src1MaskValue->Value.getZExtValue();
+    if (llvm::popcount(Src1MaskImm) != 1 ||
+        (Src1MaskImm != Src2Imm && Src2Imm != 0)) {
+      // We're expecting a single-bit bitmask
+      return false;
+    }
+
+    // TODO: this would be easier if I normalized more prior to this
+    auto Flag = ((Src2Imm == 0) ^ (Predicate == ICmpInst::ICMP_NE))
+                    ? GBFlag::Z
+                    : GBFlag::NZ;
+    auto Bit = llvm::countr_zero(Src1MaskImm);
+    MatchInfo = [=](MachineIRBuilder &MIR) {
+      MIR.buildInstr(GB::G_JP_BINARY_OP)
+          .addImm(Flag)
+          .add(Target)
+          .addImm(GB::BIT_r)
+          .addUse(Src1OtherReg)
+          .addImm(Bit);
+    };
+
+    return true;
+  }();
+  if (DidMatchBitMask) {
+    return true;
+  }
+
+  return false;
+}
 
 class GBPostLegalizeCombinerImpl : public Combiner {
   const CombinerHelper Helper;

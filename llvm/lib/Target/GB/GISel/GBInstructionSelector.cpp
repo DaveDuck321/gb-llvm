@@ -3,6 +3,7 @@
 #include "GBMOFlags.h"
 #include "GBRegisterInfo.h"
 #include "GBTargetMachine.h"
+#include "GISel/GBCombinerCommon.h"
 #include "GISel/GBRegisterBankInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/Bitset.h"
@@ -58,6 +59,7 @@ public:
 
   bool selectAddress(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectJP_CP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
+  bool selectJP_BINARY_OP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectICMP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
 
 private:
@@ -109,6 +111,9 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
   }
   case GB::G_JP_CP:
     return selectJP_CP(MI, MRI);
+
+  case GB::G_JP_BINARY_OP:
+    return selectJP_BINARY_OP(MI, MRI);
 
   case TargetOpcode::G_ICMP:
     return selectICMP(MI, MRI);
@@ -403,6 +408,24 @@ bool GBInstructionSelector::selectJP_CP(MachineInstr &MI,
   case CmpInst::ICMP_ULT:
     return MapSimpleUCP(GBFlag::C, Src1, Src2);
   }
+  return true;
+}
+
+bool GBInstructionSelector::selectJP_BINARY_OP(MachineInstr &MI,
+                                               MachineRegisterInfo &MRI) const {
+  MachineBasicBlock &MBB = *MI.getParent();
+  auto DL = MI.getDebugLoc();
+
+  auto Flag = MI.getOperand(0).getImm();
+  auto Target = MI.getOperand(1);
+
+  auto Opcode = MI.getOperand(2).getImm();
+  auto Builder = BuildMI(MBB, MI, DL, TII.get(Opcode));
+  for (size_t Operand = 3; Operand < MI.getNumOperands(); Operand += 1) {
+    Builder.add(MI.getOperand(Operand));
+  }
+  BuildMI(MBB, MI, DL, TII.get(GB::JP_COND)).addImm(Flag).add(Target);
+  MI.eraseFromParent();
   return true;
 }
 

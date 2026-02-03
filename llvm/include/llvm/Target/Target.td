@@ -1097,6 +1097,10 @@ def untyped_imm_0 : TypedOperand<"OPERAND_GENERIC_IMM_0"> {
   let IsImmediate = true;
 }
 
+def untyped_imm_1 : TypedOperand<"OPERAND_GENERIC_IMM_1"> {
+  let IsImmediate = true;
+}
+
 /// zero_reg definition - Special node to stand for the zero register.
 ///
 def zero_reg;
@@ -1617,15 +1621,15 @@ class AsmParser {
 
   // PreferSmallerInstructions - Should the assembly matcher prefer the smaller
   // instructions.
-  // 
+  //
   // This is useful for the ARM instructions set where smaller encodings must
   // be preferentially selected.
   //
-  // The preference order is: 
+  // The preference order is:
   //    Instrution size (if this option is enabled, smallest first)
-  //    Number of Operands (least first), 
-  //    Operand Classes (lexicographically by operand), 
-  //    (Optional) Instruction id (see AsmMatcherEmitter.cpp for details), 
+  //    Number of Operands (least first),
+  //    Operand Classes (lexicographically by operand),
+  //    (Optional) Instruction id (see AsmMatcherEmitter.cpp for details),
   //    Number of required features (least first)
   bit PreferSmallerInstructions = false;
 }

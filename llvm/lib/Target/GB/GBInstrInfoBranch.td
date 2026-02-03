@@ -35,6 +35,7 @@ let mayStore = true, isCall = true in {
   def CALL : GBInstrImm16<"call $imm", 0xCD, (outs), (ins uimm16:$imm)> {
     let Uses = [SP];
     let Defs = [SP];
+    let isPredicable = true;
   }
 
   def RST : GBInstr<"rst $vec", 0xC7, (outs), (ins rstvec:$vec)> {
@@ -56,16 +57,19 @@ let mayStore = true, isCall = true in {
 }
 
 // Returns
-let mayLoad = true, isReturn = true, isTerminator = true in {
+let mayLoad = true, isReturn = true in {
   def RET : GBInstrNoOperands<"ret", 0xC9> {
     let Uses = [SP];
     let Defs = [SP];
+    let isPredicable = true;
+    let isTerminator = true;
   }
 
   def RETI : GBInstrNoOperands<"reti", 0xD9> {
     let Uses = [SP];
     let Defs = [SP];
     let hasSideEffects = true;
+    let isTerminator = true;
   }
 
   def RET_COND : GBInstr<"ret $flag", 0xC0, (outs), (ins flag:$flag)> {
