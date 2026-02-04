@@ -371,13 +371,19 @@ bool GBInstructionSelector::selectJP_CP(MachineInstr &MI,
   };
 
   auto MapSimpleUCP = [&](GBFlag::NodeType Flag, auto LHS, auto RHS) {
-    BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::A).addReg(LHS);
     if (auto Imm = getIConstantVRegValWithLookThrough(RHS, MRI)) {
       // TODO: count uses of Imm... Sometime we shouldn't const fold
-      BuildMI(MBB, MI, DL, TII.get(GB::CPI))
-          .addImm(Imm->Value.getZExtValue())
-          .addReg(GB::A, getImplRegState(true) | getKillRegState(true));
+      auto ImmValue = Imm->Value.getZExtValue();
+      if (ImmValue == 0) {
+        BuildMI(MBB, MI, DL, TII.get(GB::CP_ZERO)).addReg(LHS);
+      } else {
+        BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::A).addReg(LHS);
+        BuildMI(MBB, MI, DL, TII.get(GB::CPI))
+            .addImm(ImmValue)
+            .addReg(GB::A, getImplRegState(true) | getKillRegState(true));
+      }
     } else {
+      BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::A).addReg(LHS);
       BuildMI(MBB, MI, DL, TII.get(GB::CP_r))
           .addReg(RHS)
           .addReg(GB::A, getImplRegState(true) | getKillRegState(true));

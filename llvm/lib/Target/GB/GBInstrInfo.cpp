@@ -397,6 +397,180 @@ bool GBInstrInfo::reverseBranchCondition(
   return false;
 }
 
+std::optional<Register>
+GBInstrInfo::doesSetZeroFlag(const MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  default:
+    return std::nullopt;
+  case GB::OR_r:
+  case GB::ORI:
+  case GB::OR_iHL:
+  case GB::XOR_r:
+  case GB::XORI:
+  case GB::XOR_iHL:
+  case GB::AND_r:
+  case GB::ANDI:
+  case GB::AND_iHL:
+  case GB::SUB_r:
+  case GB::SUBI:
+  case GB::SUB_iHL:
+  case GB::ADD_r:
+  case GB::ADDI:
+  case GB::ADD_iHL:
+    return GB::A;
+  case GB::INC_r:
+  case GB::DEC_r:
+    return MI.getOperand(0).getReg();
+  }
+}
+
+bool GBInstrInfo::analyzeCompare(const MachineInstr &MI, Register &SrcReg,
+                                 Register &SrcReg2, int64_t &Mask,
+                                 int64_t &Value) const {
+  switch (MI.getOpcode()) {
+  default:
+    llvm_unreachable("Unexpected compare");
+  case GB::CP_r:
+  case GB::CP_iHL:
+    return false;
+  case GB::CP_ZERO:
+    Value = 0;
+    SrcReg = MI.getOperand(0).getReg();
+    break;
+  case GB::CPI:
+    Value = MI.getOperand(0).getImm();
+    break;
+  }
+
+  auto &MBB = *MI.getParent();
+  auto &MF = *MI.getMF();
+  auto &TRI = *MF.getSubtarget().getRegisterInfo();
+
+  // 1) Which flag do we actually care about
+  std::optional<GBFlag::NodeType> BranchFlag = {};
+  for (auto NextMI = ++MI.getIterator(); NextMI != MBB.end(); ++NextMI) {
+    if (NextMI->isConditionalBranch()) {
+      BranchFlag =
+          static_cast<GBFlag::NodeType>(NextMI->getOperand(0).getImm());
+      break;
+    }
+    if (MI.readsRegister(GB::F, &TRI)) {
+      return false;
+    }
+    if (MI.definesRegister(GB::F, &TRI)) {
+      return false;
+    }
+  }
+
+  if (not BranchFlag) {
+    return false;
+  }
+
+  // 2) Currently, I only match comparisons with 0
+  if (Value == 0 && (*BranchFlag == GBFlag::Z || *BranchFlag == GBFlag::NZ)) {
+    // Lie... let optimizeCompareInstr do all the hard work.
+    return true;
+  }
+
+  return false;
+}
+
+bool GBInstrInfo::optimizeCompareInstr(MachineInstr &MI, Register SrcReg,
+                                       Register SrcReg2, int64_t Mask,
+                                       int64_t Value,
+                                       const MachineRegisterInfo *MRI) const {
+  assert(Value == 0);
+
+  auto &MBB = *MI.getParent();
+  auto &MF = *MI.getMF();
+  auto &TRI = *MF.getSubtarget().getRegisterInfo();
+
+  // CP r takes an implicit argument via the A register.
+  // Trace back through the physical assigns to find SrcReg
+  MachineInstr *DefiningMI = nullptr;
+  bool HasSeenCPCopy = SrcReg.isValid();
+  bool HasSeenALUCopy = false;
+
+  std::vector<MachineInstr *> ToDelete;
+  ToDelete.push_back(&MI);
+  for (auto PrevMI = MI.getReverseIterator(); PrevMI != MBB.rend(); ++PrevMI) {
+    if (&*PrevMI == &MI || PrevMI->isDebugInstr()) {
+      continue;
+    }
+
+    if (not HasSeenCPCopy) {
+      // a = COPY r1
+      // CP_r r2
+      if (PrevMI->definesRegister(GB::A, &TRI)) {
+        if (PrevMI->getOpcode() != TargetOpcode::COPY) {
+          // Sometimes LDIs can appear here... This is an unconditional branch
+          // and it should have been optimized away... But I get it in
+          // softfloat.
+          return false;
+        }
+
+        SrcReg = PrevMI->getOperand(1).getReg();
+        HasSeenCPCopy = true;
+        ToDelete.push_back(&*PrevMI);
+        continue;
+      }
+    } else if (not HasSeenALUCopy) {
+      // Either:
+      // a = OP ...
+      // r1 = COPY a
+
+      // Or:
+      // r1 = OP ...
+      if (PrevMI->definesRegister(SrcReg, &TRI)) {
+        if (PrevMI->getOpcode() != TargetOpcode::COPY) {
+          DefiningMI = &*PrevMI;
+          break;
+        }
+
+        if (PrevMI->getOperand(1).getReg() != GB::A) {
+          return false;
+        }
+        HasSeenALUCopy = true;
+        continue;
+      }
+    } else {
+      // a = OP ...
+      if (PrevMI->definesRegister(GB::A, &TRI)) {
+        DefiningMI = &*PrevMI;
+        break;
+      }
+    }
+
+    if (PrevMI->definesRegister(GB::F, &TRI)) {
+      return false;
+    }
+  }
+
+  if (DefiningMI == nullptr) {
+    return false;
+  }
+
+  // TODO: match non-alu ops
+  assert(HasSeenCPCopy && SrcReg.isValid());
+  if (!doesSetZeroFlag(*DefiningMI)) {
+    return false;
+  }
+
+  assert(DefiningMI->definesRegister(GB::F, &TRI));
+
+  for (auto &Operand : DefiningMI->implicit_operands()) {
+    if (Operand.isDef() && Operand.isReg() && Operand.getReg() == GB::F) {
+      Operand.setIsDead(false);
+    }
+  }
+
+  for (auto *MI : ToDelete) {
+    MI->eraseFromParent();
+  }
+
+  return true;
+}
+
 bool GBInstrInfo::PredicateInstruction(MachineInstr &MI,
                                        ArrayRef<MachineOperand> Pred) const {
   assert(Pred.size() == 1);
@@ -506,6 +680,21 @@ bool GBInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
           .addReg(PtrReg, getKillRegState(DidKillPtr))
           .addReg(GB::A, getImplRegState(true) | getKillRegState(DidKillSrc));
       break;
+    }
+    MI.eraseFromParent();
+    return true;
+  }
+  case GB::CP_ZERO: {
+    Register SrcReg = MI.getOperand(0).getReg();
+    bool DidKillSrc = MI.killsRegister(SrcReg, TRI);
+    if (SrcReg == GB::A) {
+      BuildMI(*MBB, MBBI, DL, get(GB::CPI))
+          .addImm(0)
+          .addReg(GB::A, getImplRegState(true) | getKillRegState(DidKillSrc));
+    } else {
+      BuildMI(*MBB, MBBI, DL, get(GB::INC_r), SrcReg).addReg(SrcReg);
+      BuildMI(*MBB, MBBI, DL, get(GB::DEC_r), SrcReg)
+          .addReg(SrcReg, getKillRegState(DidKillSrc));
     }
     MI.eraseFromParent();
     return true;

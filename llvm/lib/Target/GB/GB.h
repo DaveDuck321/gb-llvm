@@ -27,6 +27,7 @@ FunctionPass *createGBPreLegalizeCombiner(CodeGenOptLevel);
 FunctionPass *createGBPostLegalizeCombiner(CodeGenOptLevel);
 FunctionPass *createGBPostLegalizeExpand(CodeGenOptLevel);
 FunctionPass *createGBIncrementSerialize(CodeGenOptLevel);
+FunctionPass *createGBPostRACompareMerge(CodeGenOptLevel);
 FunctionPass *createGBCFIInserter();
 
 InstructionSelector *createGBInstructionSelector(const GBSubtarget &,

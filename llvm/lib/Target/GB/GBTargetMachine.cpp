@@ -181,6 +181,9 @@ void GBPassConfig::addPreSched2() {
 }
 
 void GBPassConfig::addPreEmitPass() {
+  if (TM->getOptLevel() != CodeGenOptLevel::None) {
+    addPass(createGBPostRACompareMerge(TM->getOptLevel()));
+  }
   addPass(createGBBranchRelaxation(getGBTargetMachine(), getOptLevel()));
   addPass(createGBCFIInserter());
 }

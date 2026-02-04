@@ -32,6 +32,8 @@ struct GBInstrInfo final : public GBGenInstrInfo {
   Register isStoreToStackSlot(const MachineInstr &MI,
                               int &FrameIndex) const override;
 
+  std::optional<Register> doesSetZeroFlag(const MachineInstr &MI) const;
+
   void storeRegToStackSlot(
       MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, Register SrcReg,
       bool IsKill, int FrameIndex, const TargetRegisterClass *RC,
@@ -84,6 +86,14 @@ struct GBInstrInfo final : public GBGenInstrInfo {
 
   bool
   reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
+
+  bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
+                      Register &SrcReg2, int64_t &Mask,
+                      int64_t &Value) const override;
+
+  bool optimizeCompareInstr(MachineInstr &CmpInstr, Register SrcReg,
+                            Register SrcReg2, int64_t Mask, int64_t Value,
+                            const MachineRegisterInfo *MRI) const override;
 
   bool getConstValDefinedInReg(const MachineInstr &MI, const Register Reg,
                                int64_t &ImmVal) const override;

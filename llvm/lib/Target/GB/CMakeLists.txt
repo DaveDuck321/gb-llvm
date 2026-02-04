@@ -34,6 +34,7 @@ add_llvm_target(GBCodeGen
     GBISelDAGToDAG.cpp
     GBISelLowering.cpp
     GBMCInstLower.cpp
+    GBPostRACompareMerge.cpp
     GBPushPopCombine.cpp
     GBRegisterInfo.cpp
     GBStackSlotLowering.cpp

@@ -200,3 +200,11 @@ def BIT_iHL : GBInstrCB<"bit $imm, (hl)", 0x40, (outs), (ins uimm3:$imm)> {
   let Defs = [F];
   let mayLoad = true;
 }
+
+// Pseudos
+
+// CPI 0 is 1) very common 2) allows us to reduce reg pressure
+def CP_ZERO : Pseudo<"CP $rs, 0", (outs), (ins GPR8:$rs)> {
+  let Defs = [F];
+  let isCompare = true;
+}
