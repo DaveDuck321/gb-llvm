@@ -18,12 +18,14 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/IR/CmpPredicate.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGenCoverage.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <utility>
 
 #define DEBUG_TYPE "gb-isel"
 
@@ -62,6 +64,8 @@ public:
   bool selectJP_BINARY_OP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
   bool selectICMP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
 
+  bool selectAdd16(MachineInstr &MI, MachineRegisterInfo &MRI) const;
+
 private:
 #define GET_GLOBALISEL_PREDICATES_DECL
 #include "GBGenGlobalISel.inc"
@@ -95,6 +99,7 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto DL = MI.getDebugLoc();
 
+  unsigned Opcode = MI.getOpcode();
   switch (MI.getOpcode()) {
   case TargetOpcode::COPY:
     return selectCopy(MI, MRI);
@@ -152,6 +157,14 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
     return true;
   }
 
+  switch (MI.getOpcode()) {
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_PTR_ADD:
+    // add8/ inc16/ ptr_add are matched in tablegen
+    // We can also match to ADD_HL but then we couldn't constant-fold
+    // (potentially opaque) immediates.
+    return selectAdd16(MI, MRI);
+  }
   return false;
 }
 
@@ -341,6 +354,104 @@ bool GBInstructionSelector::selectICMP(MachineInstr &MI,
       .addReg(MRI.createVirtualRegister(&GB::GPR8RegClass),
               getUndefRegState(true));
 
+  MI.eraseFromParent();
+  return true;
+}
+
+bool GBInstructionSelector::selectAdd16(MachineInstr &MI,
+                                        MachineRegisterInfo &MRI) const {
+  assert(MI.getOpcode() == TargetOpcode::G_ADD ||
+         MI.getOpcode() == TargetOpcode::G_PTR_ADD);
+  auto Result = MI.getOperand(0);
+  auto LHS = MI.getOperand(1);
+  auto RHS = MI.getOperand(2);
+
+  auto *LHSDef = MRI.getVRegDef(LHS.getReg());
+  auto *RHSDef = MRI.getVRegDef(RHS.getReg());
+
+  assert(LHSDef != nullptr && RHSDef != nullptr);
+  assert(MRI.getType(Result.getReg()).getSizeInBits() == 16);
+
+  // First canonicalize the operand order... This is required since ptr_add
+  // can't be canonicalized in the generic combiners.
+  auto LHSConstVal = getIConstantVRegValWithLookThrough(LHS.getReg(), MRI);
+  auto RHSConstVal = getIConstantVRegValWithLookThrough(RHS.getReg(), MRI);
+  bool LHSIsConst = LHSConstVal.has_value();
+  bool RHSIsConst = RHSConstVal.has_value();
+
+  bool LHSIsOpaqueConst = isConstantOrConstantVector(*LHSDef, MRI, false, true);
+  bool RHSIsOpaqueConst = isConstantOrConstantVector(*RHSDef, MRI, false, true);
+
+  bool ShouldSwap =
+      (LHSIsConst && !RHSIsConst) || (LHSIsOpaqueConst && !RHSIsOpaqueConst);
+  if (ShouldSwap) {
+    std::swap(LHS, RHS);
+    std::swap(LHSDef, RHSDef);
+    std::swap(LHSIsConst, RHSIsConst);
+    std::swap(LHSIsOpaqueConst, RHSIsOpaqueConst);
+  }
+
+  constrainGeneric(Result.getReg(), MRI);
+  constrainGeneric(LHS.getReg(), MRI);
+
+  MachineBasicBlock &MBB = *MI.getParent();
+  auto DL = MI.getDebugLoc();
+
+  // Add by constant should be converted into addi and adci
+  if (RHSIsOpaqueConst) {
+    auto LHSSub1 = LHS;
+    auto LHSSub2 = LHS;
+    LHSSub1.setSubReg(1);
+    LHSSub2.setSubReg(2);
+
+    auto ResLo = MRI.createVirtualRegister(&GB::GPR8RegClass);
+    auto ResHi = MRI.createVirtualRegister(&GB::GPR8RegClass);
+
+    MachineOperand RHSOpSrc = RHSDef->getOperand(1);
+    if (RHSIsConst) {
+      RHSOpSrc = MachineOperand::CreateImm(RHSConstVal->Value.getZExtValue());
+    }
+    auto RHSLo = RHSOpSrc;
+    auto RHSHi = RHSOpSrc;
+    if (RHSIsConst) {
+      RHSLo.setImm(RHSLo.getImm() & 0xff);
+      RHSHi.setImm((RHSHi.getImm() >> 8u) & 0xff);
+    } else {
+      setGBFlag(RHSLo, GBMOFlag::LOWER_PART);
+      setGBFlag(RHSHi, GBMOFlag::UPPER_PART);
+    }
+
+    BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::A).add(LHSSub1);
+    BuildMI(MBB, MI, DL, TII.get(GB::ADDI)).add(RHSLo);
+    BuildMI(MBB, MI, DL, TII.get(GB::COPY), ResLo)
+        .addReg(GB::A, getKillRegState(true));
+
+    BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::A).add(LHSSub2);
+    BuildMI(MBB, MI, DL, TII.get(GB::ADCI))
+        .add(RHSHi)
+        .addDef(GB::F, getDeadRegState(true) | getImplRegState(true));
+    BuildMI(MBB, MI, DL, TII.get(GB::COPY), ResHi)
+        .addReg(GB::A, getKillRegState(true));
+
+    BuildMI(MBB, MI, DL, TII.get(GB::REG_SEQUENCE), Result.getReg())
+        .addReg(ResLo)
+        .addImm(1)
+        .addReg(ResHi)
+        .addImm(2);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  // Add by non-constant should be add_hl (for now)
+  constrainGeneric(RHS.getReg(), MRI);
+
+  BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::HL).add(LHS);
+  BuildMI(MBB, MI, DL, TII.get(GB::ADD_HL))
+      .add(RHS)
+      .addDef(GB::F, getDeadRegState(true) | getImplRegState(true));
+  BuildMI(MBB, MI, DL, TII.get(GB::COPY))
+      .add(Result)
+      .addReg(GB::HL, getKillRegState(true));
   MI.eraseFromParent();
   return true;
 }

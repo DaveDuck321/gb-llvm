@@ -87,6 +87,7 @@ void llvm::LowerGBMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                              MO.getOffset(), AP.OutContext);
       break;
     case MachineOperand::MO_Immediate:
+      assert(MO.getTargetFlags() == 0);
       MCOp = MCOperand::createImm(MO.getImm());
       break;
     }
