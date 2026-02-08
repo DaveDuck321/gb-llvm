@@ -39,7 +39,16 @@ bool GBPostLegalizeExpand::expandJP_CP(MachineFunction &MF,
   assert(MI.getOpcode() == GB::G_JP_CP);
   auto S8 = LLT::scalar(8);
   auto &MRI = MF.getRegInfo();
+  auto LHS = MI.getOperand(1).getReg();
+  auto RHS = MI.getOperand(2).getReg();
   auto Predicate = ICmpInst::Predicate(MI.getOperand(0).getPredicate());
+
+  if (getIConstantVRegValWithLookThrough(LHS, MRI).has_value() &&
+      !getIConstantVRegValWithLookThrough(RHS, MRI).has_value()) {
+    std::swap(LHS, RHS);
+    Predicate = CmpInst::getSwappedPredicate(Predicate);
+  }
+
   switch (Predicate) {
   case CmpInst::ICMP_EQ:
   case CmpInst::ICMP_NE:
@@ -67,159 +76,129 @@ bool GBPostLegalizeExpand::expandJP_CP(MachineFunction &MF,
     }
   }();
 
-  // This is a signed comparison... Let's break it into more branches.
-  // TODO: come up with a way to make this faster... I think the old meth
-  // We want
-  // .init_bb
-  //    br .lhs_is_pos_bb or .lhs_is_neg_bb
+  // We want the following codegen:
+  //    ld a, lhs
+  //    xor rhs
+  //    bit 7, a
+  //    jp z, .same_sign
+  //    jp .different_sign
+  // .different_sign:
+  //    bit 7, lhs
+  //    jp nz .target
+  //    jp .fallthrough
+  // .same_sign:
+  //    ld a, lhs
+  //    cp rhs
+  //    jp nz .target
+  //    jp .fallthrough
+  // .target
+  //    jp __target
+  // .fallthrough
+  //    jp __fallthrough
 
-  // .lhs_is_pos_bb
-  //    br .pos_signs_match_bb or .false_bb
-  // .lhs_is_neg_bb
-  //    br .neg_signs_match_bb or .false_bb
-  //
-  // .signs_match_bb
-  //    br .false_bb or .true_bb
-  //
-  // .true_bb
-  // .false_bb
-
-  auto LHS = MI.getOperand(1).getReg();
-  auto RHS = MI.getOperand(2).getReg();
   auto *TrueTargetBB = MI.getOperand(3).getMBB();
   auto *InitBB = &MBB;
   auto *FalseBB = MBB.splitAt(MI);
   auto *TrueBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
-  auto *LHSIsPositiveBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
-  auto *LHSIsNegativeBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
+  auto *SignsDifferBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
   auto *SignsMatchBB = MF.CreateMachineBasicBlock(MBB.getBasicBlock());
 
   InitBB->removeSuccessor(FalseBB);
   FalseBB->removeSuccessor(TrueTargetBB);
 
   auto MBBI = ++InitBB->getIterator();
-  MF.insert(MBBI, LHSIsPositiveBB);
-  MF.insert(MBBI, LHSIsNegativeBB);
+  MF.insert(MBBI, SignsDifferBB);
   MF.insert(MBBI, SignsMatchBB);
   MF.insert(MBBI, TrueBB);
 
   MachineIRBuilder MIB(MI);
+  auto Zero = MIB.buildConstant(S8, 0);
+  bool RHSIsCheapToReuse = (UnsignedPredicate == ICmpInst::ICMP_UGE ||
+                            UnsignedPredicate == ICmpInst::ICMP_ULT);
 
-  // Build init
-  auto Zero = MIB.buildConstant(MRI.createGenericVirtualRegister(S8), 0);
-  auto SignBitMask =
-      MIB.buildConstant(MRI.createGenericVirtualRegister(S8), 0x80);
-  auto LHSSignBit =
-      MIB.buildAnd(MRI.createGenericVirtualRegister(S8), LHS, SignBitMask);
-
-  auto MaybeLHSSignBitValue =
-      getIConstantVRegValWithLookThrough(LHSSignBit.getReg(0), MRI);
-  if (MaybeLHSSignBitValue) {
-    if (MaybeLHSSignBitValue->Value.getZExtValue() == 0) {
-      InitBB->addSuccessor(LHSIsPositiveBB);
-      MIB.buildBr(*LHSIsPositiveBB);
+  Register XorReg;
+  {
+    // Build init
+    Register CmpRes;
+    if (auto ConstValue = getIConstantVRegValWithLookThrough(RHS, MRI);
+        ConstValue.has_value()) {
+      auto IsRHSPositive = (ConstValue->Value.getZExtValue() & 0x80) == 0;
+      auto Masked = MIB.buildAnd(S8, LHS, MIB.buildConstant(S8, 0x80));
+      CmpRes =
+          MIB.buildICmp(IsRHSPositive ? CmpInst::ICMP_EQ : CmpInst::ICMP_NE, S8,
+                        Masked, Zero)
+              .getReg(0);
     } else {
-      InitBB->addSuccessor(LHSIsNegativeBB);
-      MIB.buildBr(*LHSIsNegativeBB);
+      XorReg = MRI.createGenericVirtualRegister(S8);
+      MIB.buildXor(XorReg, LHS, RHS);
+      auto Masked = MIB.buildAnd(S8, XorReg, MIB.buildConstant(S8, 0x80));
+      CmpRes = MIB.buildICmp(CmpInst::ICMP_EQ, S8, Masked, Zero).getReg(0);
     }
-  } else {
-    auto LHSSignBitCmp =
-        MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
-                      LHSSignBit.getReg(0), Zero);
 
-    InitBB->addSuccessor(LHSIsPositiveBB);
-    InitBB->addSuccessor(LHSIsNegativeBB);
-    MIB.buildBrCond(LHSSignBitCmp, *LHSIsPositiveBB);
-    MIB.buildBr(*LHSIsNegativeBB);
+    InitBB->addSuccessor(SignsMatchBB);
+    InitBB->addSuccessor(SignsDifferBB);
+    MIB.buildBrCond(CmpRes, *SignsMatchBB);
+    MIB.buildBr(*SignsDifferBB);
   }
 
-  // Build lhs_is_pos_bb
-  MIB.setInsertPt(*LHSIsPositiveBB, LHSIsPositiveBB->begin());
-  auto RHSSignBit =
-      MIB.buildAnd(MRI.createGenericVirtualRegister(S8), RHS, SignBitMask);
+  {
+    // Build different_sign
+    MIB.setInsertPt(*SignsDifferBB, SignsDifferBB->begin());
 
-  auto MaybeRHSValue = getIConstantVRegValWithLookThrough(RHS, MRI);
-  if (MaybeRHSValue) {
-    if ((MaybeRHSValue->Value.getZExtValue() & 0x80) == 0) {
-      LHSIsPositiveBB->addSuccessor(SignsMatchBB);
-      MIB.buildBr(*SignsMatchBB);
-    } else {
-      // MaybeRHSValue & 0x80 != 0
-      if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-        LHSIsPositiveBB->addSuccessor(TrueBB);
-        MIB.buildBr(*TrueBB);
-      } else {
-        assert(Predicate == CmpInst::ICMP_SLT ||
-               Predicate == CmpInst::ICMP_SLE);
-        LHSIsPositiveBB->addSuccessor(FalseBB);
-        MIB.buildBr(*FalseBB);
-      }
-    }
-  } else {
-    auto RHSSignBitCmp =
-        MIB.buildICmp(CmpInst::ICMP_NE, MRI.createGenericVirtualRegister(S8),
-                      RHSSignBit.getReg(0), Zero);
-    //    If RHSSignBitCmp == 0, both are positive, otherwise RHS is negative
-    if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-      LHSIsPositiveBB->addSuccessor(TrueBB);
-      MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
-    } else {
-      assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
-      LHSIsPositiveBB->addSuccessor(FalseBB);
-      MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
-    }
-    LHSIsPositiveBB->addSuccessor(SignsMatchBB);
-    MIB.buildBr(*SignsMatchBB);
-  }
+    if (auto ConstValue = getIConstantVRegValWithLookThrough(RHS, MRI);
+        ConstValue.has_value()) {
+      auto IsRHSPositive = (ConstValue->Value.getZExtValue() & 0x80) == 0;
+      auto IsGT =
+          Predicate == CmpInst::ICMP_SGE || Predicate == CmpInst::ICMP_SGT;
 
-  // Build lhs_is_neg_bb
-  MIB.setInsertPt(*LHSIsNegativeBB, LHSIsNegativeBB->begin());
-  RHSSignBit =
-      MIB.buildAnd(MRI.createGenericVirtualRegister(S8), RHS, SignBitMask);
-
-  MaybeRHSValue = getIConstantVRegValWithLookThrough(RHS, MRI);
-  if (MaybeRHSValue) {
-    if ((MaybeRHSValue->Value.getZExtValue() & 0x80) != 0) {
-      LHSIsNegativeBB->addSuccessor(SignsMatchBB);
-      MIB.buildBr(*SignsMatchBB);
+      MachineBasicBlock *Target = (IsRHSPositive ^ IsGT) ? TrueBB : FalseBB;
+      SignsDifferBB->addSuccessor(Target);
+      MIB.buildBr(*Target);
     } else {
-      // MaybeRHSValue & 0x80 == 0
-      if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-        LHSIsNegativeBB->addSuccessor(FalseBB);
+      bool UseRHS = RHSIsCheapToReuse;
+      auto MaskedLHS =
+          MIB.buildAnd(S8, UseRHS ? RHS : LHS, MIB.buildConstant(S8, 0x80));
+      auto CmpRes = MIB.buildICmp(UseRHS ? CmpInst::ICMP_NE : CmpInst::ICMP_EQ,
+                                  S8, MaskedLHS, Zero);
+
+      SignsDifferBB->addSuccessor(TrueBB);
+      SignsDifferBB->addSuccessor(FalseBB);
+      if (Predicate == CmpInst::ICMP_SGE || Predicate == CmpInst::ICMP_SGT) {
+        MIB.buildBrCond(CmpRes, *TrueBB);
         MIB.buildBr(*FalseBB);
       } else {
-        assert(Predicate == CmpInst::ICMP_SLT ||
-               Predicate == CmpInst::ICMP_SLE);
-        LHSIsNegativeBB->addSuccessor(TrueBB);
+        assert(Predicate == CmpInst::ICMP_SLE ||
+               Predicate == CmpInst::ICMP_SLT);
+        MIB.buildBrCond(CmpRes, *FalseBB);
         MIB.buildBr(*TrueBB);
       }
     }
-  } else {
-    auto RHSSignBitCmp =
-        MIB.buildICmp(CmpInst::ICMP_EQ, MRI.createGenericVirtualRegister(S8),
-                      RHSSignBit.getReg(0), Zero);
-    //    If RHSSignBitCmp == 0, both are negative, otherwise RHS is positive
-    if (Predicate == CmpInst::ICMP_SGT || Predicate == CmpInst::ICMP_SGE) {
-      LHSIsNegativeBB->addSuccessor(FalseBB);
-      MIB.buildBrCond(RHSSignBitCmp, *FalseBB);
-    } else {
-      assert(Predicate == CmpInst::ICMP_SLT || Predicate == CmpInst::ICMP_SLE);
-      LHSIsNegativeBB->addSuccessor(TrueBB);
-      MIB.buildBrCond(RHSSignBitCmp, *TrueBB);
-    }
-    LHSIsNegativeBB->addSuccessor(SignsMatchBB);
-    MIB.buildBr(*SignsMatchBB);
   }
 
-  // Build signs_match_bb
-  MIB.setInsertPt(*SignsMatchBB, SignsMatchBB->begin());
-  auto UnsignedCmp = MIB.buildICmp(
-      UnsignedPredicate, MRI.createGenericVirtualRegister(S8), LHS, RHS);
+  {
+    // Build same_sign
+    MIB.setInsertPt(*SignsMatchBB, SignsMatchBB->begin());
+    auto UnsignedCmp = [&] {
+      if (getIConstantVRegValWithLookThrough(RHS, MRI).has_value()) {
+        return MIB.buildICmp(UnsignedPredicate, S8, LHS, RHS);
+      }
 
-  SignsMatchBB->addSuccessor(TrueBB);
-  SignsMatchBB->addSuccessor(FalseBB);
-  MIB.buildBrCond(UnsignedCmp.getReg(0), *TrueBB);
-  MIB.buildBr(*FalseBB);
+      // Reduce register pressure by reusing the xor result rather than keeping
+      // track of both side of the comparison.
+      // It is more efficient to reuse RHS if the branch is already
+      // gb-canonical... Otherwise flip the logic and the branch.
+      bool UseRHS = RHSIsCheapToReuse;
+      auto NewPred = UseRHS ? UnsignedPredicate
+                            : CmpInst::getSwappedPredicate(UnsignedPredicate);
+      auto OtherSide = MIB.buildXor(S8, XorReg, UseRHS ? RHS : LHS);
+      return MIB.buildICmp(NewPred, S8, OtherSide, UseRHS ? RHS : LHS);
+    }();
+
+    SignsMatchBB->addSuccessor(TrueBB);
+    SignsMatchBB->addSuccessor(FalseBB);
+    MIB.buildBrCond(UnsignedCmp, *TrueBB);
+    MIB.buildBr(*FalseBB);
+  }
 
   // Build true_bb (which only exits as a PHI src)
   MIB.setInsertPt(*TrueBB, TrueBB->begin());
