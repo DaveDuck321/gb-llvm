@@ -1,4 +1,5 @@
 #include "GB.h"
+#include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
@@ -11,11 +12,13 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include <iterator>
 #include <map>
 #include <optional>
 
@@ -24,6 +27,14 @@
 using namespace llvm;
 
 namespace {
+struct ParsedAdd16 {
+  MachineInstr *MI;
+  Register Dst;
+  Register Base;
+  Register ImmReg;
+  long Imm;
+};
+
 class GBIncrementSerialize : public MachineFunctionPass {
 public:
   static char ID;
@@ -37,14 +48,13 @@ public:
 private:
   bool parallelizeIncrements(MachineFunction &MF, MachineBasicBlock &MBB);
   bool serializeIncrements(MachineFunction &MF, MachineBasicBlock &MBB);
-};
 
-struct ParsedAdd16 {
-  MachineInstr *MI;
-  Register Dst;
-  Register Base;
-  Register ImmReg;
-  long Imm;
+  bool serializeFromGlobalValueBase(MachineFunction &MF,
+                                    MachineRegisterInfo &MRI, Register Base,
+                                    std::vector<ParsedAdd16> const &Offsets);
+  bool serializeFromRegisterBase(MachineFunction &MF, MachineRegisterInfo &MRI,
+                                 Register Base,
+                                 std::vector<ParsedAdd16> const &Offsets);
 };
 
 std::optional<ParsedAdd16> parseAdd16Immediate(MachineRegisterInfo &MRI,
@@ -110,6 +120,53 @@ bool GBIncrementSerialize::parallelizeIncrements(MachineFunction &MF,
   return false;
 }
 
+bool GBIncrementSerialize::serializeFromGlobalValueBase(
+    MachineFunction &MF, MachineRegisterInfo &MRI, Register Base,
+    std::vector<ParsedAdd16> const &Offsets) {
+  auto *BaseDef = MRI.getOneDef(Base);
+  if (BaseDef == nullptr) {
+    return false;
+  }
+
+  auto &BaseDefMI = *BaseDef->getParent();
+  if (BaseDefMI.getOpcode() != TargetOpcode::G_GLOBAL_VALUE) {
+    return false;
+  }
+
+  auto const *GlobalAddress = BaseDefMI.getOperand(1).getGlobal();
+  for (auto const &ParsedAdd : Offsets) {
+    auto &MI = *ParsedAdd.MI;
+
+    MachineIRBuilder MIB{MI};
+    MIB.buildInstr(TargetOpcode::G_GLOBAL_VALUE)
+        .addDef(ParsedAdd.Dst)
+        .addGlobalAddress(GlobalAddress, ParsedAdd.Imm);
+    MI.eraseFromParent();
+  }
+  return true;
+}
+
+bool GBIncrementSerialize::serializeFromRegisterBase(
+    MachineFunction &MF, MachineRegisterInfo &MRI, Register Base,
+    std::vector<ParsedAdd16> const &Offsets) {
+  size_t CurrentOffset = 0;
+  Register CurrentReg = Base;
+  for (auto const &ParsedAdd : Offsets) {
+    auto &MI = *ParsedAdd.MI;
+
+    MachineIRBuilder MIB{MI};
+    auto NewImm = MRI.cloneVirtualRegister(ParsedAdd.ImmReg);
+    MIB.buildConstant(NewImm, ParsedAdd.Imm - CurrentOffset);
+    MIB.buildInstr(MI.getOpcode(), {ParsedAdd.Dst}, {CurrentReg, NewImm},
+                   MI.getFlags());
+    MI.eraseFromParent();
+
+    CurrentOffset = ParsedAdd.Imm;
+    CurrentReg = ParsedAdd.Dst;
+  }
+  return true;
+}
+
 bool GBIncrementSerialize::serializeIncrements(MachineFunction &MF,
                                                MachineBasicBlock &MBB) {
   auto &MRI = MF.getRegInfo();
@@ -124,22 +181,14 @@ bool GBIncrementSerialize::serializeIncrements(MachineFunction &MF,
 
   bool HasMadeChanges = false;
   for (auto &[Base, OffsetsFromBase] : ConstantAdditions) {
-    // OffsetsFromBase is sorted by the order they each MI appears
-    size_t CurrentOffset = 0;
-    Register CurrentReg = Base;
-    for (auto const &ParsedAdd : OffsetsFromBase) {
-      auto &MI = *ParsedAdd.MI;
-
-      MachineIRBuilder MIB{MI};
-      auto NewImm = MRI.cloneVirtualRegister(ParsedAdd.ImmReg);
-      MIB.buildConstant(NewImm, ParsedAdd.Imm - CurrentOffset);
-      MIB.buildInstr(MI.getOpcode(), {ParsedAdd.Dst}, {CurrentReg, NewImm},
-                     MI.getFlags());
-      MI.eraseFromParent();
-
-      CurrentOffset = ParsedAdd.Imm;
-      CurrentReg = ParsedAdd.Dst;
+    if (serializeFromGlobalValueBase(MF, MRI, Base, OffsetsFromBase)) {
       HasMadeChanges = true;
+      continue;
+    }
+
+    if (serializeFromRegisterBase(MF, MRI, Base, OffsetsFromBase)) {
+      HasMadeChanges = true;
+      continue;
     }
   }
   return HasMadeChanges;
