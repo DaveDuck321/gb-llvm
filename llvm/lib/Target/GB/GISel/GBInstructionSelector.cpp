@@ -48,6 +48,11 @@ public:
 
   static const char *getName() { return DEBUG_TYPE; }
 
+  void renderLowerImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
+                      int OpIdx) const;
+  void renderUpperImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
+                      int OpIdx) const;
+
   bool select(MachineInstr &MI) override;
   bool selectImpl(MachineInstr &MI, CodeGenCoverage &CoverageInfo) const;
 
@@ -93,13 +98,30 @@ GBInstructionSelector::GBInstructionSelector(const GBSubtarget &STI,
 {
 }
 
+void GBInstructionSelector::renderLowerImm(MachineInstrBuilder &MIB,
+                                           const MachineInstr &MI,
+                                           int OpIdx) const {
+  assert(OpIdx == -1);
+  assert(MI.getOpcode() == TargetOpcode::G_CONSTANT);
+  auto *Imm = MI.getOperand(1).getCImm();
+  MIB.addImm(Imm->getZExtValue() & 0xff);
+}
+
+void GBInstructionSelector::renderUpperImm(MachineInstrBuilder &MIB,
+                                           const MachineInstr &MI,
+                                           int OpIdx) const {
+  assert(OpIdx == -1);
+  assert(MI.getOpcode() == TargetOpcode::G_CONSTANT);
+  auto *Imm = MI.getOperand(1).getCImm();
+  MIB.addImm((Imm->getZExtValue() >> 8) & 0xff);
+}
+
 bool GBInstructionSelector::select(MachineInstr &MI) {
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto DL = MI.getDebugLoc();
 
-  unsigned Opcode = MI.getOpcode();
   switch (MI.getOpcode()) {
   case TargetOpcode::COPY:
     return selectCopy(MI, MRI);
