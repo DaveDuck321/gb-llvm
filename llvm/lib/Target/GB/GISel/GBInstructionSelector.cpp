@@ -7,8 +7,10 @@
 #include "GISel/GBRegisterBankInfo.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/Bitset.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
+#include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -25,11 +27,13 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGenCoverage.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <llvm/CodeGen/TargetOpcodes.h>
 #include <utility>
 
 #define DEBUG_TYPE "gb-isel"
 
 using namespace llvm;
+using namespace llvm::MIPatternMatch;
 
 #define GET_GLOBALISEL_PREDICATE_BITSET
 #include "GBGenGlobalISel.inc"
@@ -70,6 +74,7 @@ public:
   bool selectICMP(MachineInstr &MI, MachineRegisterInfo &MRI) const;
 
   bool selectAdd16(MachineInstr &MI, MachineRegisterInfo &MRI) const;
+  bool selectAtomicRMW(MachineInstr &MI, MachineRegisterInfo &MRI) const;
 
 private:
 #define GET_GLOBALISEL_PREDICATES_DECL
@@ -161,6 +166,12 @@ bool GBInstructionSelector::select(MachineInstr &MI) {
 
   case TargetOpcode::G_FENCE:
     return selectFence(MI, MRI);
+
+  case TargetOpcode::G_ATOMICRMW_AND:
+  case TargetOpcode::G_ATOMICRMW_OR:
+  case TargetOpcode::G_ATOMICRMW_ADD:
+  case TargetOpcode::G_ATOMICRMW_SUB:
+    return selectAtomicRMW(MI, MRI);
 
   case TargetOpcode::G_IMPLICIT_DEF:
     MI.setDesc(TII.get(TargetOpcode::IMPLICIT_DEF));
@@ -474,6 +485,58 @@ bool GBInstructionSelector::selectAdd16(MachineInstr &MI,
   BuildMI(MBB, MI, DL, TII.get(GB::COPY))
       .add(Result)
       .addReg(GB::HL, getKillRegState(true));
+  MI.eraseFromParent();
+  return true;
+}
+
+bool GBInstructionSelector::selectAtomicRMW(MachineInstr &MI,
+                                            MachineRegisterInfo &MRI) const {
+  auto &MBB = *MI.getParent();
+  auto DL = MI.getDebugLoc();
+
+  auto Dst = MI.getOperand(0).getReg();
+  auto Addr = MI.getOperand(1).getReg();
+
+  uint64_t Imm;
+  if (!mi_match(MI.getOperand(2).getReg(), MRI, m_ICst(Imm))) {
+    llvm_unreachable("Atomic RMW imm unknown");
+  }
+
+  if (!MRI.use_nodbg_empty(Dst)) {
+    llvm_unreachable("Atomic dst RMW is used");
+  }
+
+  BuildMI(MBB, MI, DL, TII.get(GB::COPY), GB::HL).addReg(Addr);
+
+  // It would be nice if this was tablegen... But it requires an immediately
+  // expanded pseudo... Let's just do it here.
+  switch (MI.getOpcode()) {
+  default:
+    llvm_unreachable("Unrecognized opcode");
+  case TargetOpcode::G_ATOMICRMW_ADD:
+    assert(Imm == 1);
+    BuildMI(MBB, MI, DL, TII.get(GB::INC_iHL))
+        .addReg(GB::HL, getImplRegState(true) | getKillRegState(true));
+    break;
+  case TargetOpcode::G_ATOMICRMW_SUB:
+    assert(Imm == 1);
+    BuildMI(MBB, MI, DL, TII.get(GB::DEC_iHL))
+        .addReg(GB::HL, getImplRegState(true) | getKillRegState(true));
+    break;
+  case TargetOpcode::G_ATOMICRMW_AND:
+    assert(llvm::popcount(Imm) == 7);
+    BuildMI(MBB, MI, DL, TII.get(GB::RES_iHL))
+        .addImm(llvm::countr_one(Imm))
+        .addReg(GB::HL, getImplRegState(true) | getKillRegState(true));
+    break;
+  case TargetOpcode::G_ATOMICRMW_OR:
+    assert(llvm::popcount(Imm) == 1);
+    BuildMI(MBB, MI, DL, TII.get(GB::SET_iHL))
+        .addImm(llvm::countr_zero(Imm))
+        .addReg(GB::HL, getImplRegState(true) | getKillRegState(true));
+    break;
+  }
+
   MI.eraseFromParent();
   return true;
 }

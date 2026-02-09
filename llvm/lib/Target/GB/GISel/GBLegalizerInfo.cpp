@@ -2,8 +2,10 @@
 #include "GBSubtarget.h"
 #include "MCTargetDesc/GBMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/bit.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -22,6 +24,7 @@
 
 using namespace llvm;
 using namespace TargetOpcode;
+using namespace llvm::MIPatternMatch;
 
 GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
 
@@ -148,9 +151,47 @@ GBLegalizerInfo::GBLegalizerInfo(const GBSubtarget &) {
 
   getActionDefinitionsBuilder(G_FENCE).alwaysLegal();
   getActionDefinitionsBuilder(
-      {G_ATOMICRMW_XCHG, G_ATOMIC_CMPXCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
-       G_ATOMICRMW_AND, G_ATOMICRMW_NAND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR,
+      {G_ATOMICRMW_XCHG, G_ATOMIC_CMPXCHG, G_ATOMICRMW_NAND, G_ATOMICRMW_XOR,
        G_ATOMICRMW_MAX, G_ATOMICRMW_MIN, G_ATOMICRMW_UMAX, G_ATOMICRMW_UMIN})
+      .libcallFor({S8})
+      .unsupported();
+
+  getActionDefinitionsBuilder(
+      {G_ATOMICRMW_ADD, G_ATOMICRMW_SUB, G_ATOMICRMW_AND, G_ATOMICRMW_OR})
+      .legalIf([=](const LegalityQuery &Query) {
+        if (Query.MI == nullptr || Query.Types[0] != S8) {
+          return false;
+        }
+        auto const &MRI = Query.MI->getMF()->getRegInfo();
+        Register Dst = Query.MI->getOperand(0).getReg();
+        if (!MRI.use_nodbg_empty(Dst)) {
+          // We can't atomically return anything. Fail over to a libcall.
+          return false;
+        }
+
+        Register Val = Query.MI->getOperand(2).getReg();
+        int64_t Imm;
+        if (!mi_match(Val, MRI, m_ICst(Imm))) {
+          return false;
+        }
+
+        if (Query.Opcode == G_ATOMICRMW_ADD ||
+            Query.Opcode == G_ATOMICRMW_SUB) {
+          // INC and DEC are atomic
+          return Imm == 1;
+        }
+
+        if (Query.Opcode == G_ATOMICRMW_OR) {
+          // SET is atomic
+          return llvm::popcount(static_cast<uint8_t>(Imm)) == 1;
+        }
+
+        if (Query.Opcode == G_ATOMICRMW_AND) {
+          // RES is atomic
+          return llvm::popcount(static_cast<uint8_t>(Imm)) == 7;
+        }
+        llvm_unreachable("Unhandled atomic opcode");
+      })
       .libcallFor({S8})
       .unsupported();
 

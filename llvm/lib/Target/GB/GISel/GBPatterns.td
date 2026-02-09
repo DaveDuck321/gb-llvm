@@ -65,30 +65,6 @@ defm : ALU_Pat<or, OR_r>;
 
 def : Pat<(xor A, -1), (CPL)>;
 
-// Atomic rmws special cases
-def SDT_ATOMIC_INC_DEC : SDTypeProfile<1, 1, [SDTCisVT<0, i8>, SDTCisPtrTy<1>]>;
-def ATOMIC_INC_NODE
-    : SDNode<"GBISD::ATOMIC_INC", SDT_ATOMIC_INC_DEC,
-             [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def ATOMIC_DEC_NODE
-    : SDNode<"GBISD::ATOMIC_DEC", SDT_ATOMIC_INC_DEC,
-             [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-
-def : Pat<(ATOMIC_INC_NODE HL), (INC_iHL)>;
-def : Pat<(ATOMIC_DEC_NODE HL), (DEC_iHL)>;
-
-def SDT_ATOMIC_SET_RESET
-    : SDTypeProfile<1, 2, [SDTCisVT<0, i8>, SDTCisPtrTy<1>, SDTCisVT<2, i8>]>;
-def ATOMIC_BIT_SET_NODE
-    : SDNode<"GBISD::ATOMIC_BIT_SET", SDT_ATOMIC_SET_RESET,
-             [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-def ATOMIC_BIT_RESET_NODE
-    : SDNode<"GBISD::ATOMIC_BIT_RESET", SDT_ATOMIC_SET_RESET,
-             [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-
-def : Pat<(ATOMIC_BIT_SET_NODE HL, imm8:$imm8), (SET_iHL imm8:$imm8)>;
-def : Pat<(ATOMIC_BIT_RESET_NODE HL, imm8:$imm8), (RES_iHL imm8:$imm8)>;
-
 // Branches
 def : Pat<(br bb:$imm), (JP $imm)>;
 def : Pat<(brind(p0 HL)), (JP_HL)>;
