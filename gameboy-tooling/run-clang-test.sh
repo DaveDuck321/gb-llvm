@@ -16,7 +16,7 @@ do
     fi
 done
 
-$script_dir/../build/bin/clang --target=gb-unknown-unknown $script_dir/runtime.S $clang_args -o $binary_out
+$script_dir/../build/bin/clang -g --target=gb-unknown-unknown $script_dir/runtime.S $clang_args -o $binary_out
 
 if [[ -n "$is_gdb" ]]
 then

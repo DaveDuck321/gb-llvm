@@ -9,16 +9,16 @@
 define fastcc void @_ZN12FallingPiece36copy_position_into_underlying_spriteEv() {
 ; GBI-LABEL: _ZN12FallingPiece36copy_position_into_underlying_spriteEv:
 ; GBI:       # %bb.0: # %entry
+; GBI-NEXT:    ld bc, $0000
 ; GBI-NEXT:    ld a, (_ZL8scroll_y)
 ; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld de, $0000
 ; GBI-NEXT:  .LBB0_1: # %for.cond
 ; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ld ($0000), a
-; GBI-NEXT:    ld a, e
+; GBI-NEXT:    ld a, c
 ; GBI-NEXT:    or $01
-; GBI-NEXT:    ld e, a
+; GBI-NEXT:    ld c, a
 ; GBI-NEXT:    jr .LBB0_1
 entry:
   %0 = load i8, ptr @_ZL8scroll_y, align 1
@@ -42,40 +42,49 @@ for.cond:                                         ; preds = %for.cond, %entry
 define fastcc void @_ZN12FallingPiece20try_rotate_clockwiseEv(i16 %__begin1.0.idx) {
 ; GBI-LABEL: _ZN12FallingPiece20try_rotate_clockwiseEv:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    add sp, -4
+; GBI-NEXT:    add sp, -6
 ; GBI-NEXT:    ld b, h
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    ld hl, sp, 0
 ; GBI-NEXT:    ldi (hl), a
 ; GBI-NEXT:    ld (hl), b
+; GBI-NEXT:    ld bc, $0000
+; GBI-NEXT:    ld hl, sp, 4
+; GBI-NEXT:    ld d, h
+; GBI-NEXT:    ld a, l
+; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    ld (hl), d
 ; GBI-NEXT:  .LBB1_1: # %for.cond
 ; GBI-NEXT:    # =>This Inner Loop Header: Depth=1
 ; GBI-NEXT:    ld hl, sp, 0
 ; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld b, (hl)
+; GBI-NEXT:    ld d, (hl)
 ; GBI-NEXT:    add %lo _ZL10wall_kicks
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    adc %hi _ZL10wall_kicks
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld d, b
-; GBI-NEXT:    ld e, c
-; GBI-NEXT:    inc de
-; GBI-NEXT:    ld a, (de)
-; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ld d, h
 ; GBI-NEXT:    ld e, l
-; GBI-NEXT:    inc hl
-; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    inc de
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld d, a
 ; GBI-NEXT:    ld a, (_ZN12FallingPiece10m_positionE+1)
+; GBI-NEXT:    or (hl)
+; GBI-NEXT:    ld hl, sp, 2
+; GBI-NEXT:    ld e, (hl)
+; GBI-NEXT:    inc hl
+; GBI-NEXT:    ld h, (hl)
+; GBI-NEXT:    ld l, e
+; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    ld a, d
+; GBI-NEXT:    ld (hl), a
+; GBI-NEXT:    ld d, $00
 ; GBI-NEXT:    ld h, b
 ; GBI-NEXT:    ld l, c
-; GBI-NEXT:    or (hl)
-; GBI-NEXT:    ld (de), a
-; GBI-NEXT:    ld bc, $0000
-; GBI-NEXT:    ld d, $00
-; GBI-NEXT:    call $0000
+; GBI-NEXT:    call (hl)
 ; GBI-NEXT:    jr .LBB1_1
 entry:
   %agg.tmp5 = alloca %struct.Coord, align 2
@@ -90,4 +99,39 @@ for.cond:                                         ; preds = %for.cond, %entry
   store i16 %target_coord.sroa.0.0.insert.insert, ptr %agg.tmp5, align 2
   %call6 = tail call i1 null(ptr null, i8 0)
   br label %for.cond
+}
+
+
+define fastcc i16 @readEncodedPointer(i8 %encoding) {
+; GBI-LABEL: readEncodedPointer:
+; GBI:       # %bb.0: # %entry
+; GBI-NEXT:    ld a, b
+; GBI-NEXT:    cp $80
+; GBI-NEXT:    jr nc, .LBB2_2
+; GBI-NEXT:  # %bb.1:
+; GBI-NEXT:    ld hl, $0000
+; GBI-NEXT:    ret
+; GBI-NEXT:  .LBB2_2: # %select.false
+; GBI-NEXT:    ld hl, $0001
+; GBI-NEXT:    ret
+entry:
+  %tobool.not = icmp sgt i8 %encoding, -1
+  %spec.select = select i1 %tobool.not, i16 0, i16 1
+  ret i16 %spec.select
+}
+
+define ptr @_Z8g_strlenKPA_h() {
+; GBI-LABEL: _Z8g_strlenKPA_h:
+; GBI:       # %bb.0: # %begin
+; GBI-NEXT:    ld a, ($0000)
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld a, ($0001)
+; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ret
+begin:
+  br label %while_1_begin
+
+while_1_begin:                                    ; preds = %begin
+  %0 = load ptr, ptr null, align 2
+  ret ptr %0
 }

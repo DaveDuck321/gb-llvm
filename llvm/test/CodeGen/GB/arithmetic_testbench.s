@@ -544,5 +544,20 @@ _shifts:
 # EXPECT: a=01
     debugtrap
 
+
+    ld bc, 8
+    ld de, 8
+    call ptr_eq
+    and 1
+# EXPECT: a=01
+    debugtrap
+
+    ld bc, 8
+    ld de, 7
+    call ptr_eq
+    and 1
+# EXPECT: a=00
+    debugtrap
+
 _end:
     trap

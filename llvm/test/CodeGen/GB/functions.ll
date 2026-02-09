@@ -166,37 +166,28 @@ define fastcc i32 @call_large_return() nounwind {
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call large_return
 ; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ld e, (hl)
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld d, (hl)
-; GBI-O3-NEXT:    inc de
-; GBI-O3-NEXT:    ld h, d
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    inc hl
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld a, (bc)
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld c, (hl)
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld d, a
-; GBI-O3-NEXT:    ld hl, sp, 2
 ; GBI-O3-NEXT:    ldi a, (hl)
 ; GBI-O3-NEXT:    ld h, (hl)
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld d, a
 ; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld b, (hl)
 ; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, e
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    ld l, b
 ; GBI-O3-NEXT:    ldi (hl), a
 ; GBI-O3-NEXT:    ld a, c
 ; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld a, d
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, e
 ; GBI-O3-NEXT:    ld (hl), a
 ; GBI-O3-NEXT:    add sp, 8
 ; GBI-O3-NEXT:    ret
@@ -259,10 +250,10 @@ define fastcc i8 @test_spill_arg8(i8 %0) nounwind {
  define i8 @call_untyped_fn() {
 ; GBI-O3-LABEL: call_untyped_fn:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, (untyped_fn_symbol+1)
-; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld a, (untyped_fn_symbol)
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, (untyped_fn_symbol+1)
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    call (hl)
 ; GBI-O3-NEXT:    ret
   %1 = load ptr, ptr @untyped_fn_symbol
@@ -393,9 +384,9 @@ define gb_interrupt_cc void @complex_interrupt_cc() {
 ; GBI-O3-NEXT:    push hl
 ; GBI-O3-NEXT:    push af
 ; GBI-O3-NEXT:    add sp, -4
+; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    ld bc, $000a
 ; GBI-O3-NEXT:    ld de, $0000
-; GBI-O3-NEXT:    ld hl, sp, 0
 ; GBI-O3-NEXT:    call argument0_i32
 ; GBI-O3-NEXT:    add sp, 4
 ; GBI-O3-NEXT:    pop af
@@ -415,13 +406,15 @@ declare void @fn_a(i16 %input) align 2;
 define fastcc i16 @indirect_cc() {
 ; GBI-O3-LABEL: indirect_cc:
 ; GBI-O3:       # %bb.0: # %entry
-; GBI-O3-NEXT:    ld a, (fn_ptr+1)
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld bc, $0002
+; GBI-O3-NEXT:    ld de, $0000
 ; GBI-O3-NEXT:    ld a, (fn_ptr)
 ; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld bc, $0002
+; GBI-O3-NEXT:    ld a, (fn_ptr+1)
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    call (hl)
-; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ld h, d
+; GBI-O3-NEXT:    ld l, e
 ; GBI-O3-NEXT:    ret
 entry:
   %0 = load ptr, ptr @fn_ptr, align 2

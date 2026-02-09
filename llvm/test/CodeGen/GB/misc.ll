@@ -34,9 +34,8 @@ define fastcc i8 @sext8_i1(i1 %0) {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    dec a
+; GBI-O3-NEXT:    cpl
 ; GBI-O3-NEXT:    ret
   %res = sext i1 %0 to i8
   ret i8 %res
@@ -47,9 +46,8 @@ define fastcc i16 @sext16_i1(i1 %0) {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    and $01
-; GBI-O3-NEXT:    ld b, a
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    dec a
+; GBI-O3-NEXT:    cpl
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ret
@@ -97,10 +95,10 @@ define fastcc void @trap(i8 %0) noreturn {
 define i16 @test_memcpy() {
 ; GBI-O3-LABEL: test_memcpy:
 ; GBI-O3:       # %bb.0: # %entry
-; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ld bc, $0000
 ; GBI-O3-NEXT:    ld de, $000a
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld c, l
+; GBI-O3-NEXT:    ld h, b
+; GBI-O3-NEXT:    ld l, c
 ; GBI-O3-NEXT:    call memcpy
 ; GBI-O3-NEXT:    ld hl, $0000
 ; GBI-O3-NEXT:    ret
@@ -122,4 +120,130 @@ define void @inline_asm() {
 ; GBI-O3-NEXT:    ret
   call void asm sideeffect "trap", ""()
   ret void
+}
+
+
+declare i8 @llvm.ctpop.i8(i8)
+define i8 @ctpop(i8 %b) {
+; GBI-O3-LABEL: ctpop:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $55
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    swap a
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    ret
+  %1 = call i8 @llvm.ctpop.i8(i8 %b)
+  ret i8 %1
+}
+
+declare i8 @llvm.cttz.i8(i8)
+define i8 @cttz(i8 %b) {
+; GBI-O3-LABEL: cttz:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr z, .LBB11_2
+; GBI-O3-NEXT:  # %bb.1: # %cond.false
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cpl
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    and b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $55
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    swap a
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB11_2:
+; GBI-O3-NEXT:    ld a, $08
+; GBI-O3-NEXT:    ret
+  %1 = call i8 @llvm.cttz.i8(i8 %b)
+  ret i8 %1
+}
+
+declare i8 @llvm.ctlz.i8(i8)
+define i8 @ctlz(i8 %b) {
+; GBI-O3-LABEL: ctlz:
+; GBI-O3:       # %bb.0:
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr z, .LBB12_2
+; GBI-O3-NEXT:  # %bb.1: # %cond.false
+; GBI-O3-NEXT:    ld c, b
+; GBI-O3-NEXT:    srl c
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    or c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl b
+; GBI-O3-NEXT:    srl b
+; GBI-O3-NEXT:    or b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    swap a
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    or c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $55
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    sub c
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    srl a
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    and $33
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    swap a
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    add b
+; GBI-O3-NEXT:    and $0f
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, $08
+; GBI-O3-NEXT:    sub b
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB12_2:
+; GBI-O3-NEXT:    ld a, $08
+; GBI-O3-NEXT:    ret
+  %1 = call i8 @llvm.ctlz.i8(i8 %b)
+  ret i8 %1
 }

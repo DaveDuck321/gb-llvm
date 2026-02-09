@@ -28,8 +28,8 @@ main:
     ld hl, sp + 16 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1307
-# EXPECT-CYCLE-Oz: 1297
+# EXPECT-CYCLE-O3: 1295
+# EXPECT-CYCLE-Oz: 1499
 # EXPECT: a=ee
     debugtrap
 
@@ -48,8 +48,8 @@ main:
     ld hl, sp + 88 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1307
-# EXPECT-CYCLE-Oz: 1297
+# EXPECT-CYCLE-O3: 1295
+# EXPECT-CYCLE-Oz: 1499
 # EXPECT: a=01
     debugtrap
 
@@ -68,8 +68,8 @@ main:
     ld hl, sp + 73 # Test a random value
     ld a, (hl)
 # EXPECT: Debug trap!
-# EXPECT-CYCLE-O3: 1450
-# EXPECT-CYCLE-Oz: 1418
+# EXPECT-CYCLE-O3: 1445
+# EXPECT-CYCLE-Oz: 1480
 # EXPECT: a=ee
     debugtrap
 

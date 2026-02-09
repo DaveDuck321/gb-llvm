@@ -7,14 +7,14 @@
 define i8 @test_addresses() nounwind {
 ; GBI-O3-LABEL: test_addresses:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, %hi .Ltmp0
-; GBI-O3-NEXT:    ld (addr+1), a
 ; GBI-O3-NEXT:    ld a, %lo .Ltmp0
 ; GBI-O3-NEXT:    ld (addr), a
-; GBI-O3-NEXT:    ld a, (addr+1)
-; GBI-O3-NEXT:    ld h, a
+; GBI-O3-NEXT:    ld a, %hi .Ltmp0
+; GBI-O3-NEXT:    ld (addr+1), a
 ; GBI-O3-NEXT:    ld a, (addr)
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, (addr+1)
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    jp (hl)
 ; GBI-O3-NEXT:  .Ltmp0: # Block address taken
 ; GBI-O3-NEXT:  .LBB0_1: # %block
@@ -33,10 +33,10 @@ block:
 define i16 @load_i16_global() nounwind {
 ; GBI-O3-LABEL: load_i16_global:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, (val16+1)
-; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ld a, (val16)
 ; GBI-O3-NEXT:    ld l, a
+; GBI-O3-NEXT:    ld a, (val16+1)
+; GBI-O3-NEXT:    ld h, a
 ; GBI-O3-NEXT:    ret
   %1 = load i16, ptr @val16
   ret i16 %1
@@ -49,16 +49,16 @@ define fastcc i16 @lw_sw_global(i16 %a) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, (G)
 ; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld (G), a
 ; GBI-O3-NEXT:    ld a, (G+1)
 ; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld (G), a
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (G+1), a
 ; GBI-O3-NEXT:    ld a, (G+18)
+; GBI-O3-NEXT:    ld a, (G+19)
 ; GBI-O3-NEXT:    ld a, l
 ; GBI-O3-NEXT:    ld (G+18), a
-; GBI-O3-NEXT:    ld a, (G+19)
 ; GBI-O3-NEXT:    ld a, h
 ; GBI-O3-NEXT:    ld (G+19), a
 ; GBI-O3-NEXT:    ld h, b
@@ -77,11 +77,11 @@ define fastcc i16 @lw_sw_global(i16 %a) nounwind {
 define dso_local noundef i16 @test_save_i16_to_external() local_unnamed_addr {
 ; GBI-O3-LABEL: test_save_i16_to_external:
 ; GBI-O3:       # %bb.0: # %entry
-; GBI-O3-NEXT:    ld a, $11
-; GBI-O3-NEXT:    ld (external_u16+1), a
+; GBI-O3-NEXT:    ld hl, $0000
 ; GBI-O3-NEXT:    ld a, $12
 ; GBI-O3-NEXT:    ld (external_u16), a
-; GBI-O3-NEXT:    ld hl, $0000
+; GBI-O3-NEXT:    ld a, $11
+; GBI-O3-NEXT:    ld (external_u16+1), a
 ; GBI-O3-NEXT:    ret
 entry:
   store ptr inttoptr (i16 4370 to ptr), ptr @external_u16, align 2

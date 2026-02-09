@@ -12,6 +12,12 @@ define i8 @main() {
 ; GBI-O3-LABEL: main:
 ; GBI-O3:       # %bb.0: # %begin
 ; GBI-O3-NEXT:    add sp, -12
+; GBI-O3-NEXT:    ld hl, sp, 8
+; GBI-O3-NEXT:    ld b, h
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld (hl), b
 ; GBI-O3-NEXT:    ld hl, sp, 4
 ; GBI-O3-NEXT:    ld b, h
 ; GBI-O3-NEXT:    ld a, l
@@ -21,35 +27,36 @@ define i8 @main() {
 ; GBI-O3-NEXT:    ld l, a
 ; GBI-O3-NEXT:    ld h, b
 ; GBI-O3-NEXT:    call make_range
-; GBI-O3-NEXT:    ld hl, sp, 8
-; GBI-O3-NEXT:    ld b, h
-; GBI-O3-NEXT:    ld a, l
-; GBI-O3-NEXT:    ld hl, sp, 0
-; GBI-O3-NEXT:    ldi (hl), a
-; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    ld hl, sp, 2
+; GBI-O3-NEXT:    ld e, (hl)
+; GBI-O3-NEXT:    inc hl
+; GBI-O3-NEXT:    ld d, (hl)
+; GBI-O3-NEXT:    ld a, (de)
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    inc de
+; GBI-O3-NEXT:    ld a, (de)
 ; GBI-O3-NEXT:    ld c, a
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
-; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    ld d, h
-; GBI-O3-NEXT:    ld e, l
 ; GBI-O3-NEXT:    inc de
 ; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld (bc), a
-; GBI-O3-NEXT:    ld a, (hl)
-; GBI-O3-NEXT:    push af
-; GBI-O3-NEXT:    ld hl, sp, 2
-; GBI-O3-NEXT:    ldi a, (hl)
+; GBI-O3-NEXT:    ld d, a
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    ld hl, sp, 0
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    inc hl
 ; GBI-O3-NEXT:    ld h, (hl)
-; GBI-O3-NEXT:    ld l, a
-; GBI-O3-NEXT:    pop af
+; GBI-O3-NEXT:    ld l, b
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, c
+; GBI-O3-NEXT:    ldi (hl), a
+; GBI-O3-NEXT:    ld a, d
 ; GBI-O3-NEXT:    ld (hl), a
-; GBI-O3-NEXT:    inc bc
-; GBI-O3-NEXT:    inc de
-; GBI-O3-NEXT:    ld a, (de)
-; GBI-O3-NEXT:    ld (bc), a
+; GBI-O3-NEXT:    ld a, l
+; GBI-O3-NEXT:    add $00
+; GBI-O3-NEXT:    ld c, a
+; GBI-O3-NEXT:    ld a, h
+; GBI-O3-NEXT:    adc $00
+; GBI-O3-NEXT:    ld b, a
+; GBI-O3-NEXT:    ld a, (bc)
 ; GBI-O3-NEXT:    add sp, 12
 ; GBI-O3-NEXT:    ret
 begin:

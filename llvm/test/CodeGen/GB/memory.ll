@@ -36,12 +36,9 @@ define fastcc void @store8(ptr %a, i8 %b) nounwind {
 define fastcc void @store16(ptr %a, i16 %b) nounwind {
 ; GBI-LABEL: store16:
 ; GBI:       # %bb.0:
-; GBI-NEXT:    ld d, h
-; GBI-NEXT:    ld e, l
-; GBI-NEXT:    inc de
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    ld (de), a
 ; GBI-NEXT:    ld a, c
+; GBI-NEXT:    ldi (hl), a
+; GBI-NEXT:    ld a, b
 ; GBI-NEXT:    ld (hl), a
 ; GBI-NEXT:    ret
   store i16 %b, ptr %a
@@ -72,10 +69,8 @@ define fastcc i8 @load_sext(ptr %a) nounwind {
 ; GBI-LABEL: load_sext:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    and $01
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, $00
-; GBI-NEXT:    sub b
+; GBI-NEXT:    dec a
+; GBI-NEXT:    cpl
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
   %2 = sext i1 %1 to i8
@@ -86,7 +81,6 @@ define fastcc i8 @load_zext(ptr %a) nounwind {
 ; GBI-LABEL: load_zext:
 ; GBI:       # %bb.0:
 ; GBI-NEXT:    ld a, (hl)
-; GBI-NEXT:    and $01
 ; GBI-NEXT:    ret
   %1 = load i1, ptr %a
   %2 = zext i1 %1 to i8
@@ -110,10 +104,10 @@ define fastcc i1 @simple_stack(i1 %0) {
 ; GBI:       # %bb.0: # %begin
 ; GBI-NEXT:    add sp, -2
 ; GBI-NEXT:    ld a, b
-; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld hl, sp, 1
+; GBI-NEXT:    and $01
 ; GBI-NEXT:    ld (hl), a
-; GBI-NEXT:    ld a, b
+; GBI-NEXT:    ld a, (hl)
 ; GBI-NEXT:    add sp, 2
 ; GBI-NEXT:    ret
 begin:
@@ -182,10 +176,10 @@ entry:
 define fastcc i16 @load_global() {
 ; GBI-LABEL: load_global:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    ld a, (ext+1)
-; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ld a, (ext)
 ; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld a, (ext+1)
+; GBI-NEXT:    ld h, a
 ; GBI-NEXT:    ret
 entry:
   %0 = load i16, ptr @ext, align 2
@@ -195,10 +189,10 @@ entry:
 define fastcc void @store_global(i16 %arg) {
 ; GBI-LABEL: store_global:
 ; GBI:       # %bb.0: # %entry
-; GBI-NEXT:    ld a, h
-; GBI-NEXT:    ld (ext+1), a
 ; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    ld (ext), a
+; GBI-NEXT:    ld a, h
+; GBI-NEXT:    ld (ext+1), a
 ; GBI-NEXT:    ret
 entry:
   store i16 %arg, ptr @ext, align 2
@@ -211,25 +205,24 @@ define fastcc i16 @_Z3barN5libgb5ArrayIcLj16EEE(ptr byval(%array) align 1 %data)
 ; GBI-LABEL: _Z3barN5libgb5ArrayIcLj16EEE:
 ; GBI:       # %bb.0: # %entry
 ; GBI-NEXT:    ld a, l
-; GBI-NEXT:    add $09
-; GBI-NEXT:    ld c, a
-; GBI-NEXT:    ld a, h
-; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, (bc)
-; GBI-NEXT:    ld b, a
-; GBI-NEXT:    ld a, l
 ; GBI-NEXT:    add $07
-; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld e, a
 ; GBI-NEXT:    ld a, h
 ; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld h, a
-; GBI-NEXT:    ld a, b
-; GBI-NEXT:    add (hl)
-; GBI-NEXT:    ld l, a
-; GBI-NEXT:    ld a, $00
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld c, a
+; GBI-NEXT:    ld b, $00
+; GBI-NEXT:    ld a, e
+; GBI-NEXT:    add $02
+; GBI-NEXT:    ld e, a
+; GBI-NEXT:    ld a, d
 ; GBI-NEXT:    adc $00
-; GBI-NEXT:    ld h, a
+; GBI-NEXT:    ld d, a
+; GBI-NEXT:    ld a, (de)
+; GBI-NEXT:    ld l, a
+; GBI-NEXT:    ld h, b
+; GBI-NEXT:    add hl, bc
 ; GBI-NEXT:    ret
 entry:
   %arrayidx.i = getelementptr inbounds nuw i8, ptr %data, i16 7

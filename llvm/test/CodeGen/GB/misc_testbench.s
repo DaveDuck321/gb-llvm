@@ -81,5 +81,35 @@ _start:
 # EXPECT: hl=0071
     debugtrap
 
+    ld b, 0xfe
+    call ctpop
+# EXPECT: a=07
+    debugtrap
+
+    ld b, 0x00
+    call ctpop
+# EXPECT: a=00
+    debugtrap
+
+    ld b, 0xfe
+    call cttz
+# EXPECT: a=01
+    debugtrap
+
+    ld b, 0x00
+    call cttz
+# EXPECT: a=08
+    debugtrap
+
+    ld b, 0xfe
+    call ctlz
+# EXPECT: a=00
+    debugtrap
+
+    ld b, 0x01
+    call ctlz
+# EXPECT: a=07
+    debugtrap
+
 _end:
     trap

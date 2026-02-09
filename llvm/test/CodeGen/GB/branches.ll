@@ -17,19 +17,18 @@ define i8 @sge(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB1_3
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jr nz, .LBB1_3
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr z, .LBB1_4
+; GBI-O3-NEXT:    xor c
+; GBI-O3-NEXT:    cp c
+; GBI-O3-NEXT:    jr nc, .LBB1_4
 ; GBI-O3-NEXT:  .LBB1_2: # %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB1_3:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr c, .LBB1_2
+; GBI-O3-NEXT:    bit 7, c
+; GBI-O3-NEXT:    jr z, .LBB1_2
 ; GBI-O3-NEXT:  .LBB1_4: # %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -46,19 +45,18 @@ define i8 @sgt(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB2_3
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jr nz, .LBB2_3
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr z, .LBB2_4
+; GBI-O3-NEXT:    xor b
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    jr c, .LBB2_4
 ; GBI-O3-NEXT:  .LBB2_2: # %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB2_3:
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB2_2
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jr nz, .LBB2_2
 ; GBI-O3-NEXT:  .LBB2_4: # %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -74,17 +72,16 @@ define i8 @sgt_0(i8 %b) nounwind {
 ; GBI-O3-LABEL: sgt_0:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB3_2
+; GBI-O3-NEXT:    jr nz, .LBB3_3
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub $01
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB3_3
-; GBI-O3-NEXT:  .LBB3_2: # %label2
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB3_3: # %label1
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr z, .LBB3_3
+; GBI-O3-NEXT:  # %bb.2: # %label1
 ; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB3_3: # %label2
+; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp sgt i8 %b, 0
   br i1 %result, label %label1, label %label2
@@ -100,8 +97,8 @@ define i8 @sle_0(i8 %b) nounwind {
 ; GBI-O3-NEXT:    bit 7, b
 ; GBI-O3-NEXT:    jr nz, .LBB4_2
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    or a
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
 ; GBI-O3-NEXT:    jr nz, .LBB4_3
 ; GBI-O3-NEXT:  .LBB4_2: # %label1
 ; GBI-O3-NEXT:    ld a, $01
@@ -121,17 +118,16 @@ define i8 @sgt_1(i8 %b) nounwind {
 ; GBI-O3-LABEL: sgt_1:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB5_2
+; GBI-O3-NEXT:    jr nz, .LBB5_3
 ; GBI-O3-NEXT:  # %bb.1:
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub $02
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB5_3
-; GBI-O3-NEXT:  .LBB5_2: # %label2
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB5_3: # %label1
+; GBI-O3-NEXT:    cp $02
+; GBI-O3-NEXT:    jr c, .LBB5_3
+; GBI-O3-NEXT:  # %bb.2: # %label1
 ; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB5_3: # %label2
+; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp sgt i8 %b, 1
   br i1 %result, label %label1, label %label2
@@ -144,8 +140,9 @@ label2:
 define i8 @sgt_n1(i8 %b) nounwind {
 ; GBI-O3-LABEL: sgt_n1:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB6_2
+; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    cp $80
+; GBI-O3-NEXT:    jr nc, .LBB6_2
 ; GBI-O3-NEXT:  # %bb.1: # %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -164,17 +161,16 @@ define i8 @sgt_n127(i8 %b) nounwind {
 ; GBI-O3-LABEL: sgt_n127:
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr z, .LBB7_3
+; GBI-O3-NEXT:    jr z, .LBB7_2
 ; GBI-O3-NEXT:  # %bb.1:
 ; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub $82
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB7_3
-; GBI-O3-NEXT:  # %bb.2: # %label2
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    ret
-; GBI-O3-NEXT:  .LBB7_3: # %label1
+; GBI-O3-NEXT:    cp $82
+; GBI-O3-NEXT:    jr c, .LBB7_3
+; GBI-O3-NEXT:  .LBB7_2: # %label1
 ; GBI-O3-NEXT:    ld a, $01
+; GBI-O3-NEXT:    ret
+; GBI-O3-NEXT:  .LBB7_3: # %label2
+; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
   %result = icmp sgt i8 %b, -127
   br i1 %result, label %label1, label %label2
@@ -190,19 +186,18 @@ define i8 @sle(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB8_3
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jr nz, .LBB8_3
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB8_4
+; GBI-O3-NEXT:    xor b
+; GBI-O3-NEXT:    cp b
+; GBI-O3-NEXT:    jr nc, .LBB8_4
 ; GBI-O3-NEXT:  .LBB8_2: # %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB8_3:
-; GBI-O3-NEXT:    ld a, c
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr c, .LBB8_2
+; GBI-O3-NEXT:    bit 7, b
+; GBI-O3-NEXT:    jr z, .LBB8_2
 ; GBI-O3-NEXT:  .LBB8_4: # %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -219,19 +214,18 @@ define i8 @slt(i8 %b, i8 %c) nounwind {
 ; GBI-O3:       # %bb.0:
 ; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    xor c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB9_3
+; GBI-O3-NEXT:    bit 7, a
+; GBI-O3-NEXT:    jr nz, .LBB9_3
 ; GBI-O3-NEXT:  # %bb.1:
-; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB9_4
+; GBI-O3-NEXT:    xor c
+; GBI-O3-NEXT:    cp c
+; GBI-O3-NEXT:    jr c, .LBB9_4
 ; GBI-O3-NEXT:  .LBB9_2: # %label2
 ; GBI-O3-NEXT:    ld a, $00
 ; GBI-O3-NEXT:    ret
 ; GBI-O3-NEXT:  .LBB9_3:
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    sub c
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB9_2
+; GBI-O3-NEXT:    bit 7, c
+; GBI-O3-NEXT:    jr nz, .LBB9_2
 ; GBI-O3-NEXT:  .LBB9_4: # %label1
 ; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    ret
@@ -403,37 +397,32 @@ define i8 @select(i1 %b) nounwind {
 define fastcc void @jt(i8 %in, ptr %out) {
 ; GBI-O3-LABEL: jt:
 ; GBI-O3:       # %bb.0: # %entry
+; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    bit 7, b
-; GBI-O3-NEXT:    jr nz, .LBB18_5
+; GBI-O3-NEXT:    jr nz, .LBB18_2
 ; GBI-O3-NEXT:  # %bb.1: # %entry
-; GBI-O3-NEXT:    ld a, $02
-; GBI-O3-NEXT:    sub b
-; GBI-O3-NEXT:    rlca
-; GBI-O3-NEXT:    jr nc, .LBB18_5
-; GBI-O3-NEXT:  # %bb.2: # %entry
-; GBI-O3-NEXT:    ld a, b
 ; GBI-O3-NEXT:    cp $03
-; GBI-O3-NEXT:    jr z, .LBB18_9
-; GBI-O3-NEXT:  # %bb.3: # %entry
-; GBI-O3-NEXT:    ld a, b
-; GBI-O3-NEXT:    cp $04
-; GBI-O3-NEXT:    jr nz, .LBB18_11
-; GBI-O3-NEXT:  # %bb.4: # %bb4
-; GBI-O3-NEXT:    ld a, $01
-; GBI-O3-NEXT:    jr .LBB18_10
-; GBI-O3-NEXT:  .LBB18_5: # %entry
-; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    jr nc, .LBB18_6
+; GBI-O3-NEXT:  .LBB18_2: # %entry
 ; GBI-O3-NEXT:    cp $01
-; GBI-O3-NEXT:    jr z, .LBB18_8
-; GBI-O3-NEXT:  # %bb.6: # %entry
-; GBI-O3-NEXT:    ld a, b
+; GBI-O3-NEXT:    jr z, .LBB18_5
+; GBI-O3-NEXT:  # %bb.3: # %entry
 ; GBI-O3-NEXT:    cp $02
 ; GBI-O3-NEXT:    jr nz, .LBB18_11
-; GBI-O3-NEXT:  # %bb.7: # %bb2
+; GBI-O3-NEXT:  # %bb.4: # %bb2
 ; GBI-O3-NEXT:    ld a, $03
 ; GBI-O3-NEXT:    jr .LBB18_10
-; GBI-O3-NEXT:  .LBB18_8: # %bb1
+; GBI-O3-NEXT:  .LBB18_5: # %bb1
 ; GBI-O3-NEXT:    ld a, $04
+; GBI-O3-NEXT:    jr .LBB18_10
+; GBI-O3-NEXT:  .LBB18_6: # %entry
+; GBI-O3-NEXT:    cp $03
+; GBI-O3-NEXT:    jr z, .LBB18_9
+; GBI-O3-NEXT:  # %bb.7: # %entry
+; GBI-O3-NEXT:    cp $04
+; GBI-O3-NEXT:    jr nz, .LBB18_11
+; GBI-O3-NEXT:  # %bb.8: # %bb4
+; GBI-O3-NEXT:    ld a, $01
 ; GBI-O3-NEXT:    jr .LBB18_10
 ; GBI-O3-NEXT:  .LBB18_9: # %bb3
 ; GBI-O3-NEXT:    ld a, $02
@@ -489,9 +478,9 @@ declare void @some_other_fn();
 define void @pred_ret(i8 %b) nounwind {
 ; GBI-O3-LABEL: pred_ret:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    ret c
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    ret nz
 ; GBI-O3-NEXT:    call some_fn
 ; GBI-O3-NEXT:    ret
   %result = icmp ugt i8 %b, 0
@@ -506,9 +495,9 @@ false:
 define void @pred_call(i8 %b) nounwind {
 ; GBI-O3-LABEL: pred_call:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    call c, some_other_fn
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    call nz, some_other_fn
 ; GBI-O3-NEXT:    call some_fn
 ; GBI-O3-NEXT:    call some_fn
 ; GBI-O3-NEXT:    ret
@@ -526,9 +515,9 @@ false:
 define void @no_pred_call_ret(i8 %b) nounwind {
 ; GBI-O3-LABEL: no_pred_call_ret:
 ; GBI-O3:       # %bb.0:
-; GBI-O3-NEXT:    ld a, $00
-; GBI-O3-NEXT:    cp b
-; GBI-O3-NEXT:    jr nc, .LBB22_2
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr z, .LBB22_2
 ; GBI-O3-NEXT:  # %bb.1: # %true
 ; GBI-O3-NEXT:    call some_fn
 ; GBI-O3-NEXT:    ret
@@ -543,4 +532,38 @@ true:
 false:
   call void @some_other_fn()
   ret void
+}
+
+define dso_local void @loop(i8 %amount) {
+; GBI-O3-LABEL: loop:
+; GBI-O3:       # %bb.0: # %entry
+; GBI-O3-NEXT:    add sp, -2
+; GBI-O3-NEXT:    inc b
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr z, .LBB23_2
+; GBI-O3-NEXT:  .LBB23_1: # %for.body
+; GBI-O3-NEXT:    # =>This Inner Loop Header: Depth=1
+; GBI-O3-NEXT:    ld hl, sp, 1
+; GBI-O3-NEXT:    ld (hl), b
+; GBI-O3-NEXT:    call some_fn
+; GBI-O3-NEXT:    ld hl, sp, 1
+; GBI-O3-NEXT:    ld b, (hl)
+; GBI-O3-NEXT:    dec b
+; GBI-O3-NEXT:    jr nz, .LBB23_1
+; GBI-O3-NEXT:  .LBB23_2: # %for.cond.cleanup
+; GBI-O3-NEXT:    add sp, 2
+; GBI-O3-NEXT:    ret
+entry:
+  %cmp5.not = icmp eq i8 %amount, 0
+  br i1 %cmp5.not, label %for.cond.cleanup, label %for.body
+
+for.cond.cleanup:
+  ret void
+
+for.body:
+  %i.06 = phi i8 [ %add, %for.body ], [ 0, %entry ]
+  tail call void @some_fn()
+  %add = add nuw i8 %i.06, 1
+  %exitcond.not = icmp eq i8 %add, %amount
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body
 }
