@@ -36,8 +36,6 @@ InstructionSelector *createGBInstructionSelector(const GBSubtarget &,
 void LowerGBMachineInstrToMCInst(const MachineInstr *, MCInst &OutMI,
                                  AsmPrinter &);
 
-void initializeGBDAGToDAGISelLegacyPass(PassRegistry &);
-
 } // namespace llvm
 
 #endif

@@ -31,7 +31,6 @@ add_llvm_target(GBCodeGen
     GBFrameLowering.cpp
     GBInstrInfo.cpp
     GBInstructionRelaxation.cpp
-    GBISelDAGToDAG.cpp
     GBISelLowering.cpp
     GBMCInstLower.cpp
     GBPostRACompareMerge.cpp

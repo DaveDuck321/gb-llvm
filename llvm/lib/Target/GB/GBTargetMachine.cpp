@@ -27,8 +27,6 @@ using namespace llvm;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeGBTarget() {
   llvm::RegisterTargetMachine<GBTargetMachine> _(getTheGBTarget());
   PassRegistry &PR = *PassRegistry::getPassRegistry();
-  initializeGBDAGToDAGISelLegacyPass(PR);
-
   initializeGlobalISel(PR);
 }
 
@@ -91,7 +89,6 @@ public:
 
   void addLatePreRegAlloc() override;
   void addMachineSSAOptimization() override;
-  bool addInstSelector() override;
   void addPreSched2() override;
   void addPreEmitPass() override;
 
@@ -126,11 +123,6 @@ void GBPassConfig::addMachineSSAOptimization() {
   if (TM->getOptLevel() != CodeGenOptLevel::None) {
     addPass(createGBFoldImmediates(getGBTargetMachine(), getOptLevel()));
   }
-}
-
-bool GBPassConfig::addInstSelector() {
-  addPass(createGBISelDag(getGBTargetMachine(), getOptLevel()));
-  return false;
 }
 
 bool GBPassConfig::addIRTranslator() {
