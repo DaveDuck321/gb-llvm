@@ -9,6 +9,7 @@
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -243,7 +244,9 @@ bool GBCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   auto Call = [&] {
     if (Info.Callee.isReg()) {
       assert(Info.CallConv != CallingConv::Fast);
-      return MIRBuilder.buildInstrNoInsert(GB::CALL_HL);
+      auto Call = MIRBuilder.buildInstrNoInsert(GB::CALL_HL);
+      Call.addRegMask(TRI->getCallPreservedMask(MF, Info.CallConv));
+      return Call;
     }
 
     auto Call = MIRBuilder.buildInstrNoInsert(GB::CALL);
