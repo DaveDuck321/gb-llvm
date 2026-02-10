@@ -135,3 +135,10 @@ while_1_begin:                                    ; preds = %begin
   %0 = load ptr, ptr null, align 2
   ret ptr %0
 }
+
+define i16 @empty_bb() {
+; GBI-LABEL: empty_bb:
+; GBI:       # %bb.0: # %entry
+entry:
+  unreachable
+}

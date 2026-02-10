@@ -99,13 +99,15 @@ bool GBCFIInserter::runOnMachineFunction(MachineFunction &MF) {
                copyFlagsFrom(MI));
     }
 
-    MachineInstr &FirstMI = *MBB->begin();
-    if (!FirstMI.isTerminator()) {
-      // Order this initial CFI before any CFIs inserted in the above loop
-      buildCFI(*MBB, ++FirstMI.getIterator(), FirstMI.getDebugLoc(),
-               MCCFIInstruction::cfiDefCfaOffset(
-                   nullptr, -StackOffset->StartStackOffset),
-               copyFlagsFrom(FirstMI));
+    if (MBB->begin() != MBB->end()) {
+      MachineInstr &FirstMI = *MBB->begin();
+      if (!FirstMI.isTerminator()) {
+        // Order this initial CFI before any CFIs inserted in the above loop
+        buildCFI(*MBB, ++FirstMI.getIterator(), FirstMI.getDebugLoc(),
+                 MCCFIInstruction::cfiDefCfaOffset(
+                     nullptr, -StackOffset->StartStackOffset),
+                 copyFlagsFrom(FirstMI));
+      }
     }
 
     StackOffset->EndStackOffset = CurrentOffset;
